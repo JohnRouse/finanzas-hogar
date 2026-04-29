@@ -1,0 +1,17 @@
+{
+  "name": "Hogar Finanzas",
+  "short_name": "Finanzas",
+  "description": "Gestión compartida de gastos y ahorros",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f7f6f2",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/552/552791.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

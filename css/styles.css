@@ -1,0 +1,1705 @@
+/* ══════════════════════════════════════════
+   HOGAR FINANZAS — styles.css (VERSIÓN FINAL PULIDA)
+   Modales completamente mejorados + consistencia total
+   ══════════════════════════════════════════ */
+
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+:root {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.8); /* Para el efecto cristal */
+  --border: rgba(0, 0, 0, 0.05);
+  --text: #1a1c1e;
+  --text2: #5f6368;
+  --text3: #9aa0a6;
+  
+  /* Sombras "Layered" (Estilo iOS/macOS) */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02);
+
+  --blue: #2563eb;
+  --radius: 20px; /* Bordes más orgánicos */
+  --container-padding: clamp(12px, 4vw, 20px);
+}
+
+/* Modo oscuro refinado */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0c0d;
+    --surface: #16181a;
+    --surface-glass: rgba(22, 24, 26, 0.8);
+    --border: rgba(255, 255, 255, 0.06);
+    --text: #f1f3f4;
+    --text2: #bdc1c6;
+    --text3: #80868b;
+  }
+}
+
+/* ── BASE ── */
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 0px;
+}
+
+/* ── HEADER ── */
+.app-header {
+  position: sticky; 
+  top: 0; 
+  z-index: 100;
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px); /* El toque mágico */
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 var(--container-padding);
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between;
+  height: 65px; /* Altura fija para mayor control en pantallas pequeñas */
+}
+
+.avatar-row {
+  display: flex;
+  flex-direction: row; /* Avatares uno al lado del otro, no arriba/abajo */
+  gap: -8px; /* Efecto de solapado elegante */
+  align-items: center;
+  margin-right: 4px; /* Espacio antes del mes */
+}
+
+.app-logo { 
+  font-family: 'DM Serif Display', serif; 
+  font-size: 22px; 
+  font-weight: 500; 
+  color: var(--text); 
+}
+
+.app-logo span { 
+  font-family: 'DM Sans', sans-serif; 
+  font-size: 13.5px; 
+  color: var(--text2); 
+}
+
+.header-right { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; /* Reducimos un poco el gap para pantallas pequeñas */
+}
+
+.avatar { 
+  width: 32px; 
+  height: 32px; 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 10px; 
+  font-weight: 700; 
+  border: 2px solid var(--surface); /* Esto crea el "anillo" blanco de separación */
+  position: relative;
+  transition: transform 0.2s;/
+  box-shadow: var(--shadow-sm);
+}
+
+.avatar.yo   { background: var(--blue-bg); color: var(--blue-text); z-index: 2; }
+.avatar.ella { background: var(--pink-bg); color: var(--pink-text); z-index: 1; 
+  margin-left: -12px;}
+
+.avatar:first-child { margin-left: 0; }
+
+.month-btn {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-btn {
+  width: 42px; height: 42px;
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  margin-left: 4px;
+  padding: 8px;
+}
+
+.settings-btn:hover {
+  background: var(--surface2);
+  color: var(--text);
+  transform: rotate(30deg);
+}
+
+/* ── MAIN ── */
+.main { 
+  max-width: 680px; 
+  margin: 0 auto; 
+  padding: var(--container-padding);
+  padding-bottom: 0px !important;
+}
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.05); /* Gris muy suave */
+  padding: 4px;
+  border-radius: 14px;
+  margin-bottom: 24px;
+  gap: 2px;
+  width: 100%;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  text-align: center;
+}
+
+.tab.active {
+  background: var(--surface);
+  color: var(--blue);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08); /* Sombra suave para la activa */
+}
+
+/* manipulation bloquea swipe horizontal — NO aplicar a expense-item-inner */
+button, .tab, .avatar, .kpi {
+  touch-action: manipulation;
+}
+
+/* expense-item y su inner: pan-y = browser maneja scroll vertical,
+   JS puede capturar el movimiento horizontal sin conflicto */
+.expense-item,
+.expense-item-inner {
+  touch-action: pan-y;
+}
+
+/* ── PAGE VISIBILITY ── */
+.page { 
+  display: none; 
+  opacity: 0;
+  transform: translateY(12px); /* Empieza un poco abajo */
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding-bottom: 100px !important;
+}
+
+.page.active { 
+  display: block; 
+  opacity: 1;
+  transform: translateY(0); /* Sube a su posición original */
+}
+@keyframes fadeIn { 
+  from { opacity: 0; transform: translateY(8px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
+
+/* ── KPI GRID ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Por defecto: 2 columnas (ideal para P40 Lite) */
+  gap: 10px;
+}
+
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 90px;
+  transition: transform 0.2s ease;
+}
+
+/* Efecto hover/touch sutil */
+.kpi:active {
+  transform: scale(0.98);
+}
+
+/* Bordes superiores más finos y elegantes */
+.kpi.blue  { border-top: 4px solid #3b82f6; background: linear-gradient(180deg, rgba(59,130,246,0.04) 0%, var(--surface) 100%); }
+.kpi.red   { border-top: 4px solid #ef4444; background: linear-gradient(180deg, rgba(239,68,68,0.04) 0%, var(--surface) 100%); }
+.kpi.amber { border-top: 4px solid #f59e0b; background: linear-gradient(180deg, rgba(245,158,11,0.04) 0%, var(--surface) 100%); }
+.kpi.green { border-top: 4px solid #10b981; background: linear-gradient(180deg, rgba(16,185,129,0.04) 0%, var(--surface) 100%); }
+
+.kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  user-select: none; /* Evita que se seleccione el texto accidentalmente */
+  background: transparent !important;
+  -webkit-user-select: none;
+}
+.kpi-val {
+  font-family: 'DM Sans', sans-serif; /* Volvemos a Sans */
+  font-size: 1.2rem; /* Usamos rem para que escale mejor */
+  font-weight: 700;          /* Peso extra bold */
+  letter-spacing: -1px;     /* Números más juntos, estilo financiero moderno */
+  color: var(--text);
+  line-height: 1.2;
+}
+.kpi-sub   { font-size: 12.5px; margin-top: 6px; color: var(--text2); }
+
+/* ── SECTION y CARD ── */
+.section { margin-bottom: 28px; }
+.section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.section-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text3); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--container-padding);
+  box-shadow: var(--shadow-md); /* Sombra más suave y profesional */
+  margin-bottom: 16px;
+}
+
+/* ── EXPENSE, DEBT y SAVING ── */
+.expense-list { display: flex; flex-direction: column; }
+
+/* --- 2. TARJETAS DE GASTO — DISEÑO MEJORADO --- */
+
+/*
+ * NUEVA ARQUITECTURA (OPCIÓN 1 - RECOMENDADA):
+ * 
+ * .expense-item          → Contenedor flex, ancho 100%
+ *   ├── .expense-item-inner → Tarjeta principal (flex: 1)
+ *   └── .expense-actions  → Botones de acción (siempre visibles)
+ *
+ * Ventajas:
+ * ✓ Sin overflow issues
+ * ✓ Funciona perfecto en mobile y desktop
+ * ✓ Los botones son claros y visibles
+ * ✓ Sin necesidad de swipe complejo
+ */
+
+.expense-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+  margin-bottom: 8px;
+  animation: expenseItemSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── SWIPE WRAPPER (contenedor para el gesto en mobile) ── */
+.expense-swipe-wrap {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+}
+
+/* En desktop: ocultar el botón de swipe, mantener el X */
+@media (hover: hover) {
+  .expense-swipe-del { display: none; }
+}
+
+@keyframes expenseItemSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.expense-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.expense-item-inner {
+  position: relative;           /* ← Importante para posicionar la X */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px; /* Más compacto verticalmente */
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  min-height: 72px;
+  width: 100%; /* ← FIX: igual ancho para todas las tarjetas */
+  will-change: transform;
+}
+
+/* Hover en desktop */
+@media (hover: hover) {
+  .expense-item:hover {
+    box-shadow: var(--shadow-md);
+    border-color: rgba(37, 99, 235, 0.25);
+  }
+  .expense-delete {
+    opacity: 0;
+  }
+  
+  .expense-item:hover .expense-delete {
+    opacity: 1;
+  }
+  
+  .expense-delete:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  .expense-item:hover .expense-actions {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+  .expense-item:hover .expense-right {
+    transform: translateX(-8px);
+  }
+  .expense-item-inner:hover {
+    box-shadow: var(--shadow-md);
+    border-color: rgba(37, 99, 235, 0.2);
+  }
+}
+
+
+/* ── MOBILE (touch devices / pantallas pequeñas) ── */
+@media (max-width: 600px) {
+  .expense-item-inner {
+    padding: 12px 14px;   /* simétrico, sin hueco para la X */
+    gap: 10px;
+    min-height: 64px;
+  }
+  .expense-item-inner:active {
+    opacity: 0.92;
+  }
+  /* Ocultar completamente la X — el borrado es por swipe */
+  .expense-delete {
+    display: none !important;
+  }
+  .expense-icon {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    font-size: 18px;
+    border-radius: 10px;
+  }
+  .expense-name {
+    font-size: 14px;
+  }
+  .expense-cat {
+    font-size: 12px;
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+  .expense-cat-text {
+    max-width: 100%; /* permite que ocupe todo el ancho si es necesario */
+  }
+  .expense-right {
+    min-width: 70px;
+  }
+  .expense-amount {
+    font-size: 14.5px;
+  }
+  .expense-who {
+    font-size: 11px;
+  }
+  .section-action {
+    font-size: 30px;
+    /* Esto elimina cualquier texto que tenga el botón, dejando solo el símbolo + */
+    text-indent: -9999px; 
+    overflow: hidden;
+  }
+  /* Dibujamos el + con un pseudo-elemento para que sea independiente del texto */
+  .section-action::before {
+    content: '+';
+    text-indent: 0;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-weight: 400;
+  }
+  /* Ocultar los botones en el Resumen para que no se dupliquen */
+  #page-resumen .section-action {
+    display: none !important;
+  }
+  /* Si el botón tiene texto " + Agregar", lo ocultamos y dejamos solo el "+" */
+  .section-action span, .section-action::after {
+    display: none;
+  }
+
+   .presup-header {
+    flex-direction: column;      /* apila en columna */
+    align-items: flex-start;      /* alinea a la izquierda */
+    gap: 4px;                    /* espacio pequeño entre etiqueta y montos */
+  }
+  .presup-label {
+    font-size: 13px;             /* ligeramente más pequeño si quieres, opcional */
+  }
+  .presup-montos {
+    font-size: 11.5px;           /* montos más compactos */
+  }
+}
+
+
+.expense-icon {
+  font-size: 20px;
+  background: var(--bg);
+  width: 36px; 
+  height: 36px;
+  min-width: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.expense-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.expense-name { 
+  font-size: 14px; 
+  font-weight: 500; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expense-cat { 
+  font-size: 13px; 
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.expense-cat-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.expense-cat-date {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+
+
+/* Ajuste del contenido para que no se superponga con la X */
+.expense-right {
+  text-align: right;
+  min-width: 80px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.expense-amount { 
+  font-size: 15.5px; 
+  font-weight: 600; 
+}
+
+.expense-who { 
+  font-size: 12px; 
+  color: var(--text3); 
+}
+
+.expense-badge-tarjeta {
+  display: inline-block;
+  font-size: 10.5px; 
+  font-weight: 500;
+  background: #2a7de118; 
+  color: var(--blue);
+  border: 1px solid #2a7de133;
+  border-radius: 5px; 
+  padding: 1px 6px;
+  margin-top: 2px;
+}
+
+/* --- BOTONES DE ACCIÓN --- */
+.expense-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+/* Botón borrar - Versión discreta y elegante */
+.expense-delete {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);     /* Centrado vertical perfecto */
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text3);
+  border: none;
+  font-size: 17px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.65;
+  z-index: 10;
+}
+
+.expense-delete:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  opacity: 1;
+  transform: translateY(-50%) scale(1.12);
+}
+
+.expense-delete:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .expense-delete {
+    background: transparent;
+    color: var(--text3);
+  }
+  .expense-delete:hover {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+}
+
+.debt-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+
+@media (min-width: 520px) { .debt-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.debt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative; /* Asegura que la X se quede dentro de la tarjeta */
+  overflow: hidden;
+}
+
+/* Botón de Registrar Pago más elegante */
+.debt-card button[onclick*="abrirPago"] {
+  background: #f0fdf4 !important; /* Verde muy pálido */
+  color: #166534 !important;    /* Texto verde oscuro */
+  border: 1px solid #dcfce7 !important;
+  font-weight: 600;
+  padding: 10px;
+  border-radius: 12px;
+  margin-top: 8px;
+}
+
+.debt-card button[onclick*="abrirPago"]:active {
+  transform: scale(0.95);
+  background: #dcfce7 !important;
+}
+
+.debt-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.09);
+  border-color: rgba(37, 99, 235, 0.15);
+}
+
+.debt-type { font-size: 11.5px; font-weight: 600; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; }
+.debt-name { font-size: 15.5px; font-weight: 500; margin-bottom: 10px; }
+.debt-total { font-size: 20px; font-weight: 600; }
+.debt-sub { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+.debt-prog-bg { height: 6px; background: var(--surface2); border-radius: 9999px; overflow: hidden; margin-bottom: 8px; }
+.debt-prog-fill { height: 100%; border-radius: 9999px; transition: width 0.4s ease;}
+.debt-hint { font-size: 11px; color: var(--text3); margin-top: 5px; }
+
+.debt-pay-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 8px;
+  background: #3e7d2a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.debt-pay-btn:active {
+  background: #2d5a1e;
+  transform: scale(0.97);
+}
+
+/* Solo aplicar a botones que estén dentro de .debt-card o .saving-goal */
+.debt-card .debt-delete, 
+.saving-goal .saving-delete {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-size: 14px;
+  color: var(--text2);
+  z-index: 10;
+  cursor: pointer;
+}
+.debt-card .debt-delete:hover {
+  background: #fee2e2; /* Fondo rojo pálido al pasar el mouse */
+  color: #dc2626;      /* X roja */
+  transform: rotate(90deg);
+}
+
+.saving-goal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 12px; position: relative; box-shadow: var(--shadow-sm);
+}
+.saving-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; background: var(--surface2); }
+.saving-name { font-size: 15.5px; font-weight: 500; margin-bottom: 4px; }
+.saving-pct { font-size: 13px; color: var(--text2); margin-bottom: 8px; }
+.saving-bar-bg { height: 7px; background: var(--surface2); border-radius: 9999px; overflow: hidden; margin-bottom: 8px; }
+.saving-bar { height: 100%; border-radius: 9999px; }
+.saving-amounts { display: flex; justify-content: space-between; font-size: 13px; color: var(--text3); }
+.saving-delete { position: absolute; top: 14px; right: 14px; background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; }
+
+/* ── MODALES PULIDOS (Mejora principal) ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom);
+  /* Bloquea que los eventos táctiles se filtren al contenido de fondo */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-overlay.open { display: flex; }
+
+/* Body con scroll bloqueado cuando hay modal abierto.
+   La posición top se aplica dinámicamente desde JS para preservar el scroll. */
+body.modal-open {
+  overflow: hidden;
+}
+
+.modal-sheet {
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 520px;
+  max-height: 85vh; /* Evita que el modal tape toda la pantalla en el Huawei */
+  overflow-y: auto;
+  animation: slideUpModal 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+  padding: 24px;
+  transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+  border-radius: 28px 28px 0 0;
+  /* Contener el scroll dentro del modal — no propagar al body */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 600px) {
+  .modal-overlay { align-items: center; padding-bottom: 0; }
+  .modal-sheet { border-radius: 20px; margin: 20px; max-height: 90vh; }
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(100px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* Estilos internos de los modales */
+.modal-title {
+  font-size: 19px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.input-row { margin-bottom: 18px; }
+.input-row-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.input-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text2);
+  margin-bottom: 7px;
+  display: block;
+}
+
+/* Ajuste de inputs para que no se vean tan "toscos" */
+.input-field {
+  padding: 12px;
+  font-size: 14px;
+}
+
+/* Ajuste adicional para inputs en modales */
+.input-field, .select-field {
+  width: 100%;
+  padding: 13px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+  transition: border 0.2s;
+}
+
+.input-field:focus, .select-field:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* --- 3. REFINAMIENTO DE CATEGORÍAS EN EL MODAL --- */
+.chip-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 columnas en el modal de agregar */
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.chip {
+  padding: 8px 4px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+.chip.selected {
+  background: var(--blue) !important;
+  color: white !important;
+  border-color: var(--blue) !important;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+  transform: translateY(-2px);
+}
+
+/* X para cerrar modales - Más elegante */
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  background: #f1f3f4;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  color: #1a1c1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+/* El botón Cerrar azul de abajo */
+.section-action[onclick*="closeModal"] {
+  background: #f1f3f4 !important;
+  color: #5f6368 !important;
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.modal-close:hover {
+  background: var(--border2);
+  color: var(--text);
+  transform: scale(1.05);
+}
+
+/* Botones principales dentro de modales (Agregar gasto, Guardar, etc.) */
+.modal-btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15.5px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 24px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.modal-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+/* Botón de peligro (Borrar datos) */
+.modal-btn-danger {
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  color: var(--red);
+  border: 1px solid var(--red);
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.2s ease;
+}
+
+.modal-btn-danger:hover {
+  background: var(--red-bg);
+}
+
+/* Mejorar el handle (la barra superior de los modales) */
+.modal-handle {
+  width: 40px;
+  height: 5px;
+  background: var(--border2);
+  border-radius: 9999px;
+  margin: 0 auto 20px;
+}
+
+
+
+/* ── LEGEND, CHARTS, EMPTY STATE ── */
+.legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text2); }
+.legend-dot { width: 11px; height: 11px; border-radius: 3px; }
+.chart-wrap { position: relative; width: 100%; padding: 8px 0; }
+.empty-state { text-align: center; padding: 40px 20px; font-size: 13.5px; color: var(--text3); }
+
+/* ── BOTTOM NAV y TOAST ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
+  height: calc(65px + env(safe-area-inset-bottom)); /* Se estira en el iPhone, queda normal en el Huawei */
+}
+
+.bnav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 0 8px;
+  border: none;
+  background: transparent;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text3);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.bnav-btn.active {
+  color: var(--blue);
+}
+
+.bnav-btn.active::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  width: 5px;
+  height: 5px;
+  background: var(--blue);
+  border-radius: 50%;
+}
+
+.bnav-icon {
+  font-size: 23px;
+  line-height: 1;
+  margin-bottom: 2px;
+  transition: transform 0.2s ease;
+}
+
+.bnav-btn.active .bnav-icon {
+  transform: scale(1.12);
+}
+
+/* Efecto al tocar en móvil */
+.bnav-btn:active {
+  opacity: 0.7;
+}
+
+.toast {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+  background: var(--surface); padding: 14px 22px; border-radius: 14px;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.12); z-index: 300; display: none;
+}
+.toast.success { background: var(--green-bg); color: var(--green-text); }
+
+/* ====================== BOTONES + AGREGAR (EXTERIORES) ====================== */
+
+/* BOTÓN FLOTANTE GLOBAL (FAB) - Versión corregida */
+.section-action {
+  position: fixed !important; /* Mantiene su posición siempre */
+  bottom: 85px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  color: white !important;
+  border-radius: 50% !important;
+  display: flex; /* Quitamos !important para que JS pueda ocultarlo */
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  border: none;
+  cursor: pointer;
+  font-size: 32px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s ease;
+  line-height: 0;
+  font-family: Arial, sans-serif;
+  background-color: var(--blue); /* Color por defecto */
+}
+
+.section-action:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(37, 99, 235, 0.35);
+}
+
+.section-action:active {
+  transform: scale(0.85);
+}
+
+/* DISEÑO DE ACTION SHEET PARA ELECCIÓN DE DEUDA */
+.action-sheet {
+  border-radius: 24px 24px 0 0 !important;
+  padding: 20px !important;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 15px 0;
+}
+
+.choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 16px;
+  background: var(--surface2);
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.choice-btn:active {
+  border-color: var(--blue);
+  background: #2563eb10;
+}
+
+.choice-icon {
+  font-size: 24px;
+  background: var(--surface);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.choice-text strong {
+  display: block;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.choice-text p {
+  font-size: 12px;
+  color: var(--text3);
+  margin: 0;
+}
+
+.modal-btn-cancel {
+  width: 100%;
+  padding: 14px;
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+
+/* Estilo para el botón "Ver todo" en la lista principal */
+.ver-todo-container {
+  text-align: center;
+  padding: 15px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+}
+
+.btn-ver-todo {
+  background: white;
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  padding: 10px 24px;
+  font-weight: 600;
+  border-radius: 999px;
+  margin-top: 10px;
+  transition: all 0.2s;
+}
+
+.btn-ver-todo:active {
+  background: var(--blue-bg);
+  transform: scale(0.95);
+}
+
+.btn-ver-todo:hover {
+  background: var(--blue-bg);
+  border-color: var(--blue);
+}
+
+/* Estilos específicos para la lista del historial */
+.lista-gastos-full {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  /* Prevenir que el scroll interno se propague al modal/body */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Opcional: Estilizar la barra de scroll para que se vea sutil */
+.lista-gastos-full::-webkit-scrollbar {
+  width: 5px;
+}
+.lista-gastos-full::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 10px;
+}
+
+/* ══════════════════════════════════════════
+   SKELETON LOADING EFFECTS
+   ══════════════════════════════════════════ */
+
+.skeleton {
+  /* Color de fondo base (tu variable surface2) */
+  background-color: var(--surface2);
+  
+  /* Gradiente para el efecto de brillo */
+  background-image: linear-gradient(
+    90deg, 
+    rgba(255, 255, 255, 0) 0, 
+    rgba(255, 255, 255, 0.5) 50%, 
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  
+  /* Animación */
+  animation: shimmer 1.5s infinite linear; /* Añadí 'linear' para que sea fluido */
+  
+  /* Forma y Alineación */
+  border-radius: 12px; 
+  min-height: 1em;
+  display: inline-block;
+  vertical-align: middle;
+  
+  /* Evita que el usuario pueda seleccionar el "texto" del skeleton */
+  pointer-events: none;
+  user-select: none;
+}
+
+/* El keyframe (asegúrate de que el nombre coincida) */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Formas específicas para tus gastos */
+.skeleton-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.skeleton-icon { width: 40px; height: 40px; border-radius: 12px; }
+.skeleton-text { height: 14px; margin-bottom: 8px; width: 60%; }
+.skeleton-subtext { height: 10px; width: 40%; }
+.skeleton-amount { width: 50px; height: 16px; margin-left: auto; }
+
+
+/* Desktop */
+@media (min-width: 680px) {
+  .main { padding: 28px 24px 0; }
+  .bottom-nav { display: none; }
+  .tabs { display: flex; }
+}
+
+/* Móvil */
+@media (max-width: 679px) {
+  .kpi-grid.four { grid-template-columns: repeat(2, 1fr); }
+  .kpi { padding: 14px 16px; min-height: 100px; }
+  .kpi-val { font-size: 19px; }
+}
+/* ── VOUCHER SCANNER ── */
+.voucher-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 12px 16px;
+  background: var(--surface2); border: 1.5px dashed var(--border);
+  border-radius: 12px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+  color: var(--text2); transition: all 0.18s;
+}
+.voucher-btn:hover, .voucher-btn:active {
+  background: #2a7de10e; border-color: var(--blue); color: var(--blue);
+}
+.voucher-btn-icon { font-size: 20px; }
+.voucher-btn-text { flex: 1; text-align: left; }
+
+.voucher-loading-bar {
+  height: 4px; background: var(--border); border-radius: 99px;
+  margin: 12px 0 6px; overflow: hidden;
+}
+.voucher-loading-fill {
+  height: 100%; width: 40%; background: var(--blue); border-radius: 99px;
+  animation: voucherSlide 1.2s ease-in-out infinite;
+}
+@keyframes voucherSlide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+.voucher-loading-txt {
+  font-size: 12.5px; color: var(--text3); margin: 0; text-align: center;
+}
+
+.voucher-preview-img {
+  width: 100%; max-height: 160px; object-fit: cover;
+  border-radius: 10px; border: 1px solid var(--border); display: block;
+}
+.voucher-clear {
+  display: block; margin: 6px auto 0;
+  background: none; border: none; font-size: 12px;
+  color: var(--text3); cursor: pointer; padding: 2px 8px;
+}
+.voucher-clear:hover { color: #c43030; }
+
+.voucher-autofill-banner {
+  display: flex; align-items: center; gap: 8px;
+  background: #2a7de10e; border: 1px solid #2a7de133;
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+  font-size: 13px; color: var(--blue);
+}
+
+/* ── BUSCADOR HISTORIAL ── */
+.historial-search-wrap {
+  position: relative;
+  display: flex; align-items: center;
+  margin-bottom: 14px;
+}
+.historial-search-icon {
+  position: absolute; left: 12px;
+  font-size: 15px; pointer-events: none;
+  line-height: 1;
+}
+.historial-search-input {
+  width: 100%; padding: 10px 36px 10px 36px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--text);
+  outline: none; box-sizing: border-box;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+.historial-search-input:focus { border-color: var(--blue); }
+.historial-search-input::placeholder { color: var(--text3); }
+/* ocultar el botón nativo del input[type=search] */
+.historial-search-input::-webkit-search-cancel-button { display: none; }
+.historial-search-clear {
+  position: absolute; right: 10px;
+  background: none; border: none;
+  font-size: 13px; color: var(--text3);
+  cursor: pointer; padding: 4px;
+  line-height: 1;
+}
+.historial-search-clear:hover { color: var(--text); }
+
+/* ── DISTRIBUCIÓN DEL INGRESO ── */
+.dist-fila {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.dist-fila:last-child { border-bottom: none; }
+.dist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 7px;
+}
+.dist-label  { font-size: 13.5px; font-weight: 500; color: var(--text); }
+.dist-montos { font-size: 12px; color: var(--text3); }
+.dist-bar-bg {
+  height: 7px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.dist-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+  min-width: 3px;
+}
+
+/* ── ALERTAS ── */
+.alerta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;      /* Más redondeada */
+  margin-bottom: 24px;      /* Más espacio con los KPIs */
+  font-size: 13px;
+  border: 1px solid transparent;
+}
+.alerta:last-child { margin-bottom: 12px; }
+.alerta-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.alerta-msg  { color: var(--text); }
+
+.alerta-danger {
+  background: #fde8e8;
+  border: 1px solid #f5a0a0;
+}
+.alerta-danger .alerta-msg { color: #9b1c1c; font-weight: 500; }
+
+.alerta-warning {
+  background: #fff3cd;
+  border: 1px solid #f5c842;
+}
+.alerta-info {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #dbeafe;
+}
+.alerta-success {
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .alerta-danger  { background: #3a0a0a; border-color: #8a1010; }
+  .alerta-warning { background: #3a2e0a; border-color: #7a6010; }
+  .alerta-info    { background: #0d1f3c; border-color: #2a4a8a; }
+  .alerta-success { background: #0d2e14; border-color: #2a6a30; }
+}
+
+/* ── REGLA 50/30/20 ── */
+.regla-fila {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.regla-fila:last-child { border-bottom: none; }
+.regla-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+.regla-label  { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; }
+.regla-montos { font-size: 12px; color: var(--text3); text-align: right; }
+.regla-bar-bg {
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.regla-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+  min-width: 3px;
+}
+.regla-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── PRESUPUESTO DEL MES ── */
+.presup-fila {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+.presup-fila:last-child { border-bottom: none; }
+
+.presup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.presup-label  { font-size: 13.5px; font-weight: 500; color: var(--text); }
+.presup-montos { font-size: 12px; color: var(--text3); white-space: nowrap; }
+
+.presup-bar-bg {
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.presup-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+  min-width: 3px;
+}
+
+/* ── VOUCHER TOGGLE ── */
+.voucher-toggle-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 9px 14px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500;
+  color: var(--text2); transition: all 0.15s;
+}
+.voucher-toggle-btn:hover { border-color: var(--blue); color: var(--blue); }
+.voucher-toggle-active { border-color: var(--blue) !important; color: var(--blue) !important; background: #2a7de10d !important; }
+.voucher-toggle-arrow {
+  font-size: 18px; font-weight: 300; line-height: 1;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+/* ── MODAL CONFIRMACIÓN ── */
+.confirm-sheet {
+  text-align: center;
+  padding: 28px 24px 24px;
+  border-radius: 22px;
+}
+.confirm-icon {
+  font-size: 40px; margin-bottom: 12px; line-height: 1;
+}
+.confirm-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px; color: var(--text);
+  margin-bottom: 8px;
+}
+.confirm-msg {
+  font-size: 14px; color: var(--text2);
+  margin-bottom: 24px; line-height: 1.5;
+}
+.confirm-actions {
+  display: flex; gap: 10px;
+}
+.confirm-btn-cancel {
+  flex: 1; padding: 12px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 12px; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 500; color: var(--text2);
+  cursor: pointer; transition: all 0.15s;
+}
+.confirm-btn-cancel:hover { background: var(--border); }
+.confirm-btn-ok {
+  flex: 1; padding: 12px;
+  border: none; border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.confirm-btn-danger  { background: #c43030; color: #fff; }
+.confirm-btn-danger:hover  { background: #a82020; }
+.confirm-btn-primary { background: var(--blue); color: #fff; }
+.confirm-btn-primary:hover { opacity: 0.85; }
+
+/* ── FIX DARK MODE: leyenda del donut ── */
+@media (prefers-color-scheme: dark) {
+  /* Forzar texto legible en los labels del chart */
+  canvas { color-scheme: dark; }
+  /* Mejorar leyenda del donut en dark */
+  .legend-item span { color: var(--text2); }
+  .legend-dot { border: 1px solid rgba(255,255,255,0.1); }
+}
+
+/* Botones y Tabs con respuesta táctil */
+.tab, .bnav-btn, .section-action, .modal-btn, .month-btn {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab:active, .bnav-btn:active, .section-action:active, .modal-btn:active {
+  transform: scale(0.92); /* Pequeño "encogimiento" al tocar */
+  opacity: 0.8;
+}
+
+/* Scroll suave para toda la app */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 1. Solo el botón con ID fab-global será circular y flotante */
+#fab-global {
+  position: fixed !important;
+  bottom: 80px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  color: white !important;
+  border-radius: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  border: none;
+  cursor: pointer;
+  font-size: 32px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s ease;
+  line-height: 0;
+  font-family: Arial, sans-serif;
+  background-color: var(--blue);
+}
+
+/* 2. Estilo para el título del Historial (para que no se vea tan apretado) */
+#historialTitle {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px !important;
+  color: var(--text);
+  margin: 0;
+}
+
+/* 3. Ajuste de la "X" de cerrar en la parte superior del modal */
+.modal-header .close-modal {
+  width: 32px;
+  height: 32px;
+  background: var(--surface2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--text2);
+  border: none;
+  cursor: pointer;
+}
+/* Contenedor de acciones al final del modal */
+.modal-actions-stack {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Botón Primario (Guardar) */
+.modal-btn.primary {
+  background: var(--blue) !important;
+  color: white !important;
+  font-weight: 600;
+  padding: 16px;
+  border-radius: 14px;
+  width: 100%;
+  border: none;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+/* Acciones secundarias agrupadas */
+.modal-secondary-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* Botón Sutil (Cambiar Usuario) */
+.modal-btn-subtle {
+  background: var(--surface2);
+  color: var(--text);
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-btn-subtle:active {
+  background: var(--border);
+}
+
+/* Enlace de Peligro (Borrar datos) */
+.modal-link-danger {
+  background: none;
+  border: none;
+  color: #c43030;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  opacity: 0.8;
+}
+
+.modal-link-danger:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.btn-ingreso-extra {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--blue);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-ingreso-extra:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.btn-recurrentes {
+  background: none;
+  border: 1px solid var(--border);
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  color: var(--text2);
+  cursor: pointer;
+}
+
+/* --- 1. OCULTAR TABS EN MÓVIL --- */
+/* --- 3. REGLAS PARA MÓVIL (OCULTAR TABS) --- */
+@media (max-width: 680px) {
+  .tabs {
+    display: none !important; /* Oculta el menú superior en móvil */
+  }
+  
+  .app-header {
+    padding: 10px 16px;
+    background: var(--surface);
+  }
+
+  .main {
+    padding: 10px 16px 100px; /* Espacio para el menú de abajo */
+  }
+
+  /* Ajuste de los KPIs en móvil para que no se vean apretados */
+  .kpi-grid.four {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .kpi {
+    min-height: 100px;
+    padding: 14px;
+  }
+  
+  .kpi-val {
+    font-size: 20px;
+  }
+}

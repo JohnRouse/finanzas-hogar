@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Hogar Finanzas</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+</head>
+<body>
+<!-- 1. SPLASH SCREEN (Aparece al instante) -->
+<div id="pwa-splash" style="position:fixed; inset:0; background:#f7f6f2; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; transition: opacity 0.5s ease, visibility 0.5s;">
+  <div style="font-family: 'DM Serif Display', serif; font-size: 32px; color: #1c1c1a; margin-bottom: 20px;">
+    Hogar<span style="color:#2563eb; font-family: 'DM Sans', sans-serif; font-size: 20px;">finanzas</span>
+  </div>
+  <!-- Spinner Minimalista -->
+  <div class="pwa-loader"></div>
+  <style>
+    .pwa-loader {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(37, 99, 235, 0.1);
+      border-radius: 50%;
+      border-top-color: #2563eb;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Evita que el scroll se mueva mientras carga */
+    body.loading { overflow: hidden; }
+  </style>
+</div>
+<!-- ══ HEADER ══ -->
+<header class="app-header">
+  <div class="app-logo">Hogar<span>finanzas</span></div>
+  <div class="header-right">
+  <div class="avatar-row">
+    <div class="avatar yo" id="avatarYo">YO</div>
+    <div class="avatar ella" id="avatarElla">EL</div>
+  </div>
+  
+  <button class="month-btn" id="monthBtn" onclick="openMonthPicker()">
+  <span id="month-display">Abril 2026</span> ▾
+ </button>
+
+  <!-- Botón de Ajustes -->
+  <button class="settings-btn" onclick="openAjustesModal()" title="Configuración">
+    ⚙️
+  </button>
+  </div>
+  </header>
+
+<div class="main">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showPage('resumen',0)">Resumen</button>
+    <button class="tab" onclick="showPage('gastos',1)">Gastos</button>
+    <button class="tab" onclick="showPage('deudas',2)">Deudas</button>
+    <button class="tab" onclick="showPage('ahorro',3)">Ahorro</button>
+  </div>
+
+  <!-- ══════════ RESUMEN ══════════ -->
+  <div id="page-resumen" class="page active">
+
+    <div id="alertas-resumen"></div>
+
+    <div class="kpi-grid four">
+      <div class="kpi blue">
+        <div class="kpi-label">Ingresos</div>
+        <div class="kpi-val" id="kpi-ingresos">
+      <span class="skeleton" style="width: 80%; height: 24px; display: block; border-radius: 6px;"></span>
+        </div>
+        <div class="kpi-sub">Ambos juntos</div>
+      </div>
+      <div class="kpi red">
+        <div class="kpi-label">Gastos</div>
+        <div class="kpi-val" id="kpi-gastos">
+  <span class="skeleton" style="width: 80%; height: 24px; display: block; border-radius: 6px;"></span>
+    </div>
+        <div class="kpi-sub" id="kpi-gastos-sub">0% del ingreso</div>
+      </div>
+      <div class="kpi amber">
+        <div class="kpi-label">Entret.</div>
+        <div class="kpi-val" id="kpi-entret">
+  <span class="skeleton" style="width: 80%; height: 24px; display: block; border-radius: 6px;"></span>
+</div>
+        <div class="kpi-sub" id="kpi-entret-sub">S/ 0 libre</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Ahorro</div>
+        <div class="kpi-val" id="kpi-ahorro">
+      <span class="skeleton" style="width: 80%; height: 24px; display: block; border-radius: 6px;"></span>
+    </div>
+        <div class="kpi-sub" id="kpi-ahorro-sub">0% de meta</div>
+      </div>
+    </div>
+
+    <div style="text-align:right; margin-bottom:8px;">
+  <button class="btn-ingreso-extra" onclick="openIngresoExtraModal()">
+    + Ingreso extra
+  </button>
+</div>
+
+    <div class="section">
+      <div class="section-title" style="margin-bottom:10px;">Distribución del ingreso</div>
+      <div class="card" id="distribucion-card">
+        <div id="distribucion-content">
+          <div class="empty-state">Configura tus ingresos y gastos para ver la distribución</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="legend" id="legend-donut"></div>
+      <div class="card" style="padding:16px;">
+        <div class="chart-wrap" style="height:230px;">
+          <canvas id="donutChart" role="img" aria-label="Distribución de gastos por categoría.">Sin datos aún.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="legend" id="legend-bar-resumen">
+        <div class="legend-item"><div class="legend-dot" style="background:#2a7de1"></div><span id="label-yo">Tú</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#c94b7b"></div><span id="label-ella">Pareja</span></div>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div class="chart-wrap" style="height:210px;">
+          <canvas id="barChart" role="img" aria-label="Comparación de gastos por categoría entre los dos.">Sin datos aún.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Presupuesto del mes</div>
+      </div>
+      <div class="card">
+        <div class="progress-list" id="presupuesto-list">
+          <div class="empty-state">Agrega gastos para ver el presupuesto</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ GASTOS ══════════ -->
+  <div id="page-gastos" class="page">
+    <div class="section">
+      <div class="section-head">
+  <div class="section-title">Movimientos del mes</div>
+  <button class="btn-recurrentes" onclick="abrirGestionRecurrentes()">⚙️ Gastos Fijos</button>
+</div>
+      <div class="card">
+        <div class="expense-list" id="expenseList">
+          <!-- Skeletons iniciales -->
+  <div class="skeleton-item" style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px;">
+    <div class="skeleton" style="width: 44px; height: 44px; border-radius: 12px;"></div>
+    <div style="flex: 1;">
+      <div class="skeleton" style="width: 60%; height: 14px; margin-bottom: 8px;"></div>
+      <div class="skeleton" style="width: 40%; height: 10px;"></div>
+    </div>
+    <div class="skeleton" style="width: 50px; height: 16px;"></div>
+  </div>
+  <div class="skeleton-item" style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px;">
+    <div class="skeleton" style="width: 44px; height: 44px; border-radius: 12px;"></div>
+    <div style="flex: 1;">
+      <div class="skeleton" style="width: 60%; height: 14px; margin-bottom: 8px;"></div>
+      <div class="skeleton" style="width: 40%; height: 10px;"></div>
+    </div>
+    <div class="skeleton" style="width: 50px; height: 16px;"></div>
+  </div>
+  <div class="skeleton-item" style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px;">
+    <div class="skeleton" style="width: 44px; height: 44px; border-radius: 12px;"></div>
+    <div style="flex: 1;">
+      <div class="skeleton" style="width: 60%; height: 14px; margin-bottom: 8px;"></div>
+      <div class="skeleton" style="width: 40%; height: 10px;"></div>
+    </div>
+    <div class="skeleton" style="width: 50px; height: 16px;"></div>
+  </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title" style="margin-bottom:10px;">Evolución semanal</div>
+      <div class="legend" id="legend-line">
+    <div class="legend-item"><div class="legend-dot" style="background:#2a7de1"></div><span id="label-yo-2">Tú</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c94b7b"></div><span id="label-ella-2">Pareja</span></div>
+  </div>
+      <div class="card" style="padding:16px;">
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="lineChart" role="img" aria-label="Gastos semanales comparados.">Sin datos.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title" style="margin-bottom:10px;">Total por categoría</div>
+      <div class="card" style="padding:16px;">
+        <div class="chart-wrap" style="height:260px;">
+          <canvas id="hbarChart" role="img" aria-label="Total gastado por categoría este mes.">Sin datos.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ DEUDAS ══════════ -->
+  <div id="page-deudas" class="page">
+    <div class="kpi-grid">
+      <div class="kpi red">
+        <div class="kpi-label">Deuda total</div>
+        <div class="kpi-val" id="kpi-deuda-total">S/ 0</div>
+        <div class="kpi-sub">Préstamos + tarjetas</div>
+      </div>
+      <div class="kpi amber">
+        <div class="kpi-label">Pago mensual</div>
+        <div class="kpi-val" id="kpi-pago-mensual">S/ 0</div>
+        <div class="kpi-sub" id="kpi-pago-sub">0% del ingreso</div>
+      </div>
+    </div>
+
+    <div id="alertas-deuda"></div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Tarjetas de crédito</div>
+      </div>
+      <div class="debt-grid" id="tarjetas-grid">
+        <div class="empty-state" style="grid-column:1/-1;">Sin tarjetas registradas. Presiona "+ Agregar".</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Préstamos activos</div>
+      </div>
+      <div class="debt-grid" id="prestamos-grid">
+        <div class="empty-state" style="grid-column:1/-1;">Sin préstamos registrados.</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title" style="margin-bottom:10px;">Proyección libre de deuda</div>
+      <div class="card" style="padding:16px;">
+        <div class="chart-wrap" style="height:190px;">
+          <canvas id="debtChart" role="img" aria-label="Proyección de reducción de deuda.">Sin datos.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ AHORRO ══════════ -->
+  <div id="page-ahorro" class="page">
+    <div class="kpi-grid">
+      <div class="kpi green">
+        <div class="kpi-label">Ahorro este mes</div>
+        <div class="kpi-val" id="kpi-ahorro2">S/ 0</div>
+        <div class="kpi-sub" id="kpi-ahorro2-sub">0% de la meta</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-label">Fondo total</div>
+        <div class="kpi-val" id="kpi-fondo">S/ 0</div>
+        <div class="kpi-sub">Todas las metas</div>
+      </div>
+    </div>
+    <div style="font-size:12px; color:var(--text2); margin-top:8px; padding:0 4px; text-align:center;">
+  <strong>Ahorro este mes</strong> = Ingresos – Gastos – Pagos de deudas.<br>
+  <strong>Fondo total</strong> = suma del dinero ya apartado en tus metas.
+</div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">Metas de ahorro</div>
+      </div>
+      <div class="card">
+        <div id="savingGoals">
+          <div class="empty-state">Sin metas creadas. Presiona "+ Nueva meta" para empezar.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title" style="margin-bottom:10px;">Progreso anual</div>
+      <div class="card" style="padding:16px;">
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="savingChart" role="img" aria-label="Ahorro mes a mes durante el año.">Sin datos.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title" style="margin-bottom:10px;">Regla 50/30/20</div>
+      <div class="card">
+        <div id="regla-502030">
+          <div class="empty-state">Configura tus ingresos para ver el análisis.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ══ BOTTOM NAV ══ -->
+<nav class="bottom-nav">
+  <button class="bnav-btn active" onclick="showPage('resumen',0)">
+    <span class="bnav-icon">📊</span>Resumen
+  </button>
+  <button class="bnav-btn" onclick="showPage('gastos',1)">
+    <span class="bnav-icon">💳</span>Gastos
+  </button>
+  <button class="bnav-btn" onclick="showPage('deudas',2)">
+    <span class="bnav-icon">🏦</span>Deudas
+  </button>
+  <button class="bnav-btn" onclick="showPage('ahorro',3)">
+    <span class="bnav-icon">🎯</span>Ahorro
+  </button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODALES
+══════════════════════════════════════════════════════════════ -->
+
+<!-- MODAL: AJUSTES (Versión Pulida y Mejorada) -->
+<div class="modal-overlay" id="ajustesModal" onclick="closeModalOutside(event,'ajustesModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('ajustesModal')">✕</button>
+    <div class="modal-handle"></div>
+    
+    <div class="modal-title">⚙️ Configuración del Hogar</div>
+    <p style="font-size:13.5px; color:var(--text2); margin-bottom:24px; line-height:1.5;">
+      Bienvenido a Hogar Finanzas. Para empezar, crea un perfil nuevo guardando tus datos o ingresa un código de invitación para unirte.
+    </p>
+
+    <!-- Sección: Nombres -->
+    <div class="input-row">
+      <label class="input-label">Tu nombre (o apodo)</label>
+      <input type="text" class="input-field" id="aj-nombre-yo" placeholder="Ej: Christian">
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Nombre de tu pareja</label>
+      <input type="text" class="input-field" id="aj-nombre-ella" placeholder="Ej: Sydney">
+    </div>
+
+    <!-- Sección: Sueldos -->
+    <div style="margin: 28px 0 12px;">
+      <div style="font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+        Sueldos básicos mensuales
+      </div>
+      <div class="input-row input-row-two">
+        <div>
+          <label class="input-label">Tu sueldo (S/)</label>
+          <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="aj-ingreso-yo" placeholder="1500">
+        </div>
+        <div>
+          <label class="input-label">Sueldo de tu pareja (S/)</label>
+          <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="aj-ingreso-ella" placeholder="1200">
+        </div>
+      </div>
+    </div>
+
+    <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--border);">
+
+    <!-- Sección: Sincronización -->
+    <div style="background: var(--surface2); padding: 16px; border-radius: 14px; margin-bottom: 20px;">
+      <div style="font-size: 12px; font-weight: 600; color: var(--text3); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.4px;">
+        Sincronización entre dispositivos
+      </div>
+      
+      <div style="margin-bottom: 12px;">
+        <label style="font-size: 13px; color: var(--text2);">Tu Código de Hogar</label>
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px;">
+          <code id="display-hogar-id" style="flex: 1; background: var(--surface); padding: 10px 12px; border-radius: 8px; font-family: monospace; font-size: 15px; border: 1px solid var(--border);">
+            ---
+          </code>
+          <button onclick="copyHogarId()" style="padding: 8px 14px; background: var(--blue); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;">
+            Copiar
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-size: 13px; color: var(--text2);">¿Quieres unirte a un hogar existente?</label>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <input type="text" id="join-id-input" placeholder="HOGAR-XXXXXX" 
+                 style="flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); font-family: monospace;">
+          <button onclick="unirseAHogar()" 
+                  style="padding: 0 18px; background: var(--text); color: var(--surface); border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;">
+            Unirme
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions-stack">
+      <button class="modal-btn primary" onclick="guardarAjustes()">
+        Guardar configuración
+      </button>
+      <div style="text-align:center; margin: 16px 0;">
+  <button class="modal-btn-subtle" onclick="exportarAExcel()">
+    <span>📥</span> Exportar a Excel
+  </button>
+</div>
+
+      <div class="modal-secondary-actions">
+        <button class="modal-btn-subtle" onclick="cerrarSesionIdentidad()">
+          <span>👤</span> Cambiar de Usuario
+        </button>
+        
+        <button class="modal-link-danger" onclick="confirmarReset()">
+          <span>🗑️</span> Borrar todos los datos
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REGISTRAR GASTO -->
+<div class="modal-overlay" id="gastoModal" onclick="closeModalOutside(event,'gastoModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('gastoModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar gasto</div>
+
+    <!-- SCAN VOUCHER -->
+    <input type="file" id="voucher-input" accept="image/*" capture="environment" style="display:none;" onchange="procesarVoucher(this)">
+
+    <!-- VOUCHER TOGGLE -->
+    <div style="margin-bottom:14px;">
+      <button type="button" class="voucher-toggle-btn" id="voucher-toggle" onclick="toggleVoucherPanel()">
+        <span>📷 Escanear voucher</span>
+        <span class="voucher-toggle-arrow" id="voucher-arrow">›</span>
+      </button>
+      <div id="voucher-panel" style="display:none; margin-top:8px;">
+        <div id="voucher-area">
+          <button type="button" class="voucher-btn" onclick="document.getElementById('voucher-input').click()">
+            <span class="voucher-btn-icon">📷</span>
+            <span class="voucher-btn-text">Tomar foto o subir imagen</span>
+          </button>
+          <div id="voucher-loading" style="display:none;">
+            <div class="voucher-loading-bar"><div class="voucher-loading-fill"></div></div>
+            <p class="voucher-loading-txt">Analizando imagen con IA…</p>
+          </div>
+          <div id="voucher-preview" style="display:none;">
+            <img id="voucher-img" src="" alt="Voucher" class="voucher-preview-img">
+            <button type="button" class="voucher-clear" onclick="limpiarVoucher()">✕ Quitar</button>
+          </div>
+        </div>
+      </div><!-- /voucher-panel -->
+
+    <div class="input-row">
+      <label class="input-label">Descripción</label>
+      <input type="text" class="input-field" id="g-desc" placeholder="Ej: Supermercado Wong">
+    </div>
+
+    <div class="input-row input-row-two">
+      <div>
+        <label class="input-label">Monto (S/)</label>
+        <input type="number" class="input-field" id="g-monto" placeholder="0.00" step="0.01" inputmode="decimal">
+      </div>
+      <div>
+        <label class="input-label">¿Quién pagó?</label>
+        <select class="select-field" id="g-quien">
+      <option value="yo">Christian</option>     <!-- se cambiará dinámicamente -->
+      <option value="pareja">Sydney</option>    <!-- se cambiará dinámicamente -->
+      <option value="ambos">Ambos</option>
+    </select>
+      </div>
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Categoría</label>
+      <div class="chip-row" id="cat-chips">
+        <button class="chip selected" onclick="selectChip(this,'cat-chips')">🛒 Alimentación</button>
+        <button class="chip" onclick="selectChip(this,'cat-chips')">⚡ Servicios</button>
+        <button class="chip" onclick="selectChip(this,'cat-chips')">🎬 Entret.</button>
+        <button class="chip" onclick="selectChip(this,'cat-chips')">⛽ Transporte</button>
+        <button class="chip" onclick="selectChip(this,'cat-chips')">💊 Salud</button>
+        <button class="chip" onclick="selectChip(this,'cat-chips')">🏠 Hogar</button>
+        <button class="chip" onclick="selectChip(this,'cat-chips')">📦 Otros</button>
+      </div>
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Fecha</label>
+      <input type="date" class="input-field" id="g-fecha">
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Medio de pago</label>
+      <select class="select-field" id="g-medio" onchange="toggleSelectorTarjeta()">
+        <option value="efectivo">💵 Efectivo / Transferencia</option>
+        <option value="tarjeta">💳 Tarjeta de crédito</option>
+      </select>
+    </div>
+
+    <div class="input-row" id="row-tarjeta-selector" style="display:none;">
+      <label class="input-label">¿Qué tarjeta usaste?</label>
+      <select class="select-field" id="g-tarjeta-id" onchange="actualizarInfoTarjeta()">
+        <option value="">— Cargando tarjetas... —</option>
+      </select>
+      <div id="g-tarjeta-credito-info" style="margin-top:6px; font-size:12px; color:var(--text3);"></div>
+    </div>
+
+    <div class="form-group" style="margin-top: 20px; padding: 10px; background: var(--surface2); border-radius: var(--radius-sm);">
+      <label class="switch-container" style="justify-content: space-between; cursor: pointer;">
+    <span style="font-size: 14px; font-weight: 500;">🔄 Repetir este gasto cada mes</span>
+    <input type="checkbox" id="checkRecurrente">
+    <span class="slider"></span>
+      </label>
+    </div>
+    <button class="modal-btn" onclick="agregarGasto()">Agregar gasto</button>
+  </div>
+</div>
+</div>
+<!-- MODAL: TARJETA DE CRÉDITO -->
+<div class="modal-overlay" id="tarjetaModal" onclick="closeModalOutside(event,'tarjetaModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('tarjetaModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Tarjeta de crédito</div>
+
+    <div class="input-row">
+      <label class="input-label">Banco / Nombre</label>
+      <input type="text" class="input-field" id="t-nombre" placeholder="Ej: Visa BCP">
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">¿De quién es?</label>
+      <select class="select-field" id="t-quien">
+    <option value="yo">Christian</option>
+    <option value="pareja">Sydney</option>
+    <option value="ambos">Compartida</option>
+  </select>
+    </div>
+
+    <div class="input-row input-row-two">
+      <div>
+        <label class="input-label">Deuda actual (S/)</label>
+        <input type="number" inputmode="decimal" pattern="[0-9]*"class="input-field" id="t-deuda" placeholder="0">
+      </div>
+      <div>
+        <label class="input-label">Límite de crédito (S/)</label>
+        <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="t-limite" placeholder="0">
+      </div>
+    </div>
+
+    <div class="input-row input-row-two">
+      <div>
+        <label class="input-label">Cuota mínima (S/)</label>
+        <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="t-cuota" placeholder="0">
+      </div>
+      <div>
+        <label class="input-label">Día de vencimiento</label>
+        <input type="number" class="input-field" id="t-vence" placeholder="15" min="1" max="31">
+      </div>
+    </div>
+
+    <button class="modal-btn" onclick="agregarTarjeta()">Guardar tarjeta</button>
+  </div>
+</div>
+
+<!-- MODAL: PRÉSTAMO ACTIVO -->
+<div class="modal-overlay" id="prestamoModal" onclick="closeModalOutside(event,'prestamoModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('prestamoModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Préstamo activo</div>
+
+    <div class="input-row">
+      <label class="input-label">Banco / Tipo de préstamo</label>
+      <input type="text" class="input-field" id="p-nombre" placeholder="Ej: Préstamo BCP personal">
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">¿De quién es?</label>
+      <select class="select-field" id="p-quien">
+    <option value="yo">Christian</option>
+    <option value="pareja">Sydney</option>
+    <option value="ambos">Compartido</option>
+  </select>
+    </div>
+
+    <div class="input-row input-row-two">
+      <div>
+        <label class="input-label">Saldo pendiente (S/)</label>
+        <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="p-saldo" placeholder="0">
+      </div>
+      <div>
+        <label class="input-label">Cuota mensual (S/)</label>
+        <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="p-cuota" placeholder="0">
+      </div>
+    </div>
+
+    <div class="input-row input-row-two">
+      <div>
+        <label class="input-label">Cuotas pagadas</label>
+        <input type="number" class="input-field" id="p-pagadas" placeholder="0">
+      </div>
+      <div>
+        <label class="input-label">Total de cuotas</label>
+        <input type="number" class="input-field" id="p-total" placeholder="0">
+      </div>
+    </div>
+
+    <button class="modal-btn" onclick="agregarPrestamo()">Guardar préstamo</button>
+  </div>
+</div>
+
+<!-- MODAL: NUEVA META DE AHORRO -->
+<div class="modal-overlay" id="metaModal" onclick="closeModalOutside(event,'metaModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('metaModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nueva meta de ahorro</div>
+
+    <div class="input-row">
+      <label class="input-label">Nombre de la meta</label>
+      <input type="text" class="input-field" id="m-nombre" placeholder="Ej: Vacaciones Cusco">
+    </div>
+
+    <div class="input-row input-row-two">
+      <div>
+        <label class="input-label">Monto objetivo (S/)</label>
+        <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="m-objetivo" placeholder="0">
+      </div>
+      <div>
+        <label class="input-label">Ya ahorrado (S/)</label>
+        <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="m-actual" placeholder="0">
+      </div>
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Ícono</label>
+      <div class="chip-row" id="icon-chips">
+        <button class="chip selected" onclick="selectChip(this,'icon-chips')">✈️</button>
+        <button class="chip" onclick="selectChip(this,'icon-chips')">🏠</button>
+        <button class="chip" onclick="selectChip(this,'icon-chips')">🚗</button>
+        <button class="chip" onclick="selectChip(this,'icon-chips')">📱</button>
+        <button class="chip" onclick="selectChip(this,'icon-chips')">🎓</button>
+        <button class="chip" onclick="selectChip(this,'icon-chips')">💍</button>
+        <button class="chip" onclick="selectChip(this,'icon-chips')">🏥</button>
+        <button class="chip" onclick="selectChip(this,'icon-chips')">🎯</button>
+      </div>
+    </div>
+
+    <button class="modal-btn" onclick="agregarMeta()">Crear meta</button>
+  </div>
+</div>
+
+<!-- MODAL: REGISTRAR PAGO DE TARJETA -->
+<div class="modal-overlay" id="pagoTarjetaModal" onclick="closeModalOutside(event,'pagoTarjetaModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('pagoTarjetaModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar pago de tarjeta</div>
+
+    <div id="pago-tarjeta-info" style="margin-bottom:16px; padding:12px; background:var(--surface2); border-radius:10px; font-size:14px;">
+      <!-- Se llenará dinámicamente -->
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Monto del pago (S/)</label>
+      <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="pago-monto" placeholder="0.00" step="0.01">
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Fecha del pago</label>
+      <input type="date" class="input-field" id="pago-fecha">
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Nota (opcional)</label>
+      <input type="text" class="input-field" id="pago-nota" placeholder="Ej: Pago mínimo">
+    </div>
+
+    <button class="modal-btn" onclick="registrarPagoTarjeta()">Registrar pago y reducir deuda</button>
+  </div>
+</div>
+
+<!-- MODAL: REGISTRAR PAGO DE CUOTA DE PRÉSTAMO -->
+<div class="modal-overlay" id="pagoPrestamoModal" onclick="closeModalOutside(event,'pagoPrestamoModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('pagoPrestamoModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar pago de cuota</div>
+
+    <div id="pago-prestamo-info" style="margin-bottom:16px; padding:12px; background:var(--surface2); border-radius:10px;">
+      <!-- Se llena dinámicamente -->
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Monto de la cuota pagada (S/)</label>
+      <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="prestamo-pago-monto" placeholder="0.00" step="0.01">
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Fecha del pago</label>
+      <input type="date" class="input-field" id="prestamo-pago-fecha">
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Nota (opcional)</label>
+      <input type="text" class="input-field" id="prestamo-pago-nota" placeholder="Ej: Cuota #4">
+    </div>
+
+    <button class="modal-btn" onclick="registrarPagoPrestamo()">Registrar pago de cuota</button>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICACIÓN -->
+<div id="toast" class="toast">
+  <span id="toast-message"></span>
+</div>
+
+<!-- MODAL SELECTOR DE MES/AÑO -->
+<div class="modal-overlay" id="monthPickerModal" onclick="if(event.target.id === 'monthPickerModal') closeModal('monthPickerModal')">
+  <div class="modal-sheet" style="max-width: 380px;">
+    <div class="modal-handle"></div>
+    
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+      <button onclick="prevYear()" style="background:none; border:none; font-size:24px; width:40px;">‹</button>
+      <div id="selected-year" style="font-size:18px; font-weight:600; cursor:pointer;" onclick="toggleYearSelector()"></div>
+      <button onclick="nextYear()" style="background:none; border:none; font-size:24px; width:40px;">›</button>
+    </div>
+
+    <!-- Selector rápido de año (se muestra al tocar el año) -->
+    <div id="year-selector" style="display:none; margin-bottom:16px; text-align:center;">
+      <select id="year-select" onchange="changeYear(this.value)" style="padding:8px 12px; font-size:15px; border-radius:8px;">
+        <!-- Se llena con JS -->
+      </select>
+    </div>
+
+    <!-- Meses -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;" id="month-grid">
+      <!-- Se llena con JS -->
+    </div>
+
+    <button onclick="closeModal('monthPickerModal')" style="margin-top:24px; width:100%; padding:12px; background:#e5e5e5; color:#333; border:none; border-radius:12px; font-weight:500;">
+      Cerrar
+    </button>
+  </div>
+</div>
+
+<!-- MODAL LISTA DE MOVIMIENTOS EN GASTOS -->
+<div id="modalHistorial" class="modal-overlay">
+  <div class="modal-sheet"> 
+    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-right: 10px;">
+    <h2 id="historialTitle">Movimientos</h2>
+    <!-- Usamos modal-close para que se vea como los demás círculos con X -->
+    <button class="modal-close" onclick="closeModal('modalHistorial')" style="position: static;">✕</button>
+</div>
+    
+    <!-- BUSCADOR -->
+    <div class="historial-search-wrap">
+      <span class="historial-search-icon">🔍</span>
+      <input
+        type="search"
+        id="historial-search"
+        class="historial-search-input"
+        placeholder="Buscar por nombre o categoría…"
+        oninput="filtrarHistorial(this.value)"
+        autocomplete="off"
+      >
+      <button id="historial-search-clear" class="historial-search-clear" onclick="limpiarBusquedaHistorial()" style="display:none;">✕</button>
+    </div>
+    <div id="historial-no-resultados" style="display:none;" class="empty-state">Sin resultados para tu búsqueda.</div>
+
+    <div class="modal-body">
+      <div id="listaCompletaGastos" class="lista-gastos-full">
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONFIRMACIÓN PERSONALIZADO -->
+<div id="modalConfirm" class="modal-overlay" onclick="closeConfirmModal()">
+  <div class="modal-sheet confirm-sheet" onclick="event.stopPropagation()" style="max-width:340px; margin:auto;">
+    <div class="confirm-icon" id="confirm-icon">🗑️</div>
+    <div class="confirm-title" id="confirm-title">¿Eliminar?</div>
+    <div class="confirm-msg" id="confirm-msg">Esta acción no se puede deshacer.</div>
+    <div class="confirm-actions">
+      <button class="confirm-btn-cancel" onclick="closeConfirmModal()">Cancelar</button>
+      <button class="confirm-btn-ok" id="confirm-btn-ok">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Único Botón Flotante Global (Fuera de las páginas) -->
+<button id="fab-global" class="section-action" onclick="handleFabClick()" style="display: none;">+</button>
+
+<!-- Modal de Elección para Deudas (Action Sheet) -->
+<div class="modal-overlay" id="deudaChoiceModal" onclick="closeModalOutside(event,'deudaChoiceModal')">
+  <div class="modal-sheet action-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">¿Qué deseas hacer?</div>
+    <div class="action-buttons">
+      <button class="choice-btn" onclick="closeModal('deudaChoiceModal'); openModal('tarjetaModal')">
+        <span class="choice-icon">💳</span>
+        <div class="choice-text">
+          <strong>Nueva Tarjeta</strong>
+          <p>Registrar una tarjeta de crédito.</p>
+        </div>
+      </button>
+      <button class="choice-btn" onclick="closeModal('deudaChoiceModal'); openModal('prestamoModal')">
+        <span class="choice-icon">🏦</span>
+        <div class="choice-text">
+          <strong>Nuevo Préstamo</strong>
+          <p>Agregar un préstamo activo.</p>
+        </div>
+      </button>
+      <!-- 🔥 NUEVA OPCIÓN -->
+      <button class="choice-btn" onclick="closeModal('deudaChoiceModal'); abrirSelectorPago()">
+        <span class="choice-icon">💸</span>
+        <div class="choice-text">
+          <strong>Registrar Pago</strong>
+          <p>Abonar a una tarjeta o préstamo existente.</p>
+        </div>
+      </button>
+    </div>
+    <button class="modal-btn-cancel" onclick="closeModal('deudaChoiceModal')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Pantalla de Identificación Local (Solo se ve una vez por dispositivo) -->
+<div id="identidad-overlay" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:10001; align-items:center; justify-content:center; padding:20px;">
+  <div class="card" style="width:100%; max-width:350px; text-align:center; padding:30px; border-radius:28px;">
+    <h2 style="font-family:'DM Serif Display', serif; font-size:24px; margin-bottom:10px;">¿Quién eres?</h2>
+    <p style="color:var(--text2); font-size:14px; margin-bottom:25px;">Personalizaremos la experiencia para este dispositivo.</p>
+    
+    <div style="display:grid; gap:15px;">
+      <button onclick="definirIdentidad('yo')" class="choice-btn" style="display:flex; align-items:center; gap:15px; padding:15px; border-radius:18px; border:1px solid var(--border); background:var(--surface); cursor:pointer;">
+        <div class="avatar yo" style="width:45px; height:45px; margin:0;">CH</div>
+        <span style="font-weight:600; font-size:16px;" id="identidad-nombre-yo">Christian</span>
+      </button>
+
+      <button onclick="definirIdentidad('pareja')" class="choice-btn" style="display:flex; align-items:center; gap:15px; padding:15px; border-radius:18px; border:1px solid var(--border); background:var(--surface); cursor:pointer;">
+        <div class="avatar ella" style="width:45px; height:45px; margin:0;">SY</div>
+        <span style="font-weight:600; font-size:16px;" id="identidad-nombre-ella">Sydney</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SELECCIONAR DEUDA PARA PAGAR -->
+<div class="modal-overlay" id="selectorPagoModal" onclick="closeModalOutside(event,'selectorPagoModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('selectorPagoModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Selecciona qué deuda pagar</div>
+    <div id="lista-deudas-pago" class="debt-grid">
+      <!-- Se llena dinámicamente -->
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: INGRESO EXTRA -->
+<div class="modal-overlay" id="ingresoExtraModal" onclick="closeModalOutside(event,'ingresoExtraModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('ingresoExtraModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar ingreso extra</div>
+
+    <div class="input-row">
+      <label class="input-label">Descripción (opcional)</label>
+      <input type="text" class="input-field" id="ie-desc" placeholder="Ej: Clase particular">
+    </div>
+
+    <div class="input-row input-row-two">
+      <div>
+        <label class="input-label">Monto (S/)</label>
+        <input type="number" class="input-field" id="ie-monto" placeholder="0.00" step="0.01" inputmode="decimal">
+      </div>
+      <div>
+        <label class="input-label">¿Quién lo recibió?</label>
+        <select class="select-field" id="ie-quien">
+          <option value="yo">Christian</option>
+          <option value="pareja">Sydney</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Fecha</label>
+      <input type="date" class="input-field" id="ie-fecha">
+    </div>
+
+    <button class="modal-btn" onclick="agregarIngresoExtra()">Agregar ingreso extra</button>
+  </div>
+</div>
+
+<!-- MODAL: GESTIÓN DE RECURRENTES -->
+<div class="modal-overlay" id="recurrentesModal" onclick="closeModalOutside(event,'recurrentesModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('recurrentesModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Gastos fijos mensuales</div>
+    <div id="lista-recurrentes" style="margin-top:16px;">
+      <!-- Se llena dinámicamente -->
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<!-- 🔥 FIREBASE COMPAT SDK (Más fácil para vanilla JS) -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcV_ds81xCnEMYjOt0R7qdSw9SVqxTEBs",
+    authDomain: "hogar-finanzas-christian.firebaseapp.com",
+    projectId: "hogar-finanzas-christian",
+    storageBucket: "hogar-finanzas-christian.firebasestorage.app",
+    messagingSenderId: "297318843633",
+    appId: "1:297318843633:web:7e649c8ebd3ca2ec3d9550"
+  };
+
+  // Inicializar Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Hacerlas disponibles globalmente
+  window.firebaseApp = app;
+  window.auth = auth;
+  window.db = db;
+
+  if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then(reg => console.log('SW registrado'))
+    .catch(err => console.error('Error SW:', err));
+  }
+  // Login anónimo
+  auth.signInAnonymously()
+    .then(() => {
+      console.log("✅ Firebase conectado correctamente (anónimo - compat)");
+    })
+    .catch((error) => {
+      console.error("❌ Error Firebase Auth:", error.message);
+    });
+</script>
+
+<!-- data.js y app.js (SIN type="module") -->
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
