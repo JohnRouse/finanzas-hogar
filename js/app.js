@@ -2442,20 +2442,38 @@ if (legendLine) legendLine.style.display = 'flex';
     return;
   }
 
+  // 1. Identificar gastos que son pagos de deudas (tarjetas, préstamos, AFP, adelantos)
+  const esPagoDeuda = (g) => {
+    const desc = g.desc || '';
+    return desc.startsWith('Pago Tarjeta') || desc.startsWith('Pago Préstamo') || desc.startsWith('Préstamo') || desc === 'Aporte AFP' || desc === 'Adelanto Sueldo BCP';
+    // Puedes ajustar las palabras clave según tus necesidades
+  };
+
+  const gastosDeudas = (gastos || []).filter(esPagoDeuda);
+  const totalDeudas = gastosDeudas.reduce((s, g) => s + (g.monto || 0), 0);
+
+  // Ingreso disponible después de pagar deudas
+  const ingresoDisponible = Math.max(0, ingresos - totalDeudas);
+
+  // Categorías de necesidades y gustos (sin incluir los pagos de deudas)
   const NECESIDADES_CATS = ['Alimentación', 'Servicios', 'Transporte', 'Salud', 'Hogar'];
-  const GUSTOS_CATS = ['Entret.', 'Otros'];
+  const GUSTOS_CATS = ['Entret.'];   // Solo entretenimiento por ahora
 
   let totalNecesidades = 0, totalGustos = 0;
   (gastos || []).forEach(function(g) {
+    if (esPagoDeuda(g)) return; // ignorar pagos de deudas
     const monto = g.monto || 0;
     if (NECESIDADES_CATS.indexOf(g.cat) >= 0)  totalNecesidades += monto;
     else if (GUSTOS_CATS.indexOf(g.cat) >= 0)   totalGustos += monto;
   });
-  const totalAhorro = Math.max(0, ingresos - totalNecesidades - totalGustos);
 
-  const metaNecesidades = ingresos * 0.50;
-  const metaGustos      = ingresos * 0.30;
-  const metaAhorro50    = ingresos * 0.20;
+  // Ahorro real = ingreso disponible - necesidades - gustos
+  const totalAhorro = Math.max(0, ingresoDisponible - totalNecesidades - totalGustos);
+
+  // Calcular metas con base en ingreso disponible
+  const metaNecesidades = ingresoDisponible * 0.50;
+  const metaGustos      = ingresoDisponible * 0.30;
+  const metaAhorro50    = ingresoDisponible * 0.20;
 
   function buildFila(label, meta, actual, esAhorro = false) {
     const pct = Math.min(100, Math.round(actual / meta * 100));
