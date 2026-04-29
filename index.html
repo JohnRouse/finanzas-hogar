@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <base href="/finanzas-hogar/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Hogar Finanzas</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -939,10 +940,10 @@
   window.db = db;
 
   if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('firebase-messaging-sw.js')
+  navigator.serviceWorker.register('./firebase-messaging-sw.js')
     .then(reg => console.log('SW registrado'))
     .catch(err => console.error('Error SW:', err));
-  }
+}
   // Login anónimo
   auth.signInAnonymously()
     .then(() => {

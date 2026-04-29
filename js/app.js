@@ -41,6 +41,9 @@ Object.defineProperty(window, 'hogarId', {
 /* ── ESTADO GLOBAL ── */
 let mesActual = DB.getMesActual();
 
+// Al principio de app.js, debajo de "use strict" o al inicio
+const BASE_URL = new URL(document.baseURI).pathname; // ej: "/finanzas-hogar/"
+
 /* ══════════════════════
    INICIO
 ══════════════════════ */
@@ -53,15 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
   revisarIdentidad();
   
   if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('firebase-messaging-sw.js')
-    .then((registration) => {
-      console.log('✅ Firebase Messaging SW registrado correctamente');
-      // Opcional: forzar actualización
-      registration.update();
-    })
-    .catch((err) => {
-      console.error('❌ Error registrando Firebase Messaging SW:', err);
-    });
+    navigator.serviceWorker.register('./firebase-messaging-sw.js')
+      .then((registration) => {
+        console.log('✅ Firebase Messaging SW registrado correctamente');
+        registration.update();
+      })
+      .catch((err) => {
+        console.error('❌ Error registrando Firebase Messaging SW:', err);
+      });
   }
 });
 
@@ -2610,7 +2612,7 @@ function mostrarToast(mensaje) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
+    navigator.serviceWorker.register('./sw.js')
       .then(reg => console.log('✅ Service Worker registrado'))
       .catch(err => console.error('❌ Error al registrar SW', err));
   });
