@@ -2452,6 +2452,9 @@ if (legendLine) legendLine.style.display = 'flex';
   const gastosDeudas = (gastos || []).filter(esPagoDeuda);
   const totalDeudas = gastosDeudas.reduce((s, g) => s + (g.monto || 0), 0);
 
+  console.log('Gastos de deuda:', gastosDeudas.map(g => g.desc));
+  console.log('Total deudas:', totalDeudas);
+  
   // Ingreso disponible después de pagar deudas
   const ingresoDisponible = Math.max(0, ingresos - totalDeudas);
 
