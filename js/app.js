@@ -164,6 +164,7 @@ const token = await messaging.getToken({
     if (token && hogarId) {
       const miTipo = localStorage.getItem('miUsuarioTipo') || 'yo';
       // 3. Guardar token en Firestore bajo el hogar, con el tipo de usuario
+      console.log('Intentando guardar token:', token, 'usuario:', miTipo);
       await db.collection("hogares").doc(hogarId).collection("tokens").doc(token).set({
         token: token,
         usuario: miTipo,  // 'yo' o 'pareja'
@@ -173,8 +174,8 @@ const token = await messaging.getToken({
     } else {
       console.warn('No se pudo obtener el token FCM.');
     }
-  } catch (e) {
-    console.error('Error al registrar token FCM:', e);
+  } catch (error) {
+  console.error('❌ Error al guardar token:', error);
   }
 }
 
