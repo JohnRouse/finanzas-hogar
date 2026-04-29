@@ -395,6 +395,11 @@ button, .tab, .avatar, .kpi {
 
 /* ── MOBILE (touch devices / pantallas pequeñas) ── */
 @media (max-width: 600px) {
+
+  .modal-sheet {
+    overscroll-behavior: auto;
+  }
+  
   .expense-item-inner {
     padding: 12px 14px;   /* simétrico, sin hueco para la X */
     gap: 10px;

@@ -151,9 +151,15 @@ async function registrarTokenFCM() {
 
     const messaging = firebase.messaging();
     // 2. Obtener token ACTUAL
-    const token = await messaging.getToken({
-      vapidKey: 'BJ2hOCo0ghqObiVlmWBrGd0QXux17QV8bzk6KxjT-1MwOhmPJHXCD3ArCbR_NeaSj2aFPr_jcQI7iyBdD_O_hl8'
-    });
+    const registration = await navigator.serviceWorker.getRegistration();
+if (!registration) {
+  console.warn('No se encontró registro previo del SW');
+  return;
+}
+const token = await messaging.getToken({
+  vapidKey: 'BJ2hOCo0ghqObiVlmWBrGd0QXux17QV8bzk6KxjT-1MwOhmPJHXCD3ArCbR_NeaSj2aFPr_jcQI7iyBdD_O_hl8',
+  serviceWorkerRegistration: registration
+});
 
     if (token && hogarId) {
       const miTipo = localStorage.getItem('miUsuarioTipo') || 'yo';
@@ -1437,7 +1443,6 @@ function openModal(id) {
     // Bloqueamos el scroll del body
     document.body.classList.add('modal-open');
     // Prevenimos que el overlay permita scroll al fondo
-    modal.addEventListener('touchmove', preventBackgroundScroll, { passive: false });
   }
 }
 
@@ -1445,7 +1450,6 @@ function closeModal(id) {
   const modal = document.getElementById(id);
   if (modal) {
     modal.classList.remove('open');
-    modal.removeEventListener('touchmove', preventBackgroundScroll);
   }
 
   const fab = document.getElementById('fab-global');
