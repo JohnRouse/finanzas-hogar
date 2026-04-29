@@ -1489,8 +1489,6 @@ let toastTimeout = null;
 
 function showToast(message, type = 'success') {
   let toast = document.getElementById('toast');
-  
-  // Si no encuentra el toast, intentar de nuevo después de un pequeño delay
   if (!toast) {
     console.warn("Toast no encontrado, reintentando...");
     setTimeout(() => showToast(message, type), 100);
@@ -1498,18 +1496,25 @@ function showToast(message, type = 'success') {
   }
 
   const toastMessage = document.getElementById('toast-message');
+  if (!toastMessage) return;
 
   if (toastTimeout) clearTimeout(toastTimeout);
 
+  // Limpiar clases anteriores
   toast.className = 'toast';
-  if (type === 'success') {
-    toast.classList.add('success');
-  }
+  if (type === 'success') toast.classList.add('success');
+  if (type === 'info') toast.classList.add('info');
+  if (type === 'warning') toast.classList.add('warning');
 
-  toastMessage.textContent = message;
+  // Contenido con icono
+  const icono = type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+  toastMessage.innerHTML = `<span class="toast-icon">${icono}</span> ${message}`;
 
-  toast.style.display = 'flex';
-  toast.classList.add('show');
+  // Mostrar con animación
+  toast.style.display = 'block';
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
 
   toastTimeout = setTimeout(() => {
     toast.classList.remove('show');
@@ -1518,7 +1523,7 @@ function showToast(message, type = 'success') {
         toast.style.display = 'none';
       }
     }, 400);
-  }, 2500);
+  }, 4000);
 }
 
 function hideToast() {
