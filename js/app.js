@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
   revisarIdentidad();
   
   if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+  navigator.serviceWorker.register('firebase-messaging-sw.js')
     .then((registration) => {
       console.log('✅ Firebase Messaging SW registrado correctamente');
       // Opcional: forzar actualización
@@ -2610,7 +2610,7 @@ function mostrarToast(mensaje) {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('sw.js')
       .then(reg => console.log('✅ Service Worker registrado'))
       .catch(err => console.error('❌ Error al registrar SW', err));
   });
