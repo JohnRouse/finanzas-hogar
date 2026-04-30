@@ -75,6 +75,7 @@ hogar-finanzas-ch/
 ```bash
 git clone https://github.com/johnrouse/hogar-finanzas-ch.git
 cd hogar-finanzas-ch
+```
 
 ### 2. Configurar Firebase
 1. Crea un proyecto en [Firebase Console](https://console.firebase.google.com)
@@ -90,6 +91,7 @@ const firebaseConfig = {
   messagingSenderId: "XXXXXXXXXXXX",
   appId: "TU_APP_ID"
 };
+```
 
 ### 3. Configurar Mindee (opcional)
 - Regístrate en [Mindee](https://www.mindee.com/)
