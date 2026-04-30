@@ -67,6 +67,7 @@ hogar-finanzas-ch/
 ├── manifest.json       # Configuración PWA
 ├── sw.js               # Service Worker (offline)
 └── README.md
+```
 
 ## 🚀 Instalación y configuración
 
