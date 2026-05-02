@@ -2415,11 +2415,15 @@ async function renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, pago
     const GUSTOS_CATS = ['Entret.', 'Otros'];
 
     let totalNecesidades = 0, totalGustos = 0;
-    (gastos || []).forEach(function(g) {
-      const monto = g.monto || 0;
-      if (NECESIDADES_CATS.indexOf(g.cat) >= 0)  totalNecesidades += monto;
-      else if (GUSTOS_CATS.indexOf(g.cat) >= 0)   totalGustos += monto;
-    });
+(gastos || []).forEach(function(g) {
+  // Excluir pagos de deuda (no son consumo)
+  const desc = (g.desc || '').toLowerCase();
+  if (desc.includes('pago tarjeta') || desc.includes('préstamo')) return;
+  
+  const monto = g.monto || 0;
+  if (NECESIDADES_CATS.indexOf(g.cat) >= 0)  totalNecesidades += monto;
+  else if (GUSTOS_CATS.indexOf(g.cat) >= 0)   totalGustos += monto;
+});
     const totalAhorro = Math.max(0, ingresos - totalNecesidades - totalGustos);
 
     const metaNecesidades = ingresos * 0.50;
