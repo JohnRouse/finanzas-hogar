@@ -575,15 +575,14 @@ async function renderTodo() {
   const gastoTotal = Array.isArray(gastos) ? gastos.reduce((a,g) => a + (g.monto||0), 0) : 0;
   const gastoEntret = Array.isArray(gastos) ? gastos.filter(g => g.cat === 'Entret.').reduce((a,g) => a + (g.monto||0), 0) : 0;
   
-  // Calcular pago mensual real (mínimo de tarjetas + cuotas de préstamos)
-  const pagoMinTarjetas = tarjetas.reduce((sum, t) => {
-    const deuda = parseFloat(t.deuda) || 0;
-    const cuota = parseFloat(t.cuotaMin) || 0;
-    return sum + Math.min(deuda, cuota);
-  }, 0);
-  const pagoPrestamos = prestamos.reduce((sum, p) => sum + (parseFloat(p.cuota) || 0), 0);
-  const pagoDeudasMes = pagoMinTarjetas + pagoPrestamos;
-  const ahorro = Math.max(0, ingresoTotal - gastoTotal - pagoDeudasMes);
+  // Solo descontar los pagos de deuda REALES de este mes
+const gastosDeudaMes = gastos
+  .filter(g => g.desc && (g.desc.toLowerCase().includes('pago tarjeta') || g.desc.toLowerCase().includes('pago préstamo')))
+  .reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
+
+// El ahorro real es ingreso - todos los gastos (incluyendo pagos de deuda ya registrados)
+const ahorro = Math.max(0, ingresoTotal - gastoTotal);
+
 
   // KPIs Principales
   setVal('kpi-ingresos', `S/ ${ingresoTotal.toLocaleString()}`);
