@@ -11,6 +11,7 @@ const CATS = {
   'Salud':        { icon:'💊', color:'#c94b7b' },
   'Hogar':        { icon:'🏠', color:'#c43030' },
   'Otros':        { icon:'📦', color:'#6b6a66' },
+  'Deudas':       { icon:'🏦', color:'#b06a10' },  // <-- nueva
 };
 
 const COLORES_METAS = [
@@ -1559,14 +1560,14 @@ async function registrarPagoTarjeta() {
   try {
     // 1. Registrar el pago como gasto
     await DB.addGasto({
-      desc: `Pago Tarjeta: ${tarjetaActualNombre} ${nota ? '- ' + nota : ''}`,
-      monto: monto,
-      quien: 'yo',
-      cat: 'Otros',
-      icono: '💳',
-      fecha: fecha,
-      creadoEn: new Date().toISOString(),
-    });
+  desc: `Pago Tarjeta: ${tarjetaActualNombre} ${nota ? '- ' + nota : ''}`,
+  monto: monto,
+  quien: 'yo',
+  cat: 'Deudas',   // antes 'Otros'
+  icono: '💳',
+  fecha: fecha,
+  creadoEn: new Date().toISOString(),
+});
 
     // 2. Reducir la deuda de la tarjeta
     const tarjetas = await DB.getTarjetas();
@@ -1701,14 +1702,14 @@ async function registrarPagoPrestamo() {
   try {
     // 1. Registrar el pago como gasto
     await DB.addGasto({
-      desc: `Pago Préstamo: ${prestamoActualNombre} ${nota ? '- ' + nota : ''}`,
-      monto: monto,
-      quien: 'yo',
-      cat: 'Otros',
-      icono: '🏦',
-      fecha: fecha,
-      creadoEn: new Date().toISOString(),
-    });
+  desc: `Pago Préstamo: ${prestamoActualNombre} ${nota ? '- ' + nota : ''}`,
+  monto: monto,
+  quien: 'yo',
+  cat: 'Deudas',   // antes 'Otros'
+  icono: '🏦',
+  fecha: fecha,
+  creadoEn: new Date().toISOString(),
+});
 
     // 2. Actualizar el préstamo
     const prestamos = await DB.getPrestamos();
@@ -2411,18 +2412,17 @@ async function renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, pago
       return;
     }
 
-    const NECESIDADES_CATS = ['Alimentación', 'Servicios', 'Transporte', 'Salud', 'Hogar'];
+    const NECESIDADES_CATS = ['Alimentación', 'Servicios', 'Transporte', 'Salud', 'Hogar', 'Deudas'];
     const GUSTOS_CATS = ['Entret.', 'Otros'];
 
     let totalNecesidades = 0, totalGustos = 0;
 (gastos || []).forEach(function(g) {
-  // Excluir pagos de deuda (no son consumo)
-  const desc = (g.desc || '').toLowerCase();
-  if (desc.includes('pago tarjeta') || desc.includes('préstamo')) return;
-  
   const monto = g.monto || 0;
-  if (NECESIDADES_CATS.indexOf(g.cat) >= 0)  totalNecesidades += monto;
-  else if (GUSTOS_CATS.indexOf(g.cat) >= 0)   totalGustos += monto;
+  if (NECESIDADES_CATS.indexOf(g.cat) >= 0) {
+    totalNecesidades += monto;
+  } else if (GUSTOS_CATS.indexOf(g.cat) >= 0) {
+    totalGustos += monto;
+  }
 });
     const totalAhorro = Math.max(0, ingresos - totalNecesidades - totalGustos);
 
