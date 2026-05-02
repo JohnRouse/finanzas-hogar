@@ -330,14 +330,6 @@ async getIngresosExtras(mes = null) {
   }
 },
 
-async addIngresoExtra(ingreso) {
-  if (!hogarId) return null;
-  try {
-    await db.collection("hogares").doc(hogarId).collection("ingresos").add(ingreso);
-  } catch (e) {
-    console.error("Error addIngresoExtra:", e);
-  }
-},
 
 // Obtener todos los ingresos (extras y arrastres) del mes
 async getIngresosMes(mes = null) {
