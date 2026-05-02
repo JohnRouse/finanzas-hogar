@@ -33,6 +33,7 @@ let chartHbar  = null;
 let chartDebt  = null;
 let gastosDelMesCache = []; // Guardará los gastos para el modal
 let configCache = {};       // Guardará los nombres (Tú/Pareja) para el modal
+let renderChartsAbort = false;  // para cancelar renders anteriores
 
 Object.defineProperty(window, 'hogarId', {
   get: () => window.DB ? window.DB.hogarId || null : null  // temporal (mejorar después)
@@ -2004,6 +2005,13 @@ function expandirGastos(gastos) {
    ══════════════════════════════════════════ */
 
 async function renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, pagoDeudasMes) {
+  // Cancelar cualquier render anterior que aún esté corriendo
+  renderChartsAbort = true;
+  // Nuevo token para esta ejecución
+  const token = Symbol();
+  renderChartsAbort = false;
+  const currentToken = token;
+
   gastos = expandirGastos(gastos || []);
 
   const textColor     = getComputedColor('--text');
@@ -2068,7 +2076,6 @@ async function renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, pago
         return gastos.filter(x => x.medio === 'tarjeta').reduce((s, x) => s + (parseFloat(x.monto)||0), 0);
       }
       if (g.cats.includes('_ahorro_')) {
-        // El ahorro real es el ingreso total del mes menos todos los gastos
         return Math.max(0, ingresoTotal - gastos.reduce((s, x) => s + (parseFloat(x.monto)||0), 0));
       }
       return gastos.filter(x => g.cats.includes(x.cat || 'Otros')).reduce((s, x) => s + (parseFloat(x.monto)||0), 0);
@@ -2301,21 +2308,24 @@ async function renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, pago
 
     const mesesNombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     const anyoActual = new Date().getFullYear();
-    const mesActualNum = new Date().getMonth(); // 0-indexado
+    const mesActualNum = new Date().getMonth();
 
-    // 1. Obtener ingresos de todo el año
-    const todosIngresos = await DB.getIngresosMes(null); // sin filtro de mes
+    // Obtener datos reales de todo el año
+    const todosIngresos = await DB.getIngresosMes(null);
+    if (renderChartsAbort || currentToken !== token) return; // cancelar si se inició otro render
+
     const ingresosPorMes = {};
     todosIngresos.forEach(ing => {
       if (!ing.fecha) return;
-      const mesStr = ing.fecha.substring(0, 7); // YYYY-MM
+      const mesStr = ing.fecha.substring(0, 7);
       if (mesStr.startsWith(anyoActual.toString())) {
         ingresosPorMes[mesStr] = (ingresosPorMes[mesStr] || 0) + (parseFloat(ing.monto) || 0);
       }
     });
 
-    // 2. Obtener gastos de todo el año (desde Firebase)
     const todosGastos = await DB.getGastos(null);
+    if (renderChartsAbort || currentToken !== token) return;
+
     const gastosPorMes = {};
     todosGastos.forEach(g => {
       if (!g.fecha) return;
@@ -2325,20 +2335,21 @@ async function renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, pago
       }
     });
 
-    // 3. Calcular ahorro para cada mes (hasta el actual)
     const dataAhorro = mesesNombres.map((_, i) => {
-      if (i > mesActualNum) return null; // meses futuros, no mostrar
+      if (i > mesActualNum) return null;
       const mesStr = `${anyoActual}-${String(i+1).padStart(2, '0')}`;
       const ing = ingresosPorMes[mesStr] || 0;
       const gas = gastosPorMes[mesStr] || 0;
       return Math.max(0, ing - gas);
     });
 
-    // Si no hay ningún dato, mostrar mensaje
     if (dataAhorro.every(v => v === null || v === 0)) {
       showEmptyState(canvas, '200px', '📈<br><br>Registra ingresos y gastos<br>para ver el progreso anual');
       return;
     }
+
+    // Destruir el gráfico existente justo antes de crear uno nuevo (seguro extra)
+    Chart.getChart(canvas)?.destroy();
 
     const barColors = dataAhorro.map(v => v === null ? 'transparent' : '#2d6a2d');
 
