@@ -539,11 +539,8 @@ async function procesarRecurrentes(mes) {
    RENDER PRINCIPAL (COMPLETO)
 ══════════════════════ */
 async function renderTodo() {
-
-  // A) Mostrar esqueletos inmediatamente
   mostrarSkeletons();
 
-  // 2. Opcional: Poner los KPIs en estado de carga (para que no se vean vacíos)
   const kpiIds = ['kpi-ingresos', 'kpi-gastos', 'kpi-entret', 'kpi-ahorro', 'kpi-deuda-total', 'kpi-pago-mensual', 'kpi-fondo'];
   kpiIds.forEach(id => {
     const el = document.getElementById(id);
@@ -560,25 +557,19 @@ async function renderTodo() {
     DB.getMetas()
   ]);
 
-  // Procesar recurrentes del mes actual
   await procesarRecurrentes(mesActual);
-  // Volver a obtener gastos (puede haber nuevos recurrentes)
   gastos = await DB.getGastos(mesActual);
   
-  // Generar arrastre de remanente del mes anterior si es necesario
   await DB.generarArrastreSiNecesario(mesActual);
 
-  // Obtener ingresos del mes (incluye el arrastre si se acaba de generar)
   const ingresosMes = await DB.getIngresosMes(mesActual);
   const ingresoTotal = ingresosMes.reduce((sum, ing) => sum + (parseFloat(ing.monto) || 0), 0);
 
   const gastoTotal = Array.isArray(gastos) ? gastos.reduce((a,g) => a + (g.monto||0), 0) : 0;
   const gastoEntret = Array.isArray(gastos) ? gastos.filter(g => g.cat === 'Entret.').reduce((a,g) => a + (g.monto||0), 0) : 0;
   
-  // El ahorro real es simplemente ingreso menos todos los gastos del mes (ya incluyen los pagos de deuda)
   const ahorro = Math.max(0, ingresoTotal - gastoTotal);
 
-  // KPIs Principales
   setVal('kpi-ingresos', `S/ ${ingresoTotal.toLocaleString()}`);
   const elSubIngreso = document.getElementById('kpi-ingresos')?.nextElementSibling;
   if (elSubIngreso && elSubIngreso.classList.contains('kpi-sub')) {
@@ -597,7 +588,6 @@ async function renderTodo() {
   setVal('kpi-ahorro2', `S/ ${ahorro.toLocaleString()}`);
   setVal('kpi-ahorro2-sub', `${Math.round(ahorro / (cfg.metaAhorro||200) * 100)}% de la meta`);
 
-  // Deuda Total y Pago Mensual (solo informativo)
   const deudaTotal = [...tarjetas, ...prestamos].reduce((a, d) => a + (parseFloat(d.deuda || d.saldo) || 0), 0);
   const pagoMensual = [
     ...tarjetas.map(t => parseFloat(t.cuotaMin) || 0),
@@ -608,11 +598,9 @@ async function renderTodo() {
   setVal('kpi-pago-mensual', `S/ ${pagoMensual.toLocaleString()}`);
   setVal('kpi-pago-sub', ingresoTotal > 0 ? `${Math.round(pagoMensual / ingresoTotal * 100)}% del ingreso` : '0%');
 
-  // Fondo Total
   const fondoTotal = metas.reduce((a, m) => a + (parseFloat(m.actual) || 0), 0);
   setVal('kpi-fondo', `S/ ${fondoTotal.toLocaleString()}`);
 
-  // Renderizar todas las secciones (sin pasar pagoDeudasMes para no distorsionar)
   renderGastos(gastos, cfg);
   renderTarjetas(tarjetas, cfg);
   renderPrestamos(prestamos, cfg);
@@ -1765,10 +1753,12 @@ function confirmarReset() {
 }
 
 console.log("✅ app.js cargado correctamente con Tarjetas, Préstamos y Metas");
+
+
 /* ══════════════════════════════════════════
    PRESUPUESTO DEL MES
    ══════════════════════════════════════════ */
-function renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorro, pagoDeudasMes) {
+function renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorro) {
   const el = document.getElementById('presupuesto-list');
   if (!el) return;
 
@@ -1830,7 +1820,7 @@ function renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorr
 /* ══════════════════════════════════════════
    DISTRIBUCIÓN DEL INGRESO
    ══════════════════════════════════════════ */
-function renderDistribucion(ingresos, gastoTotal, gastoEntret, ahorro, deudaTotal, pagoDeudasMes) {
+function renderDistribucion(ingresos, gastoTotal, gastoEntret, ahorro) {
   const el = document.getElementById('distribucion-content');
   if (!el) return;
 
@@ -1839,12 +1829,10 @@ function renderDistribucion(ingresos, gastoTotal, gastoEntret, ahorro, deudaTota
     return;
   }
 
-  const otrosGastos = gastoTotal - gastoEntret; // todos los gastos no entretenimiento
-  const gastosFijos = deudaTotal > 0 
-    ? Math.min(pagoDeudasMes + (gastoTotal - gastoEntret), ingresos) 
-    : gastoTotal - gastoEntret;
-  const extras       = gastoEntret;
-  const ahorroReal   = Math.max(0, ahorro);
+  // Gastos fijos = todos los gastos que no son entretenimiento
+  const gastosFijos = gastoTotal - gastoEntret;
+  const extras      = gastoEntret;
+  const ahorroReal  = Math.max(0, ahorro);
 
   function fila(label, monto, color) {
     const pct = ingresos > 0 ? Math.min(100, Math.round(monto / ingresos * 100)) : 0;
