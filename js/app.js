@@ -605,7 +605,7 @@ async function renderTodo() {
   renderTarjetas(tarjetas, cfg);
   renderPrestamos(prestamos, cfg);
   renderMetas(metas);
-  renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, 0);
+  await renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, 0);
   renderDistribucion(ingresoTotal, gastoTotal, gastoEntret, ahorro, deudaTotal, 0);
   renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorro, 0);
   renderAlertas(tarjetas, prestamos, gastoTotal, ingresoTotal);
@@ -2003,7 +2003,7 @@ function expandirGastos(gastos) {
    GRÁFICOS — Versión Ultra Robusta Corregida
    ══════════════════════════════════════════ */
 
-function renderCharts(gastos, cfg, tarjetas, prestamos) {
+async function renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, pagoDeudasMes) {
   gastos = expandirGastos(gastos || []);
 
   const textColor     = getComputedColor('--text');
@@ -2022,30 +2022,19 @@ function renderCharts(gastos, cfg, tarjetas, prestamos) {
     'Otros':        '#6b6a66'
   };
 
-  // Función ultra segura para resetear canvas usando la API nativa de Chart.js
   function resetAndGetCanvas(canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return null;
-
-    // 1. Destruir gráfico usando la API nativa de Chart.js
     const existingChart = Chart.getChart(canvas);
-    if (existingChart) {
-      existingChart.destroy();
-    }
-
-    // 2. Limpiar canvas context
+    if (existingChart) existingChart.destroy();
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 3. Restaurar visibilidad (por si venimos de un mes sin datos)
     canvas.style.display = 'block';
     const emptyMsg = canvas.parentElement.querySelector('.empty-chart-msg');
     if (emptyMsg) emptyMsg.style.display = 'none';
-
     return canvas;
   }
 
-  // Función helper para mostrar "Sin datos" sin destruir el canvas en el DOM
   function showEmptyState(canvas, height, text) {
     canvas.style.display = 'none';
     let msg = canvas.parentElement.querySelector('.empty-chart-msg');
@@ -2065,8 +2054,7 @@ function renderCharts(gastos, cfg, tarjetas, prestamos) {
   (function() {
     const canvas = resetAndGetCanvas('donutChart');
     if (!canvas) return;
- 
-    // Definir los 5 grupos con sus categorías y colores fijos
+
     const GRUPOS = [
       { label: 'Vivienda',  cats: ['Hogar', 'Servicios'],            color: '#2a7de1' },
       { label: 'Tarjetas',  cats: ['_tarjeta_'],                     color: '#c94b7b' },
@@ -2074,35 +2062,26 @@ function renderCharts(gastos, cfg, tarjetas, prestamos) {
       { label: 'Entret.',   cats: ['Entret.'],                       color: '#b06a10' },
       { label: 'Otros',     cats: ['Alimentación','Transporte','Salud','Otros'], color: '#888780' },
     ];
- 
-    // Calcular totales por grupo
+
     const totalesPorGrupo = GRUPOS.map(g => {
       if (g.cats.includes('_tarjeta_')) {
-        // Gastos hechos con tarjeta
         return gastos.filter(x => x.medio === 'tarjeta').reduce((s, x) => s + (parseFloat(x.monto)||0), 0);
       }
       if (g.cats.includes('_ahorro_')) {
-        // Ahorro = ingresos - gastos totales (si positivo)
-        const ingresoTotal = (parseFloat(cfg.ingresoYo)||0) + (parseFloat(cfg.ingresoElla)||0);
-        const gastoTotal   = gastos.reduce((s, x) => s + (parseFloat(x.monto)||0), 0);
-        return Math.max(0, ingresoTotal - gastoTotal);
+        // El ahorro real es el ingreso total del mes menos todos los gastos
+        return Math.max(0, ingresoTotal - gastos.reduce((s, x) => s + (parseFloat(x.monto)||0), 0));
       }
-      return gastos
-        .filter(x => g.cats.includes(x.cat || 'Otros'))
-        .reduce((s, x) => s + (parseFloat(x.monto)||0), 0);
+      return gastos.filter(x => g.cats.includes(x.cat || 'Otros')).reduce((s, x) => s + (parseFloat(x.monto)||0), 0);
     });
- 
+
     const total = totalesPorGrupo.reduce((a, b) => a + b, 0);
     if (total === 0) {
       showEmptyState(canvas, '230px', 'Sin gastos este mes');
       return;
     }
- 
-    // Filtrar grupos vacíos para que no hagan ruido visual
-    const gruposFiltrados = GRUPOS.map((g, i) => ({ ...g, valor: totalesPorGrupo[i] }))
-                                  .filter(g => g.valor > 0);
- 
-    // Poblar leyenda externa con los 5 grupos fijos
+
+    const gruposFiltrados = GRUPOS.map((g, i) => ({ ...g, valor: totalesPorGrupo[i] })).filter(g => g.valor > 0);
+
     const legendEl = document.getElementById('legend-donut');
     if (legendEl) {
       legendEl.innerHTML = GRUPOS.map(g =>
@@ -2112,7 +2091,7 @@ function renderCharts(gastos, cfg, tarjetas, prestamos) {
         '</div>'
       ).join('');
     }
- 
+
     new Chart(canvas, {
       type: 'doughnut',
       data: {
@@ -2130,7 +2109,7 @@ function renderCharts(gastos, cfg, tarjetas, prestamos) {
         maintainAspectRatio: false,
         cutout: '65%',
         plugins: {
-          legend: { display: false }, // leyenda manejada externamente
+          legend: { display: false },
           tooltip: {
             backgroundColor: surfaceColor,
             titleColor: textColor,
@@ -2151,23 +2130,19 @@ function renderCharts(gastos, cfg, tarjetas, prestamos) {
     });
   })();
 
-  /* 2. BAR — Tú vs Pareja */
+  /* 2. BAR — Tú vs Pareja (sin cambios) */
   (function() {
     const canvas = resetAndGetCanvas('barChart');
     if (!canvas) return;
-
     const yo = cfg.nombreYo || 'Christian';
     const ella = cfg.nombreElla || 'Sydney';
     const cats = Object.keys(CATS);
-
     const dataYo = cats.map(c => gastos.filter(g => g.cat === c && g.quien === 'yo').reduce((a,g) => a + (parseFloat(g.monto)||0), 0));
     const dataElla = cats.map(c => gastos.filter(g => g.cat === c && g.quien === 'pareja').reduce((a,g) => a + (parseFloat(g.monto)||0), 0));
-
     if (dataYo.every(v => v === 0) && dataElla.every(v => v === 0)) {
       showEmptyState(canvas, '210px', 'Sin datos este mes');
       return;
     }
-
     new Chart(canvas, {
       type: 'bar',
       data: {
@@ -2189,15 +2164,13 @@ function renderCharts(gastos, cfg, tarjetas, prestamos) {
     });
   })();
 
-  /* 3. LINE — Evolución Semanal */
+  /* 3. LINE — Evolución Semanal (sin cambios) */
   (function() {
     const canvas = resetAndGetCanvas('lineChart');
     if (!canvas) return;
-
     const semanas = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'];
     const dataYo = [0,0,0,0];
     const dataElla = [0,0,0,0];
-
     gastos.forEach(g => {
       if (!g.fecha) return;
       const d = new Date(g.fecha + 'T12:00:00');
@@ -2206,17 +2179,14 @@ function renderCharts(gastos, cfg, tarjetas, prestamos) {
       if (g.quien === 'yo') dataYo[week] += monto;
       else if (g.quien === 'pareja') dataElla[week] += monto;
     });
-
     if (dataYo.every(v=>v===0) && dataElla.every(v=>v===0)) {
-  showEmptyState(canvas, '200px', '📊<br><br>Registra tus gastos semanales<br>para ver la evolución aquí');
-  const legendLine = document.getElementById('legend-line');
-  if (legendLine) legendLine.style.display = 'none';
-  return;
-}
-// Si hay datos, asegurarse de mostrar la leyenda
-const legendLine = document.getElementById('legend-line');
-if (legendLine) legendLine.style.display = 'flex';
-
+      showEmptyState(canvas, '200px', '📊<br><br>Registra tus gastos semanales<br>para ver la evolución aquí');
+      const legendLine = document.getElementById('legend-line');
+      if (legendLine) legendLine.style.display = 'none';
+      return;
+    }
+    const legendLine = document.getElementById('legend-line');
+    if (legendLine) legendLine.style.display = 'flex';
     new Chart(canvas, {
       type: 'line',
       data: {
@@ -2238,23 +2208,20 @@ if (legendLine) legendLine.style.display = 'flex';
     });
   })();
 
-  /* 4. HBAR — Total por Categoría */
+  /* 4. HBAR — Total por Categoría (sin cambios) */
   (function() {
     const canvas = resetAndGetCanvas('hbarChart');
     if (!canvas) return;
-
     const totales = {};
     gastos.forEach(g => {
       const cat = g.cat || 'Otros';
       totales[cat] = (totales[cat] || 0) + (parseFloat(g.monto) || 0);
     });
-
     const sorted = Object.entries(totales).sort((a,b) => b[1] - a[1]);
     if (sorted.length === 0) {
-  showEmptyState(canvas, '260px', '📋<br><br>Tus gastos organizados<br>por categoría aparecerán aquí');
-  return;
-}
-
+      showEmptyState(canvas, '260px', '📋<br><br>Tus gastos organizados<br>por categoría aparecerán aquí');
+      return;
+    }
     new Chart(canvas, {
       type: 'bar',
       data: {
@@ -2278,36 +2245,30 @@ if (legendLine) legendLine.style.display = 'flex';
     });
   })();
 
-  /* 5. Proyección de Deuda */
+  /* 5. Proyección de Deuda (sin cambios) */
   (function() {
     const canvas = resetAndGetCanvas('debtChart');
     if (!canvas) return;
-
     const ingresoTotal = (parseFloat(cfg.ingresoYo)||0) + (parseFloat(cfg.ingresoElla)||0);
     const pagoMensual = [...(tarjetas||[]).map(t => parseFloat(t.cuotaMin)||0),
                          ...(prestamos||[]).map(p => parseFloat(p.cuota)||0)]
                         .reduce((a,b) => a + b, 0);
-
     const deudaInicial = [...(tarjetas||[]).map(t => parseFloat(t.deuda)||0),
                           ...(prestamos||[]).map(p => parseFloat(p.saldo)||0)]
                          .reduce((a,b) => a + b, 0);
-
     if (deudaInicial === 0) {
       showEmptyState(canvas, '190px', '¡Sin deudas este mes! 🎉');
       return;
     }
-
     const labels = ['Actual'];
     const dataDeuda = [deudaInicial];
     let saldo = deudaInicial;
     const reduccion = pagoMensual > 0 ? pagoMensual : Math.max(100, ingresoTotal * 0.15);
-
     for (let i = 1; i <= 24 && saldo > 0; i++) {
       saldo = Math.max(0, saldo - reduccion);
       labels.push(`Mes ${i}`);
       dataDeuda.push(Math.round(saldo));
     }
-
     new Chart(canvas, {
       type: 'line',
       data: {
@@ -2334,36 +2295,57 @@ if (legendLine) legendLine.style.display = 'flex';
   })();
 
   /* ── PROGRESO ANUAL (savingChart) ── */
-  (function() {
+  (async function() {
     const canvas = resetAndGetCanvas('savingChart');
     if (!canvas) return;
 
-    const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const mesesNombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     const anyoActual = new Date().getFullYear();
-    const mesActualNum = new Date().getMonth();
-    const ingresoMensual = (parseFloat(cfg.ingresoYo)||0) + (parseFloat(cfg.ingresoElla)||0);
-    const metaAhorro = parseFloat(cfg.metaAhorro) || (ingresoMensual * 0.2);
+    const mesActualNum = new Date().getMonth(); // 0-indexado
 
+    // 1. Obtener ingresos de todo el año
+    const todosIngresos = await DB.getIngresosMes(null); // sin filtro de mes
+    const ingresosPorMes = {};
+    todosIngresos.forEach(ing => {
+      if (!ing.fecha) return;
+      const mesStr = ing.fecha.substring(0, 7); // YYYY-MM
+      if (mesStr.startsWith(anyoActual.toString())) {
+        ingresosPorMes[mesStr] = (ingresosPorMes[mesStr] || 0) + (parseFloat(ing.monto) || 0);
+      }
+    });
+
+    // 2. Obtener gastos de todo el año (desde Firebase)
+    const todosGastos = await DB.getGastos(null);
     const gastosPorMes = {};
-    (gastos || []).forEach(function(g) {
-      if (!g.mes || g.mes.indexOf(String(anyoActual)) !== 0) return;
-      gastosPorMes[g.mes] = (gastosPorMes[g.mes] || 0) + (g.monto || 0);
+    todosGastos.forEach(g => {
+      if (!g.fecha) return;
+      const mesStr = g.fecha.substring(0, 7);
+      if (mesStr.startsWith(anyoActual.toString())) {
+        gastosPorMes[mesStr] = (gastosPorMes[mesStr] || 0) + (parseFloat(g.monto) || 0);
+      }
     });
 
-    const dataAhorro = meses.map(function(_, i) {
-      if (i > mesActualNum) return null;
-      var mesStr = anyoActual + '-' + String(i+1).padStart(2,'0');
-      return Math.max(0, ingresoMensual - (gastosPorMes[mesStr] || 0));
+    // 3. Calcular ahorro para cada mes (hasta el actual)
+    const dataAhorro = mesesNombres.map((_, i) => {
+      if (i > mesActualNum) return null; // meses futuros, no mostrar
+      const mesStr = `${anyoActual}-${String(i+1).padStart(2, '0')}`;
+      const ing = ingresosPorMes[mesStr] || 0;
+      const gas = gastosPorMes[mesStr] || 0;
+      return Math.max(0, ing - gas);
     });
 
-    const barColors = dataAhorro.map(function(v) {
-      return v === null ? 'transparent' : v >= metaAhorro ? '#2d6a2d' : '#4a9a4a';
-    });
+    // Si no hay ningún dato, mostrar mensaje
+    if (dataAhorro.every(v => v === null || v === 0)) {
+      showEmptyState(canvas, '200px', '📈<br><br>Registra ingresos y gastos<br>para ver el progreso anual');
+      return;
+    }
+
+    const barColors = dataAhorro.map(v => v === null ? 'transparent' : '#2d6a2d');
 
     new Chart(canvas, {
       type: 'bar',
       data: {
-        labels: meses,
+        labels: mesesNombres,
         datasets: [{
           data: dataAhorro,
           backgroundColor: barColors,
@@ -2387,16 +2369,15 @@ if (legendLine) legendLine.style.display = 'flex';
         },
         scales: {
           x: {
-    grid: { display: false },
-    ticks: {
-      color: text3Color,
-      font: { family: 'DM Sans', size: 11 },
-      maxRotation: 0,         // ← horizontal siempre
-      autoSkip: false,        // ← mostrar todos los meses
-      padding: 8
-    },
-    border: { display: false }
-  },
+            grid: { display: false },
+            ticks: { 
+              color: text3Color, 
+              font: { family: 'DM Sans', size: 11 },
+              maxRotation: 0,
+              autoSkip: false
+            },
+            border: { display: false },
+          },
           y: {
             grid: { color: borderColor, drawTicks: false },
             ticks: { color: text3Color, font: { family: 'DM Sans', size: 11 }, callback: function(v) { return 'S/'+v; } },
@@ -2409,92 +2390,69 @@ if (legendLine) legendLine.style.display = 'flex';
   })();
 
   /* ── REGLA 50/30/20 ── */
-(function() {
-  const el = document.getElementById('regla-502030');
-  if (!el) return;
+  (function() {
+    const el = document.getElementById('regla-502030');
+    if (!el) return;
 
-  const ingresos = (parseFloat(cfg.ingresoYo)||0) + (parseFloat(cfg.ingresoElla)||0);
-  if (ingresos === 0) {
-    el.innerHTML = '<div class="empty-state">Configura tus ingresos para ver el análisis.</div>';
-    return;
-  }
-
-  // 1. Identificar gastos que son pagos de deudas (tarjetas, préstamos, AFP, adelantos)
-  const esPagoDeuda = (g) => {
-    const desc = g.desc || '';
-    return desc.startsWith('Pago Tarjeta') || desc.startsWith('Pago Préstamo') || desc.startsWith('Préstamo') || desc === 'Aporte AFP' || desc === 'Adelanto Sueldo BCP';
-    // Puedes ajustar las palabras clave según tus necesidades
-  };
-
-  const gastosDeudas = (gastos || []).filter(esPagoDeuda);
-  const totalDeudas = gastosDeudas.reduce((s, g) => s + (g.monto || 0), 0);
-
-  console.log('Gastos de deuda:', gastosDeudas.map(g => g.desc));
-  console.log('Total deudas:', totalDeudas);
-  
-  // Ingreso disponible después de pagar deudas
-  const ingresoDisponible = Math.max(0, ingresos - totalDeudas);
-
-  // Categorías de necesidades y gustos (sin incluir los pagos de deudas)
-  const NECESIDADES_CATS = ['Alimentación', 'Servicios', 'Transporte', 'Salud', 'Hogar'];
-  const GUSTOS_CATS = ['Entret.'];   // Solo entretenimiento por ahora
-
-  let totalNecesidades = 0, totalGustos = 0;
-  (gastos || []).forEach(function(g) {
-    if (esPagoDeuda(g)) return; // ignorar pagos de deudas
-    const monto = g.monto || 0;
-    if (NECESIDADES_CATS.indexOf(g.cat) >= 0)  totalNecesidades += monto;
-    else if (GUSTOS_CATS.indexOf(g.cat) >= 0)   totalGustos += monto;
-  });
-
-  // Ahorro real = ingreso disponible - necesidades - gustos
-  const totalAhorro = Math.max(0, ingresoDisponible - totalNecesidades - totalGustos);
-
-  // Calcular metas con base en ingreso disponible
-  const metaNecesidades = ingresoDisponible * 0.50;
-  const metaGustos      = ingresoDisponible * 0.30;
-  const metaAhorro50    = ingresoDisponible * 0.20;
-
-  function buildFila(label, meta, actual, esAhorro = false) {
-    const pct = Math.min(100, Math.round(actual / meta * 100));
-    let barColor, statusIcon, statusTxt, statusColor;
-    if (esAhorro) {
-      if (actual >= meta) {
-        barColor = '#2d6a2d'; statusIcon = '✅'; statusTxt = 'Meta de ahorro cumplida'; statusColor = '#2d6a2d';
-      } else {
-        barColor = '#2a7de1'; statusIcon = '☑️'; statusTxt = `En camino, faltan S/ ${Math.round(meta - actual).toLocaleString()} para la meta ideal`; statusColor = '#2a7de1';
-      }
-    } else {
-      if (actual > meta) {
-        barColor = '#c43030'; statusIcon = '⚠️'; statusTxt = `Excedido en S/ ${Math.round(actual - meta).toLocaleString()}`; statusColor = '#c43030';
-      } else if (actual >= meta * 0.8) {
-        barColor = '#e8850a'; statusIcon = '⚠️'; statusTxt = 'Acercándose al límite'; statusColor = '#e8850a';
-      } else {
-        barColor = '#2a7de1'; statusIcon = '✅'; statusTxt = `Quedan S/ ${Math.round(meta - actual).toLocaleString()} del presupuesto`; statusColor = '#2d6a2d';
-      }
+    const ingresos = ingresoTotal;
+    if (ingresos === 0) {
+      el.innerHTML = '<div class="empty-state">Configura tus ingresos para ver el análisis.</div>';
+      return;
     }
 
-    return `
-      <div class="regla-fila">
-        <div class="regla-header">
-          <span class="regla-label">${label}</span>
-          <span class="regla-montos">S/ ${Math.round(meta).toLocaleString()} · Actual: S/ ${Math.round(actual).toLocaleString()}</span>
-        </div>
-        <div class="regla-bar-bg">
-          <div class="regla-bar-fill" style="width:${pct}%; background:${barColor}; transition: width 0.5s ease;"></div>
-        </div>
-        <div class="regla-status" style="color:${statusColor}; margin-top:6px;">
-          ${statusIcon} <span>${statusTxt}</span>
-        </div>
-      </div>`;
-  }
+    const NECESIDADES_CATS = ['Alimentación', 'Servicios', 'Transporte', 'Salud', 'Hogar'];
+    const GUSTOS_CATS = ['Entret.', 'Otros'];
 
-  el.innerHTML =
-    buildFila('Necesidades (50%)', metaNecesidades, totalNecesidades) +
-    buildFila('Gustos (30%)',      metaGustos,      totalGustos) +
-    buildFila('Ahorro (20%)',      metaAhorro50,    totalAhorro, true);
-})();
+    let totalNecesidades = 0, totalGustos = 0;
+    (gastos || []).forEach(function(g) {
+      const monto = g.monto || 0;
+      if (NECESIDADES_CATS.indexOf(g.cat) >= 0)  totalNecesidades += monto;
+      else if (GUSTOS_CATS.indexOf(g.cat) >= 0)   totalGustos += monto;
+    });
+    const totalAhorro = Math.max(0, ingresos - totalNecesidades - totalGustos);
 
+    const metaNecesidades = ingresos * 0.50;
+    const metaGustos      = ingresos * 0.30;
+    const metaAhorro50    = ingresos * 0.20;
+
+    function buildFila(label, meta, actual, esAhorro = false) {
+      const pct = Math.min(100, Math.round(actual / meta * 100));
+      let barColor, statusIcon, statusTxt, statusColor;
+      if (esAhorro) {
+        if (actual >= meta) {
+          barColor = '#2d6a2d'; statusIcon = '✅'; statusTxt = 'Meta de ahorro cumplida'; statusColor = '#2d6a2d';
+        } else {
+          barColor = '#2a7de1'; statusIcon = '☑️'; statusTxt = `En camino, faltan S/ ${Math.round(meta - actual).toLocaleString()} para la meta ideal`; statusColor = '#2a7de1';
+        }
+      } else {
+        if (actual > meta) {
+          barColor = '#c43030'; statusIcon = '⚠️'; statusTxt = `Excedido en S/ ${Math.round(actual - meta).toLocaleString()}`; statusColor = '#c43030';
+        } else if (actual >= meta * 0.8) {
+          barColor = '#e8850a'; statusIcon = '⚠️'; statusTxt = 'Acercándose al límite'; statusColor = '#e8850a';
+        } else {
+          barColor = '#2a7de1'; statusIcon = '✅'; statusTxt = `Quedan S/ ${Math.round(meta - actual).toLocaleString()} del presupuesto`; statusColor = '#2d6a2d';
+        }
+      }
+      return `
+        <div class="regla-fila">
+          <div class="regla-header">
+            <span class="regla-label">${label}</span>
+            <span class="regla-montos">S/ ${Math.round(meta).toLocaleString()} · Actual: S/ ${Math.round(actual).toLocaleString()}</span>
+          </div>
+          <div class="regla-bar-bg">
+            <div class="regla-bar-fill" style="width:${pct}%; background:${barColor}; transition: width 0.5s ease;"></div>
+          </div>
+          <div class="regla-status" style="color:${statusColor}; margin-top:6px;">
+            ${statusIcon} <span>${statusTxt}</span>
+          </div>
+        </div>`;
+    }
+
+    el.innerHTML =
+      buildFila('Necesidades (50%)', metaNecesidades, totalNecesidades) +
+      buildFila('Gustos (30%)',      metaGustos,      totalGustos) +
+      buildFila('Ahorro (20%)',      metaAhorro50,    totalAhorro, true);
+  })();
 }
 
 /* ====================== SELECTOR DE MES/AÑO ====================== */

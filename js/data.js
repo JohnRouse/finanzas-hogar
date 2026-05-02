@@ -71,24 +71,24 @@ const DB = {
 
   /* ── GASTOS ── */
   async getGastos(mes = null) {
-    if (!hogarId) return [];
-    try {
-      const snapshot = await db.collection("hogares").doc(hogarId).collection("gastos").get();
-      let gastos = [];
-      snapshot.forEach(function(doc) {
-        gastos.push({ id: doc.id, ...doc.data() });
-      });
-      if (mes) {
-        gastos = gastos.filter(function(g) { return g.mes === mes; });
-      }
-      return gastos.sort(function(a,b) {
-        return (b.fecha || '').localeCompare(a.fecha || '');
-      });
-    } catch (e) {
-      console.error("Error getGastos:", e);
-      return [];
+  if (!hogarId) return [];
+  try {
+    const snapshot = await db.collection("hogares").doc(hogarId).collection("gastos").get();
+    let gastos = [];
+    snapshot.forEach(function(doc) {
+      gastos.push({ id: doc.id, ...doc.data() });
+    });
+    if (mes) {
+      gastos = gastos.filter(function(g) { return g.mes === mes; });
     }
-  },
+    return gastos.sort(function(a,b) {
+      return (b.fecha || '').localeCompare(a.fecha || '');
+    });
+  } catch (e) {
+    console.error("Error getGastos:", e);
+    return [];
+  }
+},
 
   async addGasto(gasto) {
     if (!hogarId) return null;
