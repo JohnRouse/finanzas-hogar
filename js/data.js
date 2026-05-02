@@ -285,6 +285,19 @@ async deleteRecurrente(id) {
   }
 },
 
+async marcarRecurrentesProcesados(mes) {
+  if (!hogarId) return;
+  await db.collection("hogares").doc(hogarId).collection("data").doc("estado").set({
+    [`recurrentesProcesados_${mes}`]: true
+  }, { merge: true });
+},
+
+async yaProcesadosRecurrentes(mes) {
+  if (!hogarId) return false;
+  const doc = await db.collection("hogares").doc(hogarId).collection("data").doc("estado").get();
+  return doc.exists && doc.data()[`recurrentesProcesados_${mes}`] === true;
+},
+
 // Dentro del objeto DB en data.js
 async enviarNotificacion(mensaje) {
   if (!hogarId) return;
@@ -324,6 +337,82 @@ async addIngresoExtra(ingreso) {
   } catch (e) {
     console.error("Error addIngresoExtra:", e);
   }
+},
+
+// Obtener todos los ingresos (extras y arrastres) del mes
+async getIngresosMes(mes = null) {
+  if (!hogarId) return [];
+  try {
+    const snapshot = await db.collection("hogares").doc(hogarId).collection("ingresos").get();
+    let list = [];
+    snapshot.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+    if (mes) {
+      list = list.filter(i => i.fecha && i.fecha.startsWith(mes));
+    }
+    return list;
+  } catch (e) {
+    console.error("Error getIngresosMes:", e);
+    return [];
+  }
+},
+
+// Generar arrastre de remanente del mes anterior
+async generarArrastreSiNecesario(mesActual) {
+  if (!hogarId) return;
+  
+  // Verificar si ya existe un arrastre para este mes
+  const ingresosMes = await this.getIngresosMes(mesActual);
+  const yaTieneArrastre = ingresosMes.some(i => i.tipo === 'arrastre');
+  if (yaTieneArrastre) return; // ya lo generamos antes
+
+  // Obtener mes anterior
+  const [year, month] = mesActual.split('-').map(Number);
+  const mesAnteriorDate = new Date(year, month - 2, 1); // month es 1-indexed
+  const mesAnteriorStr = `${mesAnteriorDate.getFullYear()}-${String(mesAnteriorDate.getMonth() + 1).padStart(2, '0')}`;
+  
+  // Calcular ahorro del mes anterior
+  const ingresosAnteriores = await this.getIngresosMes(mesAnteriorStr);
+  const gastosAnteriores = await this.getGastos(mesAnteriorStr);
+  const tarjetas = await this.getTarjetas();
+  const prestamos = await this.getPrestamos();
+  const cfg = await this.getConfig();
+
+  const ingresoTotalAnterior = ingresosAnteriores.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
+  const gastoTotalAnterior = gastosAnteriores.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
+  
+  // Pago mensual de deudas del mes anterior (aproximado)
+  const pagoMinTarjetas = tarjetas.reduce((s, t) => s + Math.min(parseFloat(t.deuda) || 0, parseFloat(t.cuotaMin) || 0), 0);
+  const pagoPrestamos = prestamos.reduce((s, p) => s + (parseFloat(p.cuota) || 0), 0);
+  const pagoDeudasAnterior = pagoMinTarjetas + pagoPrestamos;
+
+  const ahorroAnterior = Math.max(0, ingresoTotalAnterior - gastoTotalAnterior - pagoDeudasAnterior);
+  
+  if (ahorroAnterior > 0) {
+    // Insertar ingreso tipo 'arrastre' en el mes actual
+    await this.addIngreso({
+      desc: `Remanente de ${this.formatMes(mesAnteriorStr)}`,
+      monto: ahorroAnterior,
+      quien: 'ambos',
+      fecha: `${mesActual}-01`,
+      tipo: 'arrastre',
+      creadoEn: new Date().toISOString()
+    });
+  }
+},
+
+// Modificar addIngresoExtra para que llame a addIngreso genérico
+async addIngreso(ingreso) {
+  if (!hogarId) return null;
+  try {
+    await db.collection("hogares").doc(hogarId).collection("ingresos").add(ingreso);
+    console.log("✅ Ingreso agregado");
+  } catch (e) {
+    console.error("Error addIngreso:", e);
+  }
+},
+
+async addIngresoExtra(ingreso) {
+  return this.addIngreso(ingreso);
 },
 
 async deleteIngresoExtra(id) {

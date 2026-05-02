@@ -486,6 +486,9 @@ function mostrarSkeletons() {
 }
 
 async function procesarRecurrentes(mes) {
+
+  if (await DB.yaProcesadosRecurrentes(mes)) return;
+
   const recurrentes = await DB.getRecurrentes();
   const gastosMes = await DB.getGastos(mes); // ya tenemos los gastos actuales
 
@@ -500,12 +503,7 @@ async function procesarRecurrentes(mes) {
     const fechaStr = fecha.toISOString().split('T')[0];
 
     // Verificar si ya existe un gasto con la misma descripción, categoría y monto en este mes
-    const duplicado = gastosMes.some(g => 
-      g.desc === rec.desc && 
-      g.cat === rec.cat && 
-      Math.abs(g.monto - rec.monto) < 0.01 &&
-      g.fecha?.startsWith(mes)
-    );
+    const duplicado = gastosMes.some(g => g.recurrenteId === rec.id);
 
     if (!duplicado) {
       const nuevoGasto = {
@@ -519,7 +517,7 @@ async function procesarRecurrentes(mes) {
         tarjetaNombre: rec.tarjetaNombre || null,
         fecha: fechaStr,
         creadoEn: new Date().toISOString(),
-        recurrenteId: rec.id // para referencia
+        recurrenteId: rec.id  // <-- CLAVE
       };
       await DB.addGasto(nuevoGasto);
 
@@ -534,6 +532,7 @@ async function procesarRecurrentes(mes) {
       console.log(`✅ Recurrente generado: ${rec.desc} para ${fechaStr}`);
     }
   }
+  await DB.marcarRecurrentesProcesados(mes);
 }
 
 /* ══════════════════════
@@ -541,7 +540,7 @@ async function procesarRecurrentes(mes) {
 ══════════════════════ */
 async function renderTodo() {
 
-   // A) Mostrar esqueletos inmediatamente
+  // A) Mostrar esqueletos inmediatamente
   mostrarSkeletons();
 
   // 2. Opcional: Poner los KPIs en estado de carga (para que no se vean vacíos)
@@ -561,47 +560,44 @@ async function renderTodo() {
     DB.getMetas()
   ]);
 
-  const ingresosExtras = await DB.getIngresosExtras(mesActual);
-  const totalExtras = ingresosExtras.reduce((sum, ie) => sum + (parseFloat(ie.monto)||0), 0);
-
-   // Generar gastos recurrentes si corresponde
+  // Procesar recurrentes del mes actual
   await procesarRecurrentes(mesActual);
+  // Volver a obtener gastos (puede haber nuevos recurrentes)
   gastos = await DB.getGastos(mesActual);
+  
+  // Generar arrastre de remanente del mes anterior si es necesario
+  await DB.generarArrastreSiNecesario(mesActual);
 
-  const ingresoTotal = (parseFloat(cfg.ingresoYo)||0) + (parseFloat(cfg.ingresoElla)||0) + totalExtras;
+  // Obtener ingresos del mes (incluye el arrastre si se acaba de generar)
+  const ingresosMes = await DB.getIngresosMes(mesActual);
+  const ingresoTotal = ingresosMes.reduce((sum, ing) => sum + (parseFloat(ing.monto) || 0), 0);
+
   const gastoTotal = Array.isArray(gastos) ? gastos.reduce((a,g) => a + (g.monto||0), 0) : 0;
-
   const gastoEntret = Array.isArray(gastos) ? gastos.filter(g => g.cat === 'Entret.').reduce((a,g) => a + (g.monto||0), 0) : 0;
+  
   // Calcular pago mensual real (mínimo de tarjetas + cuotas de préstamos)
   const pagoMinTarjetas = tarjetas.reduce((sum, t) => {
-  const deuda = parseFloat(t.deuda) || 0;
-  const cuota = parseFloat(t.cuotaMin) || 0;
-  return sum + Math.min(deuda, cuota);
+    const deuda = parseFloat(t.deuda) || 0;
+    const cuota = parseFloat(t.cuotaMin) || 0;
+    return sum + Math.min(deuda, cuota);
   }, 0);
   const pagoPrestamos = prestamos.reduce((sum, p) => sum + (parseFloat(p.cuota) || 0), 0);
   const pagoDeudasMes = pagoMinTarjetas + pagoPrestamos;
   const ahorro = Math.max(0, ingresoTotal - gastoTotal - pagoDeudasMes);
 
   // KPIs Principales
-  
-  const sueldos = (parseFloat(cfg.ingresoYo)||0) + (parseFloat(cfg.ingresoElla)||0);
   setVal('kpi-ingresos', `S/ ${ingresoTotal.toLocaleString()}`);
-  // Podemos usar el subtexto existente o cambiarlo
-  const subIngreso = document.getElementById('kpi-ingresos').nextElementSibling;
-  if (subIngreso && subIngreso.classList.contains('kpi-sub')) {
-  subIngreso.textContent = totalExtras > 0 
-    ? `Sueldos: S/ ${sueldos.toLocaleString()} + Extras: S/ ${totalExtras.toLocaleString()}`
-    : 'Ambos juntos';
+  const elSubIngreso = document.getElementById('kpi-ingresos')?.nextElementSibling;
+  if (elSubIngreso && elSubIngreso.classList.contains('kpi-sub')) {
+    elSubIngreso.textContent = 'Total ingresos del mes';
   }
-
+  
   setVal('kpi-gastos', `S/ ${gastoTotal.toLocaleString()}`);
   setVal('kpi-gastos-sub', ingresoTotal > 0 ? `${Math.round(gastoTotal / ingresoTotal * 100)}% del ingreso` : '0%');
   
-const presupEntret = parseFloat(cfg.presupEntret) || 300;
-const restanteEntret = Math.max(0, presupEntret - gastoEntret);
-setVal('kpi-entret', `S/ ${gastoEntret.toLocaleString()}`);
-setVal('kpi-entret-sub', `Presupuesto: S/ ${presupEntret.toLocaleString()} · Gastado: S/ ${gastoEntret.toLocaleString()}`);
-// Opcional: añade un indicador visual de si está bien (verde) o excedido (rojo) – lo dejamos para más adelante.
+  const presupEntret = parseFloat(cfg.presupEntret) || 300;
+  setVal('kpi-entret', `S/ ${gastoEntret.toLocaleString()}`);
+  setVal('kpi-entret-sub', `Presupuesto: S/ ${presupEntret.toLocaleString()} · Gastado: S/ ${gastoEntret.toLocaleString()}`);
 
   setVal('kpi-ahorro', `S/ ${ahorro.toLocaleString()}`);
   setVal('kpi-ahorro-sub', `${Math.round(ahorro / (cfg.metaAhorro||200) * 100)}% de meta`);
@@ -628,9 +624,9 @@ setVal('kpi-entret-sub', `Presupuesto: S/ ${presupEntret.toLocaleString()} · Ga
   renderTarjetas(tarjetas, cfg);
   renderPrestamos(prestamos, cfg);
   renderMetas(metas);
-  renderCharts(gastos, cfg, tarjetas, prestamos);
+  renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, pagoDeudasMes);
   renderDistribucion(ingresoTotal, gastoTotal, gastoEntret, ahorro, deudaTotal, pagoDeudasMes);
-  renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorro, pagoMensual);
+  renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorro, pagoDeudasMes);
   renderAlertas(tarjetas, prestamos, gastoTotal, ingresoTotal);
 
   ocultarSplash();
@@ -2766,15 +2762,14 @@ function initGesturesModal() {
 }
 
 function openIngresoExtraModal() {
-  // Limpiar campos
   document.getElementById('ie-desc').value = '';
   document.getElementById('ie-monto').value = '';
   document.getElementById('ie-fecha').value = new Date().toISOString().split('T')[0];
-  
-  // Colocar por defecto el usuario logueado
   const miTipo = localStorage.getItem('miUsuarioTipo') || 'yo';
-  document.getElementById('ie-quien').value = miTipo;
-  
+  const selectQuien = document.getElementById('ie-quien');
+  if (selectQuien) {
+    selectQuien.value = miTipo;
+  }
   openModal('ingresoExtraModal');
 }
 
@@ -2789,9 +2784,16 @@ async function agregarIngresoExtra() {
     return;
   }
 
-  await DB.addIngresoExtra({ desc, monto, quien, fecha, creadoEn: new Date().toISOString() });
+  await DB.addIngreso({
+    desc: desc || 'Ingreso',
+    monto,
+    quien,
+    fecha,
+    tipo: 'manual',
+    creadoEn: new Date().toISOString()
+  });
   closeModal('ingresoExtraModal');
-  showToast('Ingreso extra registrado ✓');
+  showToast('Ingreso registrado ✓');
   renderTodo();
 }
 
