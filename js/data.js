@@ -352,45 +352,46 @@ async getIngresosMes(mes = null) {
 async generarArrastreSiNecesario(mesActual) {
   if (!hogarId) return;
   
-  // Verificar si ya existe un arrastre para este mes
-  const ingresosMes = await this.getIngresosMes(mesActual);
-  const yaTieneArrastre = ingresosMes.some(i => i.tipo === 'arrastre');
-  if (yaTieneArrastre) return;
-
-  // Obtener mes anterior
   const [year, month] = mesActual.split('-').map(Number);
   const mesAnteriorDate = new Date(year, month - 2, 1);
   const mesAnteriorStr = `${mesAnteriorDate.getFullYear()}-${String(mesAnteriorDate.getMonth() + 1).padStart(2, '0')}`;
   
+  // ID fijo para evitar duplicados
+  const docId = `arrastre_${mesAnteriorStr}`;
+  const docRef = db.collection("hogares").doc(hogarId).collection("ingresos").doc(docId);
+  
+  // Verificar atómicamente si ya existe
+  const docSnap = await docRef.get();
+  if (docSnap.exists) {
+    console.log(`ℹ️ Arrastre de ${mesAnteriorStr} ya existe. No se genera duplicado.`);
+    return;
+  }
+  
   // Obtener datos reales del mes anterior
   const ingresosAnteriores = await this.getIngresosMes(mesAnteriorStr);
   const gastosAnteriores = await this.getGastos(mesAnteriorStr);
-  const tarjetas = await this.getTarjetas();
-  const prestamos = await this.getPrestamos();
   
   const ingresoTotalAnterior = ingresosAnteriores.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
   const gastoTotalAnterior = gastosAnteriores.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
   
-  // 🔥 Filtrar solo los pagos de deuda realizados en el mes anterior
-  const gastosDeudaAnterior = gastosAnteriores
-    .filter(g => g.desc && (g.desc.toLowerCase().includes('pago tarjeta') || g.desc.toLowerCase().includes('pago préstamo')))
-    .reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
-  
-  // También sumamos cuotas de préstamos que estén programadas (si las tienes como gasto recurrente)
-  // Pero si ya estás registrando los pagos manualmente, con la línea anterior basta.
-
   const ahorroAnterior = Math.max(0, ingresoTotalAnterior - gastoTotalAnterior);
   
   if (ahorroAnterior > 0) {
-    await this.addIngreso({
-      desc: `Remanente de ${this.formatMes(mesAnteriorStr)}`,
-      monto: ahorroAnterior,
-      quien: 'ambos',
-      fecha: `${mesActual}-01`,
-      tipo: 'arrastre',
-      creadoEn: new Date().toISOString()
-    });
-    console.log(`✅ Remanente generado: ${mesAnteriorStr} → ${ahorroAnterior}`);
+    try {
+      // Intentar crear con ID fijo (falla si ya existe)
+      await docRef.set({
+        desc: `Remanente de ${this.formatMes(mesAnteriorStr)}`,
+        monto: ahorroAnterior,
+        quien: 'ambos',
+        fecha: `${mesActual}-01`,
+        tipo: 'arrastre',
+        creadoEn: new Date().toISOString()
+      }, { merge: false }); // merge: false = fail if exists
+      console.log(`✅ Remanente generado: ${mesAnteriorStr} → ${ahorroAnterior}`);
+    } catch (e) {
+      // Si otro proceso ya lo creó, ignoramos silenciosamente
+      console.warn(`⚠️ El arrastre de ${mesAnteriorStr} ya fue creado por otro proceso.`);
+    }
   } else {
     console.log(`ℹ️ Sin remanente de ${mesAnteriorStr} para arrastrar.`);
   }
