@@ -575,14 +575,8 @@ async function renderTodo() {
   const gastoTotal = Array.isArray(gastos) ? gastos.reduce((a,g) => a + (g.monto||0), 0) : 0;
   const gastoEntret = Array.isArray(gastos) ? gastos.filter(g => g.cat === 'Entret.').reduce((a,g) => a + (g.monto||0), 0) : 0;
   
-  // Solo descontar los pagos de deuda REALES de este mes
-const gastosDeudaMes = gastos
-  .filter(g => g.desc && (g.desc.toLowerCase().includes('pago tarjeta') || g.desc.toLowerCase().includes('pago préstamo')))
-  .reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
-
-// El ahorro real es ingreso - todos los gastos (incluyendo pagos de deuda ya registrados)
-const ahorro = Math.max(0, ingresoTotal - gastoTotal);
-
+  // El ahorro real es simplemente ingreso menos todos los gastos del mes (ya incluyen los pagos de deuda)
+  const ahorro = Math.max(0, ingresoTotal - gastoTotal);
 
   // KPIs Principales
   setVal('kpi-ingresos', `S/ ${ingresoTotal.toLocaleString()}`);
@@ -603,7 +597,7 @@ const ahorro = Math.max(0, ingresoTotal - gastoTotal);
   setVal('kpi-ahorro2', `S/ ${ahorro.toLocaleString()}`);
   setVal('kpi-ahorro2-sub', `${Math.round(ahorro / (cfg.metaAhorro||200) * 100)}% de la meta`);
 
-  // Deuda Total y Pago Mensual
+  // Deuda Total y Pago Mensual (solo informativo)
   const deudaTotal = [...tarjetas, ...prestamos].reduce((a, d) => a + (parseFloat(d.deuda || d.saldo) || 0), 0);
   const pagoMensual = [
     ...tarjetas.map(t => parseFloat(t.cuotaMin) || 0),
@@ -618,14 +612,14 @@ const ahorro = Math.max(0, ingresoTotal - gastoTotal);
   const fondoTotal = metas.reduce((a, m) => a + (parseFloat(m.actual) || 0), 0);
   setVal('kpi-fondo', `S/ ${fondoTotal.toLocaleString()}`);
 
-  // Renderizar todas las secciones
+  // Renderizar todas las secciones (sin pasar pagoDeudasMes para no distorsionar)
   renderGastos(gastos, cfg);
   renderTarjetas(tarjetas, cfg);
   renderPrestamos(prestamos, cfg);
   renderMetas(metas);
-  renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, pagoDeudasMes);
-  renderDistribucion(ingresoTotal, gastoTotal, gastoEntret, ahorro, deudaTotal, pagoDeudasMes);
-  renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorro, pagoDeudasMes);
+  renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, 0);
+  renderDistribucion(ingresoTotal, gastoTotal, gastoEntret, ahorro, deudaTotal, 0);
+  renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorro, 0);
   renderAlertas(tarjetas, prestamos, gastoTotal, ingresoTotal);
 
   ocultarSplash();
