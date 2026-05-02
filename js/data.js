@@ -355,32 +355,33 @@ async generarArrastreSiNecesario(mesActual) {
   // Verificar si ya existe un arrastre para este mes
   const ingresosMes = await this.getIngresosMes(mesActual);
   const yaTieneArrastre = ingresosMes.some(i => i.tipo === 'arrastre');
-  if (yaTieneArrastre) return; // ya lo generamos antes
+  if (yaTieneArrastre) return;
 
   // Obtener mes anterior
   const [year, month] = mesActual.split('-').map(Number);
-  const mesAnteriorDate = new Date(year, month - 2, 1); // month es 1-indexed
+  const mesAnteriorDate = new Date(year, month - 2, 1);
   const mesAnteriorStr = `${mesAnteriorDate.getFullYear()}-${String(mesAnteriorDate.getMonth() + 1).padStart(2, '0')}`;
   
-  // Calcular ahorro del mes anterior
+  // Obtener datos reales del mes anterior
   const ingresosAnteriores = await this.getIngresosMes(mesAnteriorStr);
   const gastosAnteriores = await this.getGastos(mesAnteriorStr);
   const tarjetas = await this.getTarjetas();
   const prestamos = await this.getPrestamos();
-  const cfg = await this.getConfig();
-
+  
   const ingresoTotalAnterior = ingresosAnteriores.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
   const gastoTotalAnterior = gastosAnteriores.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
   
-  // Pago mensual de deudas del mes anterior (aproximado)
-  const pagoMinTarjetas = tarjetas.reduce((s, t) => s + Math.min(parseFloat(t.deuda) || 0, parseFloat(t.cuotaMin) || 0), 0);
-  const pagoPrestamos = prestamos.reduce((s, p) => s + (parseFloat(p.cuota) || 0), 0);
-  const pagoDeudasAnterior = pagoMinTarjetas + pagoPrestamos;
+  // 🔥 Filtrar solo los pagos de deuda realizados en el mes anterior
+  const gastosDeudaAnterior = gastosAnteriores
+    .filter(g => g.desc && (g.desc.toLowerCase().includes('pago tarjeta') || g.desc.toLowerCase().includes('pago préstamo')))
+    .reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
+  
+  // También sumamos cuotas de préstamos que estén programadas (si las tienes como gasto recurrente)
+  // Pero si ya estás registrando los pagos manualmente, con la línea anterior basta.
 
-  const ahorroAnterior = Math.max(0, ingresoTotalAnterior - gastoTotalAnterior - pagoDeudasAnterior);
+  const ahorroAnterior = Math.max(0, ingresoTotalAnterior - gastoTotalAnterior);
   
   if (ahorroAnterior > 0) {
-    // Insertar ingreso tipo 'arrastre' en el mes actual
     await this.addIngreso({
       desc: `Remanente de ${this.formatMes(mesAnteriorStr)}`,
       monto: ahorroAnterior,
@@ -389,6 +390,9 @@ async generarArrastreSiNecesario(mesActual) {
       tipo: 'arrastre',
       creadoEn: new Date().toISOString()
     });
+    console.log(`✅ Remanente generado: ${mesAnteriorStr} → ${ahorroAnterior}`);
+  } else {
+    console.log(`ℹ️ Sin remanente de ${mesAnteriorStr} para arrastrar.`);
   }
 },
 
