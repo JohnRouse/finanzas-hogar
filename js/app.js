@@ -494,6 +494,14 @@ async function procesarRecurrentes(mes) {
   const recurrentes = await DB.getRecurrentes();
   const gastosMes = await DB.getGastos(mes); // ya tenemos los gastos actuales
 
+  if (nuevoGasto.medio === 'tarjeta' && nuevoGasto.tarjetaId) {
+  const tarjeta = (await DB.getTarjetas()).find(t => t.id === nuevoGasto.tarjetaId);
+  if (tarjeta) {
+    const nuevaDeuda = (parseFloat(tarjeta.deuda) || 0) + nuevoGasto.monto;
+    await db.collection("hogares").doc(hogarId).collection("tarjetas").doc(nuevoGasto.tarjetaId).update({ deuda: nuevaDeuda });
+  }
+}
+
   for (const rec of recurrentes) {
     if (!rec.activo) continue;
 
@@ -568,9 +576,17 @@ async function renderTodo() {
   const ingresoTotal = ingresosMes.reduce((sum, ing) => sum + (parseFloat(ing.monto) || 0), 0);
 
   const gastoTotal = Array.isArray(gastos) ? gastos.reduce((a,g) => a + (g.monto||0), 0) : 0;
+  // Gastos que NO son con tarjeta (efectivo, débito, transferencia)
+  const gastosEfectivo = Array.isArray(gastos) 
+  ? gastos.filter(g => g.medio !== 'tarjeta').reduce((a,g) => a + (g.monto||0), 0) 
+  : 0;
+
+// Gastos con tarjeta (no afectan el efectivo disponible)
+  const gastosTarjeta = gastoTotal - gastosEfectivo;
+
   const gastoEntret = Array.isArray(gastos) ? gastos.filter(g => g.cat === 'Entret.').reduce((a,g) => a + (g.monto||0), 0) : 0;
   
-  const ahorro = Math.max(0, ingresoTotal - gastoTotal);
+  const ahorro = Math.max(0, ingresoTotal - gastosEfectivo);
 
   setVal('kpi-ingresos', `S/ ${ingresoTotal.toLocaleString()}`);
   const elSubIngreso = document.getElementById('kpi-ingresos')?.nextElementSibling;
@@ -1536,6 +1552,8 @@ function abrirPagoTarjeta(id, nombre, deudaActual) {
   document.getElementById('pago-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('pago-nota').value = '';
 
+  document.getElementById('pago-credito-liberado').value = '';
+
   openModal('pagoTarjetaModal');
 }
 
@@ -1569,20 +1587,29 @@ async function registrarPagoTarjeta() {
   creadoEn: new Date().toISOString(),
 });
 
-    // 2. Reducir la deuda de la tarjeta
-    const tarjetas = await DB.getTarjetas();
-    const tarjeta = tarjetas.find(t => t.id === tarjetaActualId);
+    
+    // 2. Reducir la deuda de la tarjeta (usando el crédito realmente liberado)
+const tarjetas = await DB.getTarjetas();
+const tarjeta = tarjetas.find(t => t.id === tarjetaActualId);
 
-    if (tarjeta) {
-      const nuevaDeuda = Math.max(0, parseFloat(tarjeta.deuda) - monto);
-      
-      await db.collection("hogares").doc(hogarId)
-        .collection("tarjetas")
-        .doc(tarjetaActualId)
-        .update({ deuda: nuevaDeuda });
+if (tarjeta) {
+  // Si se especificó crédito liberado, se usa ese valor; si no, se asume igual al pago
+  const creditoLiberadoInput = document.getElementById('pago-credito-liberado')?.value;
+  const creditoLiberado = creditoLiberadoInput && creditoLiberadoInput.trim() !== '' 
+    ? parseFloat(creditoLiberadoInput) 
+    : monto;
 
-      console.log(`Deuda reducida: ${tarjeta.deuda} → ${nuevaDeuda}`);
-    }
+  // Validar que no libere más de lo que pagó
+  const aumentoDisponible = Math.min(creditoLiberado, monto);
+  const nuevaDeuda = Math.max(0, parseFloat(tarjeta.deuda) - aumentoDisponible);
+  
+  await db.collection("hogares").doc(hogarId)
+    .collection("tarjetas")
+    .doc(tarjetaActualId)
+    .update({ deuda: nuevaDeuda });
+
+  console.log(`Deuda reducida: ${tarjeta.deuda} → ${nuevaDeuda} (crédito liberado: ${aumentoDisponible})`);
+}
 
     await DB.enviarNotificacion(`Se pagó S/ ${monto} de la tarjeta ${tarjetaActualNombre}`);
     // Cerrar el modal primero

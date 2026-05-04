@@ -363,9 +363,18 @@ async generarArrastreSiNecesario(mesActual) {
   // Verificar atómicamente si ya existe
   const docSnap = await docRef.get();
   if (docSnap.exists) {
-    console.log(`ℹ️ Arrastre de ${mesAnteriorStr} ya existe. No se genera duplicado.`);
-    return;
+  const arrastreExistente = docSnap.data();
+  const montoGuardado = parseFloat(arrastreExistente.monto) || 0;
+  
+  // Si el ahorro real del mes anterior cambió, actualizamos el arrastre
+  if (Math.abs(montoGuardado - ahorroAnterior) > 0.01) {
+    await docRef.update({ monto: ahorroAnterior });
+    console.log(`🔄 Arrastre actualizado: ${mesAnteriorStr} de ${montoGuardado} → ${ahorroAnterior}`);
+  } else {
+    console.log(`ℹ️ Arrastre de ${mesAnteriorStr} ya existe y está actualizado.`);
   }
+  return;
+}
   
   // Obtener datos reales del mes anterior
   const ingresosAnteriores = await this.getIngresosMes(mesAnteriorStr);
@@ -373,8 +382,11 @@ async generarArrastreSiNecesario(mesActual) {
   
   const ingresoTotalAnterior = ingresosAnteriores.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
   const gastoTotalAnterior = gastosAnteriores.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
-  
-  const ahorroAnterior = Math.max(0, ingresoTotalAnterior - gastoTotalAnterior);
+  const gastosEfectivoAnterior = gastosAnteriores
+  .filter(g => g.medio !== 'tarjeta')
+  .reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
+
+  const ahorroAnterior = Math.max(0, ingresoTotalAnterior - gastosEfectivoAnterior);
   
   if (ahorroAnterior > 0) {
     try {

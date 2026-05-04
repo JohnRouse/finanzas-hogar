@@ -681,6 +681,14 @@
       <label class="input-label">Nota (opcional)</label>
       <input type="text" class="input-field" id="pago-nota" placeholder="Ej: Pago mínimo">
     </div>
+    <div class="input-row">
+  <label class="input-label">Crédito liberado (opcional)</label>
+  <input type="number" class="input-field" id="pago-credito-liberado" 
+         placeholder="Dejar vacío = mismo monto del pago" step="0.01" inputmode="decimal">
+  <small style="color: var(--text3); font-size: 12px;">
+    Si el pago no aumentó tu disponible en la misma cantidad, ingresa el monto real que se liberó.
+  </small>
+</div>
 
     <button class="modal-btn" onclick="registrarPagoTarjeta()">Registrar pago y reducir deuda</button>
   </div>
