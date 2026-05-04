@@ -577,8 +577,8 @@ async function renderTodo() {
 
   const gastoTotal = Array.isArray(gastos) ? gastos.reduce((a,g) => a + (g.monto||0), 0) : 0;
   // Gastos que NO son con tarjeta (efectivo, débito, transferencia)
-  const gastosEfectivo = Array.isArray(gastos) 
-  ? gastos.filter(g => g.medio !== 'tarjeta').reduce((a,g) => a + (g.monto||0), 0) 
+  const gastosEfectivo = Array.isArray(gastos)
+  ? gastos.filter(g => g.medio !== 'tarjeta').reduce((a,g) => a + (g.monto||0), 0)
   : 0;
 
 // Gastos con tarjeta (no afectan el efectivo disponible)

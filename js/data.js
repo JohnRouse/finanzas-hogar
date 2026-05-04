@@ -360,48 +360,48 @@ async generarArrastreSiNecesario(mesActual) {
   const docId = `arrastre_${mesAnteriorStr}`;
   const docRef = db.collection("hogares").doc(hogarId).collection("ingresos").doc(docId);
   
-  // Verificar atómicamente si ya existe
-  const docSnap = await docRef.get();
-  if (docSnap.exists) {
-  const arrastreExistente = docSnap.data();
-  const montoGuardado = parseFloat(arrastreExistente.monto) || 0;
-  
-  // Si el ahorro real del mes anterior cambió, actualizamos el arrastre
-  if (Math.abs(montoGuardado - ahorroAnterior) > 0.01) {
-    await docRef.update({ monto: ahorroAnterior });
-    console.log(`🔄 Arrastre actualizado: ${mesAnteriorStr} de ${montoGuardado} → ${ahorroAnterior}`);
-  } else {
-    console.log(`ℹ️ Arrastre de ${mesAnteriorStr} ya existe y está actualizado.`);
-  }
-  return;
-}
-  
-  // Obtener datos reales del mes anterior
+  // Obtener datos del mes anterior (siempre, los necesitamos para ver si hay que actualizar)
   const ingresosAnteriores = await this.getIngresosMes(mesAnteriorStr);
   const gastosAnteriores = await this.getGastos(mesAnteriorStr);
   
   const ingresoTotalAnterior = ingresosAnteriores.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
-  const gastoTotalAnterior = gastosAnteriores.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
-  const gastosEfectivoAnterior = gastosAnteriores
-  .filter(g => g.medio !== 'tarjeta')
-  .reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
-
-  const ahorroAnterior = Math.max(0, ingresoTotalAnterior - gastosEfectivoAnterior);
   
-  if (ahorroAnterior > 0) {
+  // Solo gastos en efectivo (no tarjeta) para calcular el efectivo disponible
+  const gastosEfectivoAnterior = gastosAnteriores
+    .filter(g => g.medio !== 'tarjeta')
+    .reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
+    
+  const ahorroEfectivo = Math.max(0, ingresoTotalAnterior - gastosEfectivoAnterior);
+
+  // Verificar si ya existe un documento de arrastre para este mes anterior
+  const docSnap = await docRef.get();
+  if (docSnap.exists) {
+    // Si ya existe, ver si el monto cambió
+    const arrastreExistente = docSnap.data();
+    const montoGuardado = parseFloat(arrastreExistente.monto) || 0;
+    
+    if (Math.abs(montoGuardado - ahorroEfectivo) > 0.01) {
+      await docRef.update({ monto: ahorroEfectivo });
+      console.log(`🔄 Arrastre actualizado: ${mesAnteriorStr} de ${montoGuardado} → ${ahorroEfectivo}`);
+    } else {
+      console.log(`ℹ️ Arrastre de ${mesAnteriorStr} ya existe y está actualizado.`);
+    }
+    return;
+  }
+  
+  // Si no existe, crearlo
+  if (ahorroEfectivo > 0) {
     try {
-      // Intentar crear con ID fijo (falla si ya existe)
       await docRef.set({
         desc: `Remanente de ${this.formatMes(mesAnteriorStr)}`,
-        monto: ahorroAnterior,
+        monto: ahorroEfectivo,
         quien: 'ambos',
         fecha: `${mesActual}-01`,
         tipo: 'arrastre',
         creadoEn: new Date().toISOString()
-      }, { merge: false }); // merge: false = fail if exists
-      console.log(`✅ Remanente generado: ${mesAnteriorStr} → ${ahorroAnterior}`);
+      }, { merge: false });
+      console.log(`✅ Remanente generado: ${mesAnteriorStr} → ${ahorroEfectivo}`);
     } catch (e) {
-      // Si otro proceso ya lo creó, ignoramos silenciosamente
       console.warn(`⚠️ El arrastre de ${mesAnteriorStr} ya fue creado por otro proceso.`);
     }
   } else {
