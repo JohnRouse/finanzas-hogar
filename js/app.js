@@ -2167,98 +2167,93 @@ async function renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, pago
   })();
 
   /* 2. BAR — Tú vs Pareja (Apilado Efectivo/Tarjeta) */
-  (function() {
-    const canvas = resetAndGetCanvas('barChart');
-    if (!canvas) return;
-    
-    const yo = cfg.nombreYo || 'Christian';
-    const ella = cfg.nombreElla || 'Sydney';
-    const cats = Object.keys(CATS);
+(function() {
+  const canvas = resetAndGetCanvas('barChart');
+  if (!canvas) return;
+  
+  const yo = cfg.nombreYo || 'Christian';
+  const ella = cfg.nombreElla || 'Sydney';
+  const cats = Object.keys(CATS);
 
-    // Función para sumar gastos por categoría, persona y medio de pago
-    function sumarGastos(quien, medio) {
-      return cats.map(c => 
-        gastos
-          .filter(g => g.cat === c && g.quien === quien && (medio === 'tarjeta' ? g.medio === 'tarjeta' : g.medio !== 'tarjeta'))
-          .reduce((a, g) => a + (parseFloat(g.monto) || 0), 0)
-      );
-    }
+  // Función para sumar gastos por categoría, persona y medio de pago
+  function sumarGastos(quien, medio) {
+    return cats.map(c => 
+      gastos
+        .filter(g => g.cat === c && g.quien === quien && (medio === 'tarjeta' ? g.medio === 'tarjeta' : g.medio !== 'tarjeta'))
+        .reduce((a, g) => a + (parseFloat(g.monto) || 0), 0)
+    );
+  }
 
-    const dataYoEfectivo = sumarGastos('yo', 'efectivo');
-    const dataYoTarjeta = sumarGastos('yo', 'tarjeta');
-    const dataEllaEfectivo = sumarGastos('pareja', 'efectivo');
-    const dataEllaTarjeta = sumarGastos('pareja', 'tarjeta');
+  const dataYoEfectivo = sumarGastos('yo', 'efectivo');
+  const dataYoTarjeta = sumarGastos('yo', 'tarjeta');
+  const dataEllaEfectivo = sumarGastos('pareja', 'efectivo');
+  const dataEllaTarjeta = sumarGastos('pareja', 'tarjeta');
 
-    // Verificar si hay datos
-    const totalData = [...dataYoEfectivo, ...dataYoTarjeta, ...dataEllaEfectivo, ...dataEllaTarjeta];
-    if (totalData.every(v => v === 0)) {
-      showEmptyState(canvas, '210px', 'Sin datos este mes');
-      return;
-    }
+  // Verificar si hay datos
+  const totalData = [...dataYoEfectivo, ...dataYoTarjeta, ...dataEllaEfectivo, ...dataEllaTarjeta];
+  if (totalData.every(v => v === 0)) {
+    showEmptyState(canvas, '210px', 'Sin datos este mes');
+    return;
+  }
 
-    new Chart(canvas, {
-      type: 'bar',
-      data: {
-        labels: cats,
-        datasets: [
-          {
-            label: `${yo} (Efectivo)`,
-            data: dataYoEfectivo,
-            backgroundColor: '#2a7de1', // Azul sólido
-            borderRadius: 6,
-            stack: 'yo',
-          },
-          {
-            label: `${yo} (Tarjeta)`,
-            data: dataYoTarjeta,
-            backgroundColor: '#2a7de1cc', // Azul semitransparente (puedes usar un color más claro)
-            borderRadius: 6,
-            stack: 'yo',
-          },
-          {
-            label: `${ella} (Efectivo)`,
-            data: dataEllaEfectivo,
-            backgroundColor: '#c94b7b', // Rosa sólido
-            borderRadius: 6,
-            stack: 'ella',
-          },
-          {
-            label: `${ella} (Tarjeta)`,
-            data: dataEllaTarjeta,
-            backgroundColor: '#c94b7bcc', // Rosa semitransparente
-            borderRadius: 6,
-            stack: 'ella',
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { 
-          legend: { 
-            display: true,
-            position: 'bottom',
-            labels: {
-              color: text3Color,
-              font: { family: 'DM Sans', size: 11 }
-            }
-          } 
+  new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: cats,
+      datasets: [
+        {
+          label: `${yo} (Efectivo)`,
+          data: dataYoEfectivo,
+          backgroundColor: '#1e40af', // Azul oscuro para efectivo
+          borderRadius: 6,
+          stack: 'yo',
         },
-        scales: {
-          x: { 
-            stacked: true,
-            grid: { display: false }, 
-            ticks: { color: text3Color } 
-          },
-          y: { 
-            stacked: true,
-            grid: { color: borderColor }, 
-            ticks: { color: text3Color, callback: v => 'S/' + v } 
-          }
+        {
+          label: `${yo} (Tarjeta)`,
+          data: dataYoTarjeta,
+          backgroundColor: '#93c5fd', // Azul claro para tarjeta
+          borderRadius: 6,
+          stack: 'yo',
+        },
+        {
+          label: `${ella} (Efectivo)`,
+          data: dataEllaEfectivo,
+          backgroundColor: '#9d174d', // Rosa oscuro para efectivo
+          borderRadius: 6,
+          stack: 'ella',
+        },
+        {
+          label: `${ella} (Tarjeta)`,
+          data: dataEllaTarjeta,
+          backgroundColor: '#f9a8d4', // Rosa claro para tarjeta
+          borderRadius: 6,
+          stack: 'ella',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { 
+          display: false // Ocultamos la leyenda para que no aparezcan los 4 textos
+        } 
+      },
+      scales: {
+        x: { 
+          stacked: true,
+          grid: { display: false }, 
+          ticks: { color: text3Color } 
+        },
+        y: { 
+          stacked: true,
+          grid: { color: borderColor }, 
+          ticks: { color: text3Color, callback: v => 'S/' + v } 
         }
       }
-    });
-  })();
+    }
+  });
+})();
 
   /* 3. LINE — Evolución Semanal (sin cambios) */
   (function() {
