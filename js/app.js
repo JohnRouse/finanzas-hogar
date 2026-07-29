@@ -494,14 +494,6 @@ async function procesarRecurrentes(mes) {
   const recurrentes = await DB.getRecurrentes();
   const gastosMes = await DB.getGastos(mes); // ya tenemos los gastos actuales
 
-  if (nuevoGasto.medio === 'tarjeta' && nuevoGasto.tarjetaId) {
-  const tarjeta = (await DB.getTarjetas()).find(t => t.id === nuevoGasto.tarjetaId);
-  if (tarjeta) {
-    const nuevaDeuda = (parseFloat(tarjeta.deuda) || 0) + nuevoGasto.monto;
-    await db.collection("hogares").doc(hogarId).collection("tarjetas").doc(nuevoGasto.tarjetaId).update({ deuda: nuevaDeuda });
-  }
-}
-
   for (const rec of recurrentes) {
     if (!rec.activo) continue;
 
@@ -549,7 +541,8 @@ async function procesarRecurrentes(mes) {
    RENDER PRINCIPAL (COMPLETO)
 ══════════════════════ */
 async function renderTodo() {
-  mostrarSkeletons();
+  try {
+    mostrarSkeletons();
 
   const kpiIds = ['kpi-ingresos', 'kpi-gastos', 'kpi-entret', 'kpi-ahorro', 'kpi-deuda-total', 'kpi-pago-mensual', 'kpi-fondo'];
   kpiIds.forEach(id => {
@@ -629,9 +622,15 @@ async function renderTodo() {
   renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorro, 0);
   renderAlertas(tarjetas, prestamos, gastoTotal, ingresoTotal);
 
-  ocultarSplash();
-  
-  console.log(`Renderizado completado - Ingresos: ${ingresoTotal} | Deuda Total: ${deudaTotal} | Ahorro: ${ahorro}`);
+    console.log(`Renderizado completado - Ingresos: ${ingresoTotal} | Deuda Total: ${deudaTotal} | Ahorro: ${ahorro}`);
+  } catch (error) {
+    console.error('Error al renderizar la aplicación:', error);
+    if (typeof showToast === 'function') {
+      showToast('Ocurrió un error al cargar algunos datos. Revisa la consola.');
+    }
+  } finally {
+    ocultarSplash();
+  }
 }
 
 /* ── RENDER PRÉSTAMOS ── */
