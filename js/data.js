@@ -104,6 +104,20 @@ const DB = {
     }
   },
 
+  async updateGasto(id, cambios) {
+    if (!hogarId || !id) return false;
+    try {
+      const datos = { ...cambios };
+      if (datos.fecha) datos.mes = datos.fecha.slice(0, 7);
+      await db.collection("hogares").doc(hogarId)
+        .collection("gastos").doc(id).update(datos);
+      return true;
+    } catch (e) {
+      console.error("Error updateGasto:", e);
+      return false;
+    }
+  },
+
   async deleteGasto(id) {
     if (!hogarId) return;
     try {
@@ -148,6 +162,99 @@ const DB = {
     }
   },
 
+  async updateTarjeta(id, cambios) {
+    if (!hogarId || !id) return false;
+    try {
+      await db.collection("hogares").doc(hogarId).collection("tarjetas").doc(id).update(cambios);
+      return true;
+    } catch (e) {
+      console.error("Error updateTarjeta:", e);
+      return false;
+    }
+  },
+
+  async conciliarTarjeta(id, ajuste) {
+    if (!hogarId || !id || !ajuste) return false;
+    try {
+      const tarjetaRef = db.collection("hogares").doc(hogarId).collection("tarjetas").doc(id);
+      const historialRef = tarjetaRef.collection("conciliaciones").doc();
+      const batch = db.batch();
+      batch.update(tarjetaRef, {
+        deuda: ajuste.deudaCalculada,
+        actualizadoEn: ajuste.fecha,
+        ultimaConciliacion: ajuste.fecha,
+        saldoEstimado: false,
+        pendienteConciliar: false
+      });
+      batch.set(historialRef, {
+        ...ajuste,
+        creadoEn: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await batch.commit();
+      return true;
+    } catch (e) {
+      console.error("Error conciliarTarjeta:", e);
+      return false;
+    }
+  },
+
+  async getConciliacionesTarjeta(id) {
+    if (!hogarId || !id) return [];
+    try {
+      const snapshot = await db.collection("hogares").doc(hogarId)
+        .collection("tarjetas").doc(id)
+        .collection("conciliaciones")
+        .orderBy("fecha", "desc")
+        .limit(30)
+        .get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (e) {
+      console.error("Error getConciliacionesTarjeta:", e);
+      return [];
+    }
+  },
+
+  async getPagosTarjeta(tarjetaId, nombreTarjeta) {
+    if (!hogarId || (!tarjetaId && !nombreTarjeta)) return [];
+
+    try {
+      const gastosRef = db.collection("hogares").doc(hogarId).collection("gastos");
+      let pagosPorId = [];
+
+      if (tarjetaId) {
+        const snapshotId = await gastosRef
+          .where("tarjetaId", "==", tarjetaId)
+          .get();
+
+        pagosPorId = snapshotId.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(g => g.tipoMovimiento === "pagoTarjeta" || g.cat === "Deudas");
+      }
+
+      // Compatibilidad con pagos antiguos, guardados antes de enlazar por ID.
+      const snapshotDeudas = await gastosRef
+        .where("cat", "==", "Deudas")
+        .get();
+
+      const prefijo = `Pago Tarjeta: ${nombreTarjeta || ""}`;
+      const pagosAntiguos = snapshotDeudas.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(g =>
+          !pagosPorId.some(p => p.id === g.id) &&
+          typeof g.desc === "string" &&
+          nombreTarjeta &&
+          g.desc.startsWith(prefijo)
+        );
+
+      return [...pagosPorId, ...pagosAntiguos]
+        .sort((a, b) => String(b.fecha || b.creadoEn || "").localeCompare(String(a.fecha || a.creadoEn || "")))
+        .slice(0, 50);
+    } catch (e) {
+      console.error("Error getPagosTarjeta:", e);
+      return [];
+    }
+  },
+
   /* ── PRÉSTAMOS ── */
   async getPrestamos() {
     if (!hogarId) return [];
@@ -180,6 +287,18 @@ const DB = {
       await db.collection("hogares").doc(hogarId).collection("prestamos").doc(id).delete();
     } catch (e) {
       console.error("Error deletePrestamo:", e);
+    }
+  },
+
+  async updatePrestamo(id, cambios) {
+    if (!hogarId || !id) return false;
+    try {
+      await db.collection("hogares").doc(hogarId)
+        .collection("prestamos").doc(id).update(cambios);
+      return true;
+    } catch (e) {
+      console.error("Error updatePrestamo:", e);
+      return false;
     }
   },
 
@@ -272,6 +391,21 @@ async addRecurrente(gastoBase) {
     console.log("✅ Recurrente guardado");
   } catch (e) {
     console.error("Error addRecurrente:", e);
+  }
+},
+
+async updateRecurrente(id, cambios) {
+  if (!hogarId || !id) return false;
+  try {
+    await db.collection("hogares").doc(hogarId)
+      .collection("recurrentes").doc(id).update({
+        ...cambios,
+        actualizadoEn: new Date().toISOString()
+      });
+    return true;
+  } catch (e) {
+    console.error("Error updateRecurrente:", e);
+    return false;
   }
 },
 
@@ -422,6 +556,21 @@ async addIngreso(ingreso) {
 
 async addIngresoExtra(ingreso) {
   return this.addIngreso(ingreso);
+},
+
+async updateIngresoExtra(id, cambios) {
+  if (!hogarId || !id) return false;
+  try {
+    await db.collection("hogares").doc(hogarId)
+      .collection("ingresos").doc(id).update({
+        ...cambios,
+        actualizadoEn: new Date().toISOString()
+      });
+    return true;
+  } catch (e) {
+    console.error("Error updateIngresoExtra:", e);
+    return false;
+  }
 },
 
 async deleteIngresoExtra(id) {

@@ -1750,3 +1750,790 @@ html {
     font-size: 20px;
   }
 }
+
+/* Finanzas 2.0 */
+.debt-label-main{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-top:12px}
+.debt-card-details{display:flex;flex-direction:column;gap:3px;margin-top:4px}
+.credit-overflow{margin-top:9px;padding:7px 9px;border-radius:8px;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:600}
+.debt-card-actions{display:flex;gap:8px;margin-top:12px}
+.debt-card-actions button{flex:1;border:1px solid var(--border);background:var(--surface2);border-radius:8px;padding:8px 6px;font-size:11px;cursor:pointer;color:var(--text)}
+.debt-card-actions button:hover{background:var(--surface3)}
+
+
+/* Conciliación bancaria */
+.reconcile-current{display:flex;flex-direction:column;gap:4px;margin-bottom:16px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
+.reconcile-current strong{font-size:14px}.reconcile-current span{font-size:11px;color:var(--text3)}.reconcile-current b{font-size:20px}
+.reconcile-difference{display:flex;flex-direction:column;gap:4px;margin:4px 0 12px;padding:12px;border-radius:10px;border:1px solid transparent;font-size:12px}
+.reconcile-difference strong{font-size:13px}.reconcile-difference span{line-height:1.35}
+.reconcile-difference.neutral{background:var(--surface2);border-color:var(--border);color:var(--text3)}
+.reconcile-difference.increase{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+.reconcile-difference.decrease{background:#dcfce7;border-color:#bbf7d0;color:#166534}
+.reconcile-help{display:block;color:var(--text3);line-height:1.45;margin-bottom:16px}
+#btn-confirmar-conciliacion:disabled{opacity:.5;cursor:not-allowed}
+
+
+/* Estado financiero de tarjetas */
+.financial-health-card{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:14px 16px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.035)}
+.financial-health-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.financial-health-title{font-size:15px;font-weight:650;margin-top:3px;color:var(--text)}
+.financial-health-chips{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.health-chip,.card-status{font-size:10px;font-weight:650;border-radius:999px;padding:5px 8px;white-space:nowrap}
+.health-danger,.status-danger{background:#fee2e2;color:#b91c1c}
+.health-warning,.status-warning{background:#ffedd5;color:#c2410c}
+.health-caution,.status-caution{background:#fef3c7;color:#92400e}
+.health-success,.status-success{background:#dcfce7;color:#166534}
+.debt-name-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+@media(max-width:600px){.financial-health-card{align-items:flex-start;flex-direction:column}.financial-health-chips{justify-content:flex-start}.card-status{font-size:9px;padding:4px 7px}}
+
+/* Botón flotante contextual */
+.contextual-fab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contextual-fab::after {
+  content: attr(data-label);
+  position: absolute;
+  right: 68px;
+  white-space: nowrap;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 5px 16px rgba(0,0,0,.10);
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+@media (max-width: 390px) {
+  .contextual-fab::after {
+    display: none;
+  }
+}
+
+/* Alertas de tarjetas ubicadas en Resumen */
+#page-resumen #estado-financiero {
+  margin-bottom: 10px;
+}
+
+#page-resumen #alertas-deuda {
+  margin-bottom: 14px;
+}
+
+/* Estado de tarjetas plegable en Resumen */
+.financial-health-details {
+  margin-bottom: 12px;
+}
+
+.financial-health-details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.financial-health-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.financial-health-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.financial-health-toggle {
+  flex: 0 0 auto;
+  color: var(--primary, #2563eb);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.financial-health-details[open] .financial-health-toggle::before {
+  content: "Ocultar";
+  font-size: 0;
+}
+
+.financial-health-details[open] .financial-health-toggle {
+  font-size: 0;
+}
+
+.financial-health-details[open] .financial-health-toggle::after {
+  content: "Ocultar detalle";
+  font-size: 11px;
+}
+
+.financial-health-content {
+  padding-top: 8px;
+}
+
+.financial-health-content .alerta {
+  margin-bottom: 8px;
+}
+
+.financial-health-content .alerta:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+  .financial-health-main {
+    align-items: flex-start;
+  }
+
+  .financial-health-toggle {
+    margin-top: 2px;
+  }
+}
+
+/* Tarjetas de crédito compactas */
+.credit-overflow.compact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.credit-overflow.compact small {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: .82;
+}
+
+.credit-line-visual {
+  margin-top: 10px;
+}
+
+.credit-line-track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.credit-line-fill {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.credit-line-limit {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  width: 2px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--text2);
+  opacity: .65;
+}
+
+.credit-line-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.compact-actions {
+  display: flex;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.compact-actions button {
+  flex: 1;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.debt-action-primary {
+  border: none;
+  background: var(--primary, #2563eb);
+  color: #fff;
+}
+
+.debt-action-secondary {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+@media (max-width: 420px) {
+  .credit-line-labels {
+    flex-direction: column;
+    gap: 1px;
+  }
+}
+
+/* Estado de conciliación de tarjetas */
+.reconcile-status {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 9px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  font-size: 10px;
+}
+
+.reconcile-status span {
+  font-weight: 700;
+}
+
+.reconcile-status small {
+  font-size: 9px;
+  opacity: .82;
+}
+
+.reconcile-status.pending {
+  background: #fff6df;
+  color: #8a5a00;
+  border: 1px solid #f2cf79;
+}
+
+.reconcile-status.reconciled {
+  background: #edf8f1;
+  color: #23633b;
+  border: 1px solid #b9dfc6;
+}
+
+.reconcile-status.neutral {
+  background: var(--surface2, #f4f5f7);
+  color: var(--text3);
+  border: 1px solid var(--border);
+}
+
+/* Historial de pagos y conciliaciones */
+.compact-actions {
+  flex-wrap: wrap;
+}
+
+.compact-actions .debt-action-history {
+  flex-basis: 100%;
+  min-height: 29px;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  font-size: 10px;
+}
+
+.history-summary {
+  margin-bottom: 12px;
+  color: var(--text3);
+  font-size: 12px;
+}
+
+.card-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.card-history-item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+
+.card-history-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 800;
+}
+
+.card-history-item.payment .card-history-icon {
+  background: #eef4ff;
+  color: #2563eb;
+}
+
+.card-history-item.reconciliation .card-history-icon {
+  background: #edf8f1;
+  color: #23633b;
+}
+
+.card-history-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-history-info strong {
+  font-size: 12px;
+}
+
+.card-history-info span,
+.card-history-info small {
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.card-history-amount {
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* Resumen del historial por tarjeta */
+.history-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.history-summary-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 9px;
+  background: var(--surface2, #f4f5f7);
+  border: 1px solid var(--border);
+}
+
+.history-summary-grid span {
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.history-summary-grid strong {
+  font-size: 11px;
+}
+
+/* Fechas próximas de tarjetas */
+.card-date-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.card-date-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface2, #f4f5f7);
+  color: var(--text3);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.card-date-chip.soon {
+  border-color: #efcf86;
+  background: #fff7e5;
+  color: #805600;
+}
+
+.card-date-chip.urgent {
+  border-color: #efb3b3;
+  background: #fff0f0;
+  color: #a52b2b;
+}
+
+/* Menú de opciones de tarjetas y préstamos */
+.debt-card {
+  position: relative;
+}
+
+.debt-more-wrap {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+}
+
+.debt-more-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text3);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.debt-more-btn:hover,
+.debt-more-btn:focus-visible {
+  background: var(--surface2, #f3f4f6);
+}
+
+.debt-more-menu {
+  display: none;
+  position: absolute;
+  top: 31px;
+  right: 0;
+  min-width: 118px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  box-shadow: 0 8px 24px rgba(0,0,0,.14);
+}
+
+.debt-more-menu.open {
+  display: block;
+}
+
+.debt-more-menu button {
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.debt-more-menu button:hover {
+  background: var(--surface2, #f3f4f6);
+}
+
+.debt-more-menu button.danger {
+  color: #b42318;
+}
+
+/* Ayuda del gasto recurrente */
+.recurring-help {
+  display: block;
+  margin-top: 7px;
+  padding-right: 6px;
+  color: var(--text3);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+/* Administración de gastos recurrentes */
+.recurring-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 12px 0 8px;
+}
+
+.recurring-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface2, #f4f5f7);
+}
+
+.recurring-summary span {
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.recurring-summary strong {
+  font-size: 11px;
+}
+
+.recurring-modal-help {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--text3);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.recurring-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 56vh;
+  overflow-y: auto;
+}
+
+.recurring-item {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface, #fff);
+}
+
+.recurring-item.paused {
+  opacity: .68;
+  background: var(--surface2, #f4f5f7);
+}
+
+.recurring-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.recurring-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.recurring-main strong {
+  font-size: 12px;
+}
+
+.recurring-main span,
+.recurring-main small {
+  color: var(--text3);
+  font-size: 10px;
+}
+
+.recurring-status {
+  padding: 3px 6px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.recurring-status.active {
+  background: #edf8f1;
+  color: #23633b;
+}
+
+.recurring-status.paused {
+  background: #ececec;
+  color: #666;
+}
+
+.recurring-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.recurring-actions button {
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.recurring-actions button.danger {
+  color: #b42318;
+}
+
+/* Menú y edición de movimientos */
+.expense-item-inner {
+  position: relative;
+}
+
+.expense-more-wrap {
+  position: relative;
+  margin-left: 4px;
+  z-index: 6;
+}
+
+.expense-more-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text3);
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.expense-more-btn:hover,
+.expense-more-btn:focus-visible {
+  background: var(--surface2, #f3f4f6);
+}
+
+.expense-more-menu {
+  display: none;
+  position: absolute;
+  top: 29px;
+  right: 0;
+  min-width: 120px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  box-shadow: 0 8px 24px rgba(0,0,0,.14);
+  z-index: 20;
+}
+
+.expense-more-menu.open {
+  display: block;
+}
+
+.expense-more-menu button {
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.expense-more-menu button:hover {
+  background: var(--surface2, #f3f4f6);
+}
+
+.expense-more-menu button.danger {
+  color: #b42318;
+}
+
+.expense-menu-note {
+  display: block;
+  padding: 6px 10px;
+  color: var(--text3);
+  font-size: 9px;
+}
+
+/* Edición de gastos recurrentes */
+.recurring-edit-help {
+  display: block;
+  margin: 2px 0 12px;
+  color: var(--text3);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.recurring-actions {
+  flex-wrap: wrap;
+}
+
+/* Gestión de ingresos manuales */
+.income-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.btn-ingreso-extra.secondary {
+  background: var(--surface, #fff);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.income-manage-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+
+.income-manage-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface2, #f4f5f7);
+}
+
+.income-manage-summary span {
+  color: var(--text3);
+  font-size: 9px;
+}
+
+.income-manage-summary strong {
+  font-size: 12px;
+}
+
+.income-manage-help {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--text3);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.income-manage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 56vh;
+  overflow-y: auto;
+}
+
+.income-manage-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface, #fff);
+}
+
+.income-manage-main,
+.income-manage-right {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.income-manage-main strong,
+.income-manage-right > strong {
+  font-size: 12px;
+}
+
+.income-manage-main span {
+  color: var(--text3);
+  font-size: 10px;
+}
+
+.income-manage-right {
+  align-items: flex-end;
+}
+
+.income-manage-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.income-manage-actions button {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface, #fff);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.income-manage-actions button.danger {
+  color: #b42318;
+}

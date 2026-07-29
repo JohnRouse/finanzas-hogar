@@ -147,3 +147,6 @@ Diseño UX/UI revisado y optimizado en colaboración con inteligencia artificial
 ## 📄 Licencia
 
 Este proyecto es de uso **personal**. Puedes modificarlo y usarlo libremente siempre que mantengas la atribución al autor original.
+
+## Conciliación bancaria
+Desde cada tarjeta, **Ajustar saldo** compara la deuda registrada con el saldo del banco, muestra la diferencia, pide confirmación y guarda un historial en `tarjetas/{tarjetaId}/conciliaciones`.

@@ -70,6 +70,8 @@
 
     <div id="alertas-resumen"></div>
 
+    <div id="estado-financiero"></div>
+
     <div class="kpi-grid four">
       <div class="kpi blue">
         <div class="kpi-label">Ingresos</div>
@@ -101,11 +103,10 @@
       </div>
     </div>
 
-    <div style="text-align:right; margin-bottom:8px;">
-  <button class="btn-ingreso-extra" onclick="openIngresoExtraModal()">
-  + Ingreso
-</button>
-</div>
+    <div class="income-toolbar">
+      <button class="btn-ingreso-extra secondary" onclick="abrirGestionIngresos()">Ver ingresos</button>
+      <button class="btn-ingreso-extra" onclick="openIngresoExtraModal()">+ Ingreso</button>
+    </div>
 
     <div class="section">
       <div class="section-title" style="margin-bottom:10px;">Distribución del ingreso</div>
@@ -154,7 +155,7 @@
     <div class="section">
       <div class="section-head">
   <div class="section-title">Movimientos del mes</div>
-  <button class="btn-recurrentes" onclick="abrirGestionRecurrentes()">⚙️ Gastos Fijos</button>
+  <div style="display:flex;gap:8px"><button class="btn-recurrentes" onclick="openGastoRapidoModal()">⚡ Gasto rápido</button><button class="btn-recurrentes" onclick="abrirGestionRecurrentes()">🔄 Recurrentes</button></div>
 </div>
       <div class="card">
         <div class="expense-list" id="expenseList">
@@ -219,13 +220,11 @@
         <div class="kpi-sub">Préstamos + tarjetas</div>
       </div>
       <div class="kpi amber">
-        <div class="kpi-label">Pago mensual</div>
+        <div class="kpi-label">Cuotas fijas</div>
         <div class="kpi-val" id="kpi-pago-mensual">S/ 0</div>
-        <div class="kpi-sub" id="kpi-pago-sub">0% del ingreso</div>
+        <div class="kpi-sub" id="kpi-pago-sub">Solo préstamos activos</div>
       </div>
     </div>
-
-    <div id="alertas-deuda"></div>
 
     <div class="section">
       <div class="section-head">
@@ -422,11 +421,36 @@
 </div>
 
 <!-- MODAL: REGISTRAR GASTO -->
+<!-- MODAL: ELEGIR TIPO DE GASTO -->
+<div class="modal-overlay" id="gastoChoiceModal" onclick="closeModalOutside(event,'gastoChoiceModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('gastoChoiceModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Agregar gasto</div>
+    <div class="action-buttons">
+      <button class="choice-btn" onclick="closeModal('gastoChoiceModal'); openGastoRapidoModal()">
+        <span class="choice-icon">⚡</span>
+        <div class="choice-text">
+          <strong>Gasto rápido</strong>
+          <p>Registra monto, categoría y medio de pago en pocos pasos.</p>
+        </div>
+      </button>
+      <button class="choice-btn" onclick="closeModal('gastoChoiceModal'); openGastoModal()">
+        <span class="choice-icon">🧾</span>
+        <div class="choice-text">
+          <strong>Gasto detallado</strong>
+          <p>Añade descripción, fecha, responsable, tarjeta y recurrencia mensual.</p>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="gastoModal" onclick="closeModalOutside(event,'gastoModal')">
   <div class="modal-sheet" style="position:relative;">
     <button class="modal-close" onclick="closeModal('gastoModal')">✕</button>
     <div class="modal-handle"></div>
-    <div class="modal-title">Registrar gasto</div>
+    <div class="modal-title" id="gasto-modal-title">Agregar gasto detallado</div>
 
     <!-- SCAN VOUCHER -->
     <input type="file" id="voucher-input" accept="image/*" capture="environment" style="display:none;" onchange="procesarVoucher(this)">
@@ -509,14 +533,15 @@
       <div id="g-tarjeta-credito-info" style="margin-top:6px; font-size:12px; color:var(--text3);"></div>
     </div>
 
-    <div class="form-group" style="margin-top: 20px; padding: 10px; background: var(--surface2); border-radius: var(--radius-sm);">
+    <div class="form-group" id="gasto-recurrente-box" style="margin-top: 20px; padding: 10px; background: var(--surface2); border-radius: var(--radius-sm);">
       <label class="switch-container" style="justify-content: space-between; cursor: pointer;">
-    <span style="font-size: 14px; font-weight: 500;">🔄 Repetir este gasto cada mes</span>
+    <span style="font-size: 14px; font-weight: 500;">🔄 Repetir mensualmente</span>
     <input type="checkbox" id="checkRecurrente">
     <span class="slider"></span>
       </label>
+      <small class="recurring-help">Se repetirá cada mes en el mismo día. Puedes usar efectivo, transferencia o una tarjeta de crédito.</small>
     </div>
-    <button class="modal-btn" onclick="agregarGasto()">Agregar gasto</button>
+    <button class="modal-btn" id="gasto-submit-btn" onclick="agregarGasto()">Agregar gasto</button>
   </div>
 </div>
 </div>
@@ -525,7 +550,7 @@
   <div class="modal-sheet" style="position:relative;">
     <button class="modal-close" onclick="closeModal('tarjetaModal')">✕</button>
     <div class="modal-handle"></div>
-    <div class="modal-title">Tarjeta de crédito</div>
+    <div class="modal-title" id="tarjeta-modal-title">Nueva tarjeta de crédito</div>
 
     <div class="input-row">
       <label class="input-label">Banco / Nombre</label>
@@ -554,8 +579,8 @@
 
     <div class="input-row input-row-two">
       <div>
-        <label class="input-label">Cuota mínima (S/)</label>
-        <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="t-cuota" placeholder="0">
+        <label class="input-label">Día de cierre</label>
+        <input type="number" class="input-field" id="t-cierre" placeholder="25" min="1" max="31">
       </div>
       <div>
         <label class="input-label">Día de vencimiento</label>
@@ -563,7 +588,7 @@
       </div>
     </div>
 
-    <button class="modal-btn" onclick="agregarTarjeta()">Guardar tarjeta</button>
+    <button class="modal-btn" id="tarjeta-submit-btn" onclick="agregarTarjeta()">Guardar tarjeta</button>
   </div>
 </div>
 
@@ -572,7 +597,7 @@
   <div class="modal-sheet" style="position:relative;">
     <button class="modal-close" onclick="closeModal('prestamoModal')">✕</button>
     <div class="modal-handle"></div>
-    <div class="modal-title">Préstamo activo</div>
+    <div class="modal-title" id="prestamo-modal-title">Nuevo préstamo</div>
 
     <div class="input-row">
       <label class="input-label">Banco / Tipo de préstamo</label>
@@ -610,7 +635,7 @@
       </div>
     </div>
 
-    <button class="modal-btn" onclick="agregarPrestamo()">Guardar préstamo</button>
+    <button class="modal-btn" id="prestamo-submit-btn" onclick="agregarPrestamo()">Guardar préstamo</button>
   </div>
 </div>
 
@@ -655,6 +680,34 @@
   </div>
 </div>
 
+<!-- MODAL: AJUSTAR SALDO DE TARJETA -->
+<div class="modal-overlay" id="ajusteTarjetaModal" onclick="closeModalOutside(event,'ajusteTarjetaModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('ajusteTarjetaModal')">✕</button>
+    <div class="modal-handle"></div><div class="modal-title">Conciliar tarjeta</div>
+    <div id="ajuste-tarjeta-info" class="reconcile-current"></div>
+    <div class="input-row">
+      <label class="input-label">Disponible según el banco (S/)</label>
+      <input type="number" step="0.01" inputmode="decimal" class="input-field" id="ajuste-tarjeta-disponible" placeholder="Ej.: 150.00 o -122.98">
+    </div>
+    <div id="ajuste-tarjeta-diferencia" class="reconcile-difference neutral"></div>
+    <small class="reconcile-help">La app calculará la deuda real restando el disponible a la línea de crédito. Puedes ingresar un disponible negativo cuando la tarjeta esté excedida.</small>
+    <button class="modal-btn" id="btn-confirmar-conciliacion" onclick="guardarAjusteTarjeta()">Confirmar conciliación</button>
+  </div>
+</div>
+
+<!-- MODAL: GASTO RÁPIDO -->
+<div class="modal-overlay" id="gastoRapidoModal" onclick="closeModalOutside(event,'gastoRapidoModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('gastoRapidoModal')">✕</button><div class="modal-handle"></div><div class="modal-title">Gasto rápido</div>
+    <div class="input-row"><label class="input-label">Monto (S/)</label><input type="number" step="0.01" inputmode="decimal" class="input-field" id="gr-monto" placeholder="0.00"></div>
+    <div class="input-row input-row-two"><div><label class="input-label">Categoría</label><select class="select-field" id="gr-cat"><option>Alimentación</option><option>Transporte</option><option>Servicios</option><option>Entret.</option><option>Salud</option><option>Hogar</option><option>Otros</option></select></div><div><label class="input-label">¿Quién?</label><select class="select-field" id="gr-quien"><option value="yo">Yo</option><option value="pareja">Pareja</option><option value="ambos">Ambos</option></select></div></div>
+    <div class="input-row"><label class="input-label">Medio</label><select class="select-field" id="gr-medio" onchange="actualizarTarjetasGastoRapido()"><option value="efectivo">Efectivo / transferencia</option><option value="tarjeta">Tarjeta de crédito</option></select></div>
+    <div class="input-row" id="gr-tarjeta-row" style="display:none"><label class="input-label">Tarjeta</label><select class="select-field" id="gr-tarjeta"></select><small id="gr-tarjeta-info" style="display:block;margin-top:6px;color:var(--text3)"></small></div>
+    <button class="modal-btn" onclick="agregarGastoRapido()">Guardar gasto rápido</button>
+  </div>
+</div>
+
 <!-- MODAL: REGISTRAR PAGO DE TARJETA -->
 <div class="modal-overlay" id="pagoTarjetaModal" onclick="closeModalOutside(event,'pagoTarjetaModal')">
   <div class="modal-sheet" style="position:relative;">
@@ -680,16 +733,7 @@
       <label class="input-label">Nota (opcional)</label>
       <input type="text" class="input-field" id="pago-nota" placeholder="Ej: Pago mínimo">
     </div>
-    <div class="input-row">
-  <label class="input-label">Crédito liberado (opcional)</label>
-  <input type="number" class="input-field" id="pago-credito-liberado" 
-         placeholder="Dejar vacío = mismo monto del pago" step="0.01" inputmode="decimal">
-  <small style="color: var(--text3); font-size: 12px;">
-    Si el pago no aumentó tu disponible en la misma cantidad, ingresa el monto real que se liberó.
-  </small>
-</div>
-
-    <button class="modal-btn" onclick="registrarPagoTarjeta()">Registrar pago y reducir deuda</button>
+<button class="modal-btn" onclick="registrarPagoTarjeta()">Registrar pago</button>
   </div>
 </div>
 
@@ -720,6 +764,19 @@
     </div>
 
     <button class="modal-btn" onclick="registrarPagoPrestamo()">Registrar pago de cuota</button>
+  </div>
+</div>
+
+<!-- MODAL: HISTORIAL DE TARJETA -->
+<div class="modal-overlay" id="historialTarjetaModal" onclick="closeModalOutside(event,'historialTarjetaModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('historialTarjetaModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="historial-tarjeta-titulo">Historial de tarjeta</div>
+    <div id="historial-tarjeta-resumen" class="history-summary"></div>
+    <div id="historial-tarjeta-lista" class="card-history-list">
+      <div class="empty-state">Cargando historial…</div>
+    </div>
   </div>
 </div>
 
@@ -802,34 +859,26 @@
 </div>
 
 <!-- Único Botón Flotante Global (Fuera de las páginas) -->
-<button id="fab-global" class="section-action" onclick="handleFabClick()" style="display: none;">+</button>
+<button id="fab-global" class="section-action contextual-fab" onclick="handleFabClick()" data-label="Registrar ingreso" aria-label="Registrar ingreso" title="Registrar ingreso">+</button>
 
 <!-- Modal de Elección para Deudas (Action Sheet) -->
 <div class="modal-overlay" id="deudaChoiceModal" onclick="closeModalOutside(event,'deudaChoiceModal')">
   <div class="modal-sheet action-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">¿Qué deseas hacer?</div>
+    <div class="modal-title">Agregar deuda</div>
     <div class="action-buttons">
-      <button class="choice-btn" onclick="closeModal('deudaChoiceModal'); openModal('tarjetaModal')">
+      <button class="choice-btn" onclick="closeModal('deudaChoiceModal'); abrirNuevaTarjeta()">
         <span class="choice-icon">💳</span>
         <div class="choice-text">
           <strong>Nueva Tarjeta</strong>
           <p>Registrar una tarjeta de crédito.</p>
         </div>
       </button>
-      <button class="choice-btn" onclick="closeModal('deudaChoiceModal'); openModal('prestamoModal')">
+      <button class="choice-btn" onclick="closeModal('deudaChoiceModal'); abrirNuevoPrestamo()">
         <span class="choice-icon">🏦</span>
         <div class="choice-text">
           <strong>Nuevo Préstamo</strong>
           <p>Agregar un préstamo activo.</p>
-        </div>
-      </button>
-      <!-- 🔥 NUEVA OPCIÓN -->
-      <button class="choice-btn" onclick="closeModal('deudaChoiceModal'); abrirSelectorPago()">
-        <span class="choice-icon">💸</span>
-        <div class="choice-text">
-          <strong>Registrar Pago</strong>
-          <p>Abonar a una tarjeta o préstamo existente.</p>
         </div>
       </button>
     </div>
@@ -874,7 +923,7 @@
   <div class="modal-sheet" style="position:relative;">
     <button class="modal-close" onclick="closeModal('ingresoExtraModal')">✕</button>
     <div class="modal-handle"></div>
-    <div class="modal-title">Registrar ingreso extra</div>
+    <div class="modal-title" id="ingreso-modal-title">Registrar ingreso extra</div>
 
     <div class="input-row">
       <label class="input-label">Descripción (opcional)</label>
@@ -900,18 +949,97 @@
       <input type="date" class="input-field" id="ie-fecha">
     </div>
 
-    <button class="modal-btn" onclick="agregarIngresoExtra()">Agregar ingreso extra</button>
+    <button class="modal-btn" id="ingreso-submit-btn" onclick="agregarIngresoExtra()">Agregar ingreso</button>
+  </div>
+</div>
+
+<!-- MODAL: GESTIÓN DE INGRESOS -->
+<div class="modal-overlay" id="gestionIngresosModal" onclick="closeModalOutside(event,'gestionIngresosModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('gestionIngresosModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Ingresos manuales del mes</div>
+    <div id="ingresos-manuales-resumen" class="income-manage-summary"></div>
+    <small class="income-manage-help">Aquí aparecen solo los ingresos agregados manualmente. Los remanentes automáticos no se pueden editar ni eliminar.</small>
+    <div id="lista-ingresos-manuales" class="income-manage-list"></div>
   </div>
 </div>
 
 <!-- MODAL: GESTIÓN DE RECURRENTES -->
+<!-- MODAL: EDITAR GASTO RECURRENTE -->
+<div class="modal-overlay" id="editarRecurrenteModal" onclick="closeModalOutside(event,'editarRecurrenteModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="cancelarEdicionRecurrente()">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar gasto recurrente</div>
+
+    <div class="input-row">
+      <label class="input-label">Descripción</label>
+      <input type="text" class="input-field" id="er-desc" placeholder="Ej: Internet">
+    </div>
+
+    <div class="input-row input-row-two">
+      <div>
+        <label class="input-label">Monto mensual (S/)</label>
+        <input type="number" step="0.01" inputmode="decimal" class="input-field" id="er-monto" placeholder="0.00">
+      </div>
+      <div>
+        <label class="input-label">Día de cada mes</label>
+        <input type="number" min="1" max="31" class="input-field" id="er-dia" placeholder="1">
+      </div>
+    </div>
+
+    <div class="input-row input-row-two">
+      <div>
+        <label class="input-label">Categoría</label>
+        <select class="select-field" id="er-cat">
+          <option>Alimentación</option>
+          <option>Servicios</option>
+          <option>Entret.</option>
+          <option>Transporte</option>
+          <option>Salud</option>
+          <option>Hogar</option>
+          <option>Otros</option>
+          <option>Deudas</option>
+        </select>
+      </div>
+      <div>
+        <label class="input-label">Responsable</label>
+        <select class="select-field" id="er-quien">
+          <option value="yo">Yo</option>
+          <option value="pareja">Pareja</option>
+          <option value="ambos">Ambos</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Medio de pago</label>
+      <select class="select-field" id="er-medio" onchange="actualizarMedioRecurrente()">
+        <option value="efectivo">Efectivo / transferencia</option>
+        <option value="tarjeta">Tarjeta de crédito</option>
+      </select>
+    </div>
+
+    <div class="input-row" id="er-tarjeta-row" style="display:none;">
+      <label class="input-label">Tarjeta</label>
+      <select class="select-field" id="er-tarjeta"></select>
+    </div>
+
+    <small class="recurring-edit-help">Los cambios se aplicarán a las próximas generaciones. Los movimientos ya registrados no se modificarán.</small>
+    <button class="modal-btn" onclick="guardarEdicionRecurrente()">Guardar cambios</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="recurrentesModal" onclick="closeModalOutside(event,'recurrentesModal')">
   <div class="modal-sheet" style="position:relative;">
     <button class="modal-close" onclick="closeModal('recurrentesModal')">✕</button>
     <div class="modal-handle"></div>
-    <div class="modal-title">Gastos fijos mensuales</div>
-    <div id="lista-recurrentes" style="margin-top:16px;">
-      <!-- Se llena dinámicamente -->
+    <div class="modal-title">Gastos recurrentes</div>
+    <div id="recurrentes-resumen" class="recurring-summary"></div>
+    <small class="recurring-modal-help">Pausar evita que se genere en los próximos meses. Los movimientos anteriores permanecen en el historial.</small>
+    <div id="lista-recurrentes" class="recurring-list">
+      <div class="empty-state">Cargando gastos recurrentes…</div>
     </div>
   </div>
 </div>
