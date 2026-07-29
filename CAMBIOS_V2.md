@@ -124,3 +124,12 @@
 - Se restauró `_bodyScrollY` y el estado auxiliar de la interfaz.
 - Se restauraron las variables de conciliación, pagos y selector mensual vinculadas a las funciones recuperadas.
 - El año y mes del selector ahora se inicializan usando la fecha actual.
+
+## Etapa 1 — Identidad y miembros del hogar
+
+- Se reemplazó la pregunta “¿Quién eres?” por la configuración profesional del perfil de este dispositivo.
+- Se agregó un esquema de miembros con identificadores estables, rol y compatibilidad con `yo`/`pareja`.
+- Los dispositivos ya configurados migran automáticamente sin volver a preguntar.
+- Se añadió `schemaVersion: 3` y migración no destructiva de la configuración existente.
+- Cambiar de perfil ya no borra ni altera los datos del hogar.
+- Ajustes muestra claramente el perfil vinculado y el hogar actual.

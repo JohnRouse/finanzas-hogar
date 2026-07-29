@@ -77,6 +77,99 @@ function escapeInlineString(value = '') {
     .replace(/\r?\n/g, ' ');
 }
 
+/* ── IDENTIDAD DEL HOGAR Y PERFIL DEL DISPOSITIVO ── */
+const IDENTITY_SCHEMA_VERSION = 3;
+
+function crearIdMiembro(nombre, fallback) {
+  const limpio = String(nombre || fallback || 'miembro')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return limpio || fallback || `miembro-${Date.now()}`;
+}
+
+function normalizarConfigIdentidad(cfg = {}) {
+  const nombrePrincipal = cfg.nombreYo || 'Christian';
+  const nombrePareja = cfg.nombreElla || 'Sydney';
+  const miembrosExistentes = cfg.miembros && typeof cfg.miembros === 'object' ? cfg.miembros : {};
+  const ids = Object.keys(miembrosExistentes);
+  const principalExistente = ids.find(id => miembrosExistentes[id]?.legacyTipo === 'yo');
+  const parejaExistente = ids.find(id => miembrosExistentes[id]?.legacyTipo === 'pareja');
+  const principalId = principalExistente || crearIdMiembro(nombrePrincipal, 'christian');
+  let parejaId = parejaExistente || crearIdMiembro(nombrePareja, 'sydney');
+  if (parejaId === principalId) parejaId = `${parejaId}-2`;
+
+  const miembros = {
+    ...miembrosExistentes,
+    [principalId]: {
+      ...(miembrosExistentes[principalId] || {}),
+      id: principalId,
+      nombre: nombrePrincipal,
+      rol: 'administrador',
+      legacyTipo: 'yo',
+      activo: true
+    },
+    [parejaId]: {
+      ...(miembrosExistentes[parejaId] || {}),
+      id: parejaId,
+      nombre: nombrePareja,
+      rol: 'miembro',
+      legacyTipo: 'pareja',
+      activo: true
+    }
+  };
+
+  return {
+    ...cfg,
+    schemaVersion: Math.max(Number(cfg.schemaVersion) || 0, IDENTITY_SCHEMA_VERSION),
+    nombreHogar: cfg.nombreHogar || `Hogar de ${nombrePrincipal} y ${nombrePareja}`,
+    miembros,
+    miembroPrincipalId: principalId,
+    miembroParejaId: parejaId
+  };
+}
+
+function obtenerMiembroActual(cfg = configCache) {
+  const normalizada = normalizarConfigIdentidad(cfg || {});
+  let miembroId = localStorage.getItem('miembroActualId');
+  if (!miembroId) {
+    const legacy = localStorage.getItem('miUsuarioTipo');
+    miembroId = legacy === 'pareja' ? normalizada.miembroParejaId : legacy === 'yo' ? normalizada.miembroPrincipalId : null;
+    if (miembroId) localStorage.setItem('miembroActualId', miembroId);
+  }
+  return miembroId ? normalizada.miembros[miembroId] || null : null;
+}
+
+function legacyTipoDeMiembro(miembroId, cfg = configCache) {
+  const normalizada = normalizarConfigIdentidad(cfg || {});
+  return normalizada.miembros[miembroId]?.legacyTipo || 'yo';
+}
+
+function guardarPerfilDispositivo(miembroId, cfg = configCache) {
+  const normalizada = normalizarConfigIdentidad(cfg || {});
+  const miembro = normalizada.miembros[miembroId];
+  if (!miembro) return false;
+  localStorage.setItem('miembroActualId', miembroId);
+  // Compatibilidad temporal con movimientos y filtros anteriores.
+  localStorage.setItem('miUsuarioTipo', miembro.legacyTipo || 'yo');
+  localStorage.setItem('perfilDispositivoConfigurado', '1');
+  return true;
+}
+
+async function migrarEsquemaIdentidad(cfg) {
+  const normalizada = normalizarConfigIdentidad(cfg);
+  const requiereGuardar = Number(cfg?.schemaVersion || 0) < IDENTITY_SCHEMA_VERSION || !cfg?.miembros;
+  if (requiereGuardar && DB.hogarId) {
+    await DB.updateConfig({
+      schemaVersion: normalizada.schemaVersion,
+      nombreHogar: normalizada.nombreHogar,
+      miembros: normalizada.miembros,
+      miembroPrincipalId: normalizada.miembroPrincipalId,
+      miembroParejaId: normalizada.miembroParejaId
+    });
+  }
+  return normalizada;
+}
+
 /* ══════════════════════
    INICIO
 ══════════════════════ */
@@ -89,24 +182,20 @@ document.addEventListener('DOMContentLoaded', () => {
   revisarIdentidad();
   actualizarFabContextual(activeTab);
   
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./firebase-messaging-sw.js')
-      .then((registration) => {
-        console.log('✅ Firebase Messaging SW registrado correctamente');
-        registration.update();
-      })
-      .catch((err) => {
-        console.error('❌ Error registrando Firebase Messaging SW:', err);
-      });
-  }
+  registrarServiceWorkerMensajeria();
 });
 
 async function verificarConfiguracion() {
-  const cfg = await DB.getConfig();
-  
-  if (cfg) {
-    // Si hay configuración pero no hay identidad guardada localmente
-    if (!localStorage.getItem('miUsuarioTipo')) {
+  const cfgOriginal = await DB.getConfig();
+
+  if (cfgOriginal) {
+    const cfg = await migrarEsquemaIdentidad(cfgOriginal);
+    configCache = cfg;
+
+    // Migra silenciosamente dispositivos que ya habían elegido “yo” o “pareja”.
+    obtenerMiembroActual(cfg);
+
+    if (!localStorage.getItem('miembroActualId')) {
       mostrarModalIdentificacion(cfg);
     } else {
       iniciarApp(cfg);
@@ -117,24 +206,25 @@ async function verificarConfiguracion() {
   }
 }
 
-// Función para mostrar el selector de quién es quién
 function mostrarModalIdentificacion(cfg) {
   ocultarSplash();
-  const modal = document.getElementById('identificacionModal');
-  modal.style.display = 'flex';
-  
-  // Personalizar nombres en el modal según la configuración
-  document.getElementById('name-choice-yo').textContent = cfg.nombreYo;
-  document.getElementById('name-choice-ella').textContent = cfg.nombreElla;
-  document.getElementById('avatar-choice-yo').textContent = cfg.nombreYo.slice(0,2).toUpperCase();
-  document.getElementById('avatar-choice-ella').textContent = cfg.nombreElla.slice(0,2).toUpperCase();
+  const normalizada = normalizarConfigIdentidad(cfg);
+  configCache = normalizada;
+  const overlay = document.getElementById('identidad-overlay');
+  if (!overlay) return;
+
+  const principal = normalizada.miembros[normalizada.miembroPrincipalId];
+  const pareja = normalizada.miembros[normalizada.miembroParejaId];
+  document.getElementById('identidad-nombre-yo').textContent = principal.nombre;
+  document.getElementById('identidad-nombre-ella').textContent = pareja.nombre;
+  document.getElementById('identidad-avatar-yo').textContent = principal.nombre.slice(0,2).toUpperCase();
+  document.getElementById('identidad-avatar-ella').textContent = pareja.nombre.slice(0,2).toUpperCase();
+  document.getElementById('identidad-hogar-nombre').textContent = normalizada.nombreHogar;
+  overlay.style.display = 'flex';
 }
 
-// Función que se llama al hacer clic en un nombre
 function establecerIdentidad(tipo) {
-  localStorage.setItem('miUsuarioTipo', tipo); // Guarda 'yo' o 'pareja'
-  document.getElementById('identificacionModal').style.display = 'none';
-  location.reload(); // Recargamos para aplicar cambios
+  definirIdentidad(tipo);
 }
 
 function vibrar() {
@@ -143,144 +233,430 @@ function vibrar() {
   }
 }
 
-async function solicitarPermisoYGuardarToken() {
+const FCM_VAPID_KEY = 'BJ2hOCo0ghqObiVlmWBrGd0QXux17QV8bzk6KxjT-1MwOhmPJHXCD3ArCbR_NeaSj2aFPr_jcQI7iyBdD_O_hl8';
+let messagingServiceWorkerRegistration = null;
+
+function obtenerIdDispositivo() {
+  let id = localStorage.getItem('hogarDispositivoId');
+  if (!id) {
+    const aleatorio = (crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    id = `disp_${aleatorio.replace(/[^a-zA-Z0-9_-]/g, '')}`;
+    localStorage.setItem('hogarDispositivoId', id);
+  }
+  return id;
+}
+
+function detectarPlataforma() {
+  const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+  if (/Android/i.test(ua)) return 'android';
+  return 'desktop';
+}
+
+function estaEnModoInstalado() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function nombrePredeterminadoDispositivo() {
+  const plataforma = detectarPlataforma();
+  const perfil = obtenerMiembroActual(configCache || {});
+  const propietario = perfil?.nombre || 'Hogar';
+  if (plataforma === 'ios') return `iPhone de ${propietario}`;
+  if (plataforma === 'android') return `Android de ${propietario}`;
+  return `Navegador de ${propietario}`;
+}
+
+function capacidadesNotificaciones() {
+  const plataforma = detectarPlataforma();
+  const instalada = estaEnModoInstalado();
+  const compatible = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && firebase?.messaging?.isSupported?.() !== false;
+  const requiereInstalacion = plataforma === 'ios' && !instalada;
+  return { plataforma, instalada, compatible, requiereInstalacion };
+}
+
+async function registrarServiceWorkerMensajeria() {
+  if (!('serviceWorker' in navigator)) return null;
+  if (messagingServiceWorkerRegistration) return messagingServiceWorkerRegistration;
   try {
-    const messaging = firebase.messaging();
-    
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      const token = await messaging.getToken({
-        vapidKey: 'BJ2hOCo0ghqObiVlmWBrGd0QXux17QV8bzk6KxjT-1MwOhmPJHXCD3ArCbR_NeaSj2aFPr_jcQI7iyBdD_O_hl8'
-      });
-
-      if (token && hogarId) {
-        // Guardar el token en Firestore (asociado al hogar)
-        await db.collection("hogares").doc(hogarId)
-          .collection("tokens").doc(token).set({
-            token: token,
-            dispositivo: navigator.userAgent,
-            ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp(),
-            userId: auth.currentUser ? auth.currentUser.uid : 'anonimo'
-          });
-        console.log("✅ Token FCM guardado:", token);
-      }
-    } else {
-      console.log("Permiso de notificaciones denegado");
-    }
+    messagingServiceWorkerRegistration = await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: './' });
+    await navigator.serviceWorker.ready;
+    return messagingServiceWorkerRegistration;
   } catch (error) {
-    console.error("Error al obtener token FCM:", error);
+    console.error('❌ No se pudo registrar el service worker:', error);
+    return null;
   }
 }
 
-async function registrarTokenFCM() {
+async function guardarDispositivo(token = null, cambios = {}) {
+  if (!DB.hogarId) return false;
+  const cfg = normalizarConfigIdentidad(configCache || await DB.getConfig() || {});
+  const miembro = obtenerMiembroActual(cfg);
+  if (!miembro) return false;
+  const dispositivoId = obtenerIdDispositivo();
+  const preferenciasGuardadas = JSON.parse(localStorage.getItem('preferenciasNotificaciones') || '{}');
+  return DB.saveDispositivo(dispositivoId, {
+    miembroId: miembro.id,
+    usuario: miembro.legacyTipo,
+    nombre: cambios.nombre || localStorage.getItem('nombreDispositivo') || nombrePredeterminadoDispositivo(),
+    plataforma: detectarPlataforma(),
+    tipoInstalacion: estaEnModoInstalado() ? 'pwa' : 'navegador',
+    token: token || null,
+    notificacionesActivas: Notification.permission === 'granted' && !!token,
+    preferencias: {
+      movimientos: preferenciasGuardadas.movimientos !== false,
+      vencimientos: preferenciasGuardadas.vencimientos !== false,
+      presupuesto: preferenciasGuardadas.presupuesto !== false,
+      estadosCuenta: preferenciasGuardadas.estadosCuenta !== false,
+      ...cambios.preferencias
+    },
+    userAgent: navigator.userAgent,
+    authUid: auth.currentUser?.uid || null,
+    ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+async function obtenerTokenMensajeria() {
+  const registro = await registrarServiceWorkerMensajeria();
+  if (!registro) throw new Error('No se pudo preparar el servicio de notificaciones.');
+  const messaging = firebase.messaging();
+  return messaging.getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: registro });
+}
+
+async function sincronizarDispositivoSiAutorizado() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
   try {
-    // 1. Pedir permiso explícitamente si no está concedido
-    if (Notification.permission !== 'granted') {
-      const permiso = await Notification.requestPermission();
-      if (permiso !== 'granted') {
-        console.warn('Permiso de notificación denegado');
-        return;
-      }
-    }
-
-    const messaging = firebase.messaging();
-    // 2. Obtener token ACTUAL
-    const registration = await navigator.serviceWorker.getRegistration();
-if (!registration) {
-  console.warn('No se encontró registro previo del SW');
-  return;
-}
-const token = await messaging.getToken({
-  vapidKey: 'BJ2hOCo0ghqObiVlmWBrGd0QXux17QV8bzk6KxjT-1MwOhmPJHXCD3ArCbR_NeaSj2aFPr_jcQI7iyBdD_O_hl8',
-  serviceWorkerRegistration: registration
-});
-
-    if (token && hogarId) {
-      const miTipo = localStorage.getItem('miUsuarioTipo') || 'yo';
-      // 3. Guardar token en Firestore bajo el hogar, con el tipo de usuario
-      console.log('Intentando guardar token:', token, 'usuario:', miTipo);
-      await db.collection("hogares").doc(hogarId).collection("tokens").doc(token).set({
-        token: token,
-        usuario: miTipo,  // 'yo' o 'pareja'
-        fecha: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      console.log(`✅ Token FCM guardado (${miTipo}):`, token);
-    } else {
-      console.warn('No se pudo obtener el token FCM.');
-    }
+    const token = await obtenerTokenMensajeria();
+    if (token) await guardarDispositivo(token);
   } catch (error) {
-  console.error('❌ Error al guardar token:', error);
+    console.warn('No se pudo sincronizar el token autorizado:', error);
   }
 }
 
-function openAjustesModal() {
-  // Valores por defecto solo la primera vez
-  if (!DB.hogarId) {
-    document.getElementById('aj-nombre-yo').value = 'Christian';
-    document.getElementById('aj-nombre-ella').value = 'Sydney';
-    document.getElementById('aj-ingreso-yo').value = '1500';
-    document.getElementById('aj-ingreso-ella').value = '1200';
+async function activarNotificacionesDesdeBoton() {
+  const capacidades = capacidadesNotificaciones();
+  if (!capacidades.compatible) {
+    showToast('Este navegador no admite notificaciones web');
+    actualizarModalNotificaciones();
+    return;
   }
+  if (capacidades.requiereInstalacion) {
+    mostrarGuiaInstalacionIOS();
+    return;
+  }
+  try {
+    const permiso = await Notification.requestPermission();
+    if (permiso !== 'granted') {
+      showToast('El permiso no fue concedido');
+      actualizarModalNotificaciones();
+      return;
+    }
+    const token = await obtenerTokenMensajeria();
+    if (!token) throw new Error('El dispositivo no devolvió un token.');
+    const nombre = document.getElementById('notif-device-name')?.value.trim() || nombrePredeterminadoDispositivo();
+    localStorage.setItem('nombreDispositivo', nombre);
+    await guardarDispositivo(token, { nombre });
+    showToast('Notificaciones activadas en este dispositivo ✓');
+    await actualizarModalNotificaciones();
+  } catch (error) {
+    console.error('Error activando notificaciones:', error);
+    showToast('No se pudieron activar. Revisa el navegador y vuelve a intentar.');
+    await actualizarModalNotificaciones();
+  }
+}
 
-  // Mostrar el código actual
-  const displayId = document.getElementById('display-hogar-id');
-  if (displayId) {
-    displayId.textContent = DB.hogarId || "Se generará al guardar";
+async function desactivarNotificacionesDispositivo() {
+  try {
+    const registro = await registrarServiceWorkerMensajeria();
+    if (registro) {
+      const messaging = firebase.messaging();
+      const token = await messaging.getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: registro }).catch(() => null);
+      if (token) await messaging.deleteToken(token).catch(() => false);
+    }
+    await DB.updateDispositivo(obtenerIdDispositivo(), { token: null, notificacionesActivas: false, ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp() });
+    showToast('Notificaciones desactivadas para este dispositivo');
+    await actualizarModalNotificaciones();
+  } catch (error) {
+    console.error(error);
+    showToast('No se pudieron desactivar');
+  }
+}
+
+async function configurarNotificaciones() {
+  closeModal('ajustesModal');
+  openModal('notificacionesModal');
+  await actualizarModalNotificaciones();
+}
+
+function mostrarGuiaInstalacionIOS() {
+  const guia = document.getElementById('notif-install-guide');
+  if (guia) guia.classList.remove('hidden');
+}
+
+async function actualizarPreferenciasNotificaciones() {
+  const preferencias = {
+    movimientos: !!document.getElementById('notif-pref-movimientos')?.checked,
+    vencimientos: !!document.getElementById('notif-pref-vencimientos')?.checked,
+    presupuesto: !!document.getElementById('notif-pref-presupuesto')?.checked,
+    estadosCuenta: !!document.getElementById('notif-pref-estados')?.checked
+  };
+  localStorage.setItem('preferenciasNotificaciones', JSON.stringify(preferencias));
+  await guardarDispositivo(null, { preferencias });
+}
+
+async function actualizarNombreDispositivo() {
+  const input = document.getElementById('notif-device-name');
+  const nombre = input?.value.trim();
+  if (!nombre) return;
+  localStorage.setItem('nombreDispositivo', nombre);
+  await guardarDispositivo(null, { nombre });
+  showToast('Nombre del dispositivo actualizado');
+}
+
+async function actualizarModalNotificaciones() {
+  const capacidades = capacidadesNotificaciones();
+  const status = document.getElementById('notif-status');
+  const detail = document.getElementById('notif-status-detail');
+  const button = document.getElementById('notif-primary-btn');
+  const disable = document.getElementById('notif-disable-btn');
+  const guide = document.getElementById('notif-install-guide');
+  const nameInput = document.getElementById('notif-device-name');
+  if (nameInput) nameInput.value = localStorage.getItem('nombreDispositivo') || nombrePredeterminadoDispositivo();
+
+  const prefs = JSON.parse(localStorage.getItem('preferenciasNotificaciones') || '{}');
+  const map = [['notif-pref-movimientos','movimientos'],['notif-pref-vencimientos','vencimientos'],['notif-pref-presupuesto','presupuesto'],['notif-pref-estados','estadosCuenta']];
+  map.forEach(([id,key]) => { const el=document.getElementById(id); if(el) el.checked = prefs[key] !== false; });
+
+  if (!capacidades.compatible) {
+    status.textContent = 'No disponibles';
+    detail.textContent = 'Este navegador no ofrece las funciones necesarias para recibir notificaciones.';
+    button.style.display = 'none';
+    disable.style.display = 'none';
+  } else if (capacidades.requiereInstalacion) {
+    status.textContent = 'Falta instalar la app';
+    detail.textContent = 'En iPhone, las notificaciones solo funcionan desde la app agregada a la pantalla de inicio.';
+    button.textContent = 'Ver cómo instalar';
+    button.style.display = '';
+    disable.style.display = 'none';
+  } else if (Notification.permission === 'granted') {
+    status.textContent = 'Activadas';
+    detail.textContent = 'Este dispositivo puede recibir avisos aunque la aplicación esté cerrada.';
+    button.textContent = 'Sincronizar nuevamente';
+    button.style.display = '';
+    disable.style.display = '';
+    await sincronizarDispositivoSiAutorizado();
+  } else if (Notification.permission === 'denied') {
+    status.textContent = 'Bloqueadas';
+    detail.textContent = 'Actívalas desde los ajustes del navegador o del sistema y vuelve a abrir la aplicación.';
+    button.style.display = 'none';
+    disable.style.display = 'none';
+  } else {
+    status.textContent = 'No activadas';
+    detail.textContent = 'Actívalas para recibir movimientos y recordatorios importantes.';
+    button.textContent = 'Activar notificaciones';
+    button.style.display = '';
+    disable.style.display = 'none';
+  }
+  if (guide) guide.classList.toggle('hidden', !capacidades.requiereInstalacion);
+}
+
+async function openDispositivosRegistradosModal() {
+  const lista = document.getElementById('lista-dispositivos');
+  closeModal('hogarDispositivosModal');
+  openModal('dispositivosRegistradosModal');
+  lista.innerHTML = '<div class="empty-state">Cargando dispositivos…</div>';
+  const dispositivos = await DB.getDispositivos();
+  const cfg = normalizarConfigIdentidad(configCache || await DB.getConfig() || {});
+  if (!dispositivos.length) {
+    lista.innerHTML = '<div class="empty-state">Todavía no hay dispositivos registrados.</div>';
+    return;
+  }
+  lista.innerHTML = dispositivos.map(d => {
+    const miembro = cfg.miembros?.[d.miembroId];
+    const actual = d.id === obtenerIdDispositivo();
+    const estado = d.notificacionesActivas ? 'Notificaciones activas' : 'Sin notificaciones';
+    return `<div class="registered-device-card">
+      <div class="registered-device-icon">${d.plataforma === 'ios' ? '📱' : d.plataforma === 'android' ? '📲' : '💻'}</div>
+      <div class="registered-device-copy"><strong>${escapeHTML(d.nombre || 'Dispositivo')}</strong><small>${escapeHTML(miembro?.nombre || 'Sin perfil')} · ${estado}${actual ? ' · Este dispositivo' : ''}</small></div>
+      ${actual ? '<span class="current-device-badge">Actual</span>' : ''}
+    </div>`;
+  }).join('');
+}
+async function openAjustesModal() {
+  const cfgGuardada = await DB.getConfig();
+  const cfg = normalizarConfigIdentidad(cfgGuardada || {});
+  configCache = cfg;
+
+  const perfil = obtenerMiembroActual(cfg);
+  const perfilNombre = document.getElementById('aj-perfil-nombre');
+  const perfilRol = document.getElementById('aj-perfil-rol');
+  const perfilAvatar = document.getElementById('aj-perfil-avatar');
+  const hogarResumen = document.getElementById('aj-hogar-resumen');
+  const ingresosResumen = document.getElementById('aj-ingresos-resumen');
+  const dispositivosResumen = document.getElementById('aj-dispositivos-resumen');
+  const notifResumen = document.getElementById('aj-notificaciones-resumen');
+
+  if (perfilNombre) perfilNombre.textContent = perfil?.nombre || 'Sin vincular';
+  if (perfilRol) perfilRol.textContent = perfil?.rol === 'administrador' ? 'Administrador del hogar' : 'Miembro del hogar';
+  if (perfilAvatar) perfilAvatar.textContent = perfil?.nombre ? perfil.nombre.slice(0, 2).toUpperCase() : '👤';
+  if (hogarResumen) hogarResumen.textContent = `${cfg.nombreYo || 'Christian'} y ${cfg.nombreElla || 'Sydney'}`;
+
+  const totalFijo = (parseFloat(cfg.ingresoYo) || 0) + (parseFloat(cfg.ingresoElla) || 0);
+  if (ingresosResumen) ingresosResumen.textContent = totalFijo > 0
+    ? `S/ ${totalFijo.toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} al mes`
+    : 'Aún no hay ingresos mensuales configurados';
+  if (dispositivosResumen) dispositivosResumen.textContent = DB.hogarId ? `Código ${DB.hogarId}` : 'Vincular otro dispositivo';
+
+  if (notifResumen) {
+    const cap = capacidadesNotificaciones();
+    notifResumen.textContent = !cap.compatible ? 'No disponibles en este navegador'
+      : cap.requiereInstalacion ? 'Instala la app en el iPhone'
+      : Notification.permission === 'granted' ? 'Activadas en este dispositivo'
+      : Notification.permission === 'denied' ? 'Bloqueadas en este dispositivo'
+      : 'Configurar en este dispositivo';
   }
 
   openModal('ajustesModal');
 }
 
-// Nueva función para copiar el código al portapapeles
-function copyHogarId() {
-  if (!DB.hogarId) return;
-  navigator.clipboard.writeText(DB.hogarId);
-  showToast("Código copiado al portapapeles ✓");
+async function obtenerConfigActualizada() {
+  const guardada = await DB.getConfig();
+  const cfg = normalizarConfigIdentidad(guardada || configCache || {});
+  configCache = cfg;
+  return cfg;
 }
 
-// Nueva función para procesar la unión a un hogar
+async function openIntegrantesModal() {
+  const cfg = await obtenerConfigActualizada();
+  document.getElementById('hogar-nombre').value = cfg.nombreHogar || `Hogar de ${cfg.nombreYo || 'Christian'} y ${cfg.nombreElla || 'Sydney'}`;
+  document.getElementById('hogar-nombre-yo').value = cfg.nombreYo || '';
+  document.getElementById('hogar-nombre-ella').value = cfg.nombreElla || '';
+  closeModal('ajustesModal');
+  openModal('integrantesModal');
+}
+
+async function guardarIntegrantes() {
+  const nombreHogar = document.getElementById('hogar-nombre').value.trim();
+  const nombreYo = document.getElementById('hogar-nombre-yo').value.trim();
+  const nombreElla = document.getElementById('hogar-nombre-ella').value.trim();
+  if (!nombreYo || !nombreElla) {
+    alert('Ingresa el nombre de ambos integrantes.');
+    return;
+  }
+
+  const anterior = await obtenerConfigActualizada();
+  const principalId = anterior.miembroPrincipalId || crearIdMiembro(nombreYo, 'christian');
+  const parejaId = anterior.miembroParejaId || crearIdMiembro(nombreElla, 'sydney');
+  const cambios = normalizarConfigIdentidad({
+    ...anterior,
+    nombreHogar: nombreHogar || `Hogar de ${nombreYo} y ${nombreElla}`,
+    nombreYo,
+    nombreElla,
+    miembros: {
+      ...(anterior.miembros || {}),
+      [principalId]: { ...(anterior.miembros?.[principalId] || {}), id: principalId, nombre: nombreYo, rol: 'administrador', legacyTipo: 'yo', activo: true },
+      [parejaId]: { ...(anterior.miembros?.[parejaId] || {}), id: parejaId, nombre: nombreElla, rol: 'miembro', legacyTipo: 'pareja', activo: true }
+    }
+  });
+
+  const saved = await DB.saveConfig(cambios);
+  if (!saved) {
+    alert('No se pudieron guardar los integrantes.');
+    return;
+  }
+  configCache = cambios;
+  actualizarNombresEnFormularios(cambios);
+  actualizarNombresEnDeudas(cambios);
+  aplicarNombres(cambios);
+  closeModal('integrantesModal');
+  showToast('Integrantes actualizados ✓');
+  renderTodo();
+}
+
+async function openIngresosFijosModal() {
+  const cfg = await obtenerConfigActualizada();
+  const nombreYo = cfg.nombreYo || 'Christian';
+  const nombreElla = cfg.nombreElla || 'Sydney';
+  document.getElementById('if-nombre-yo').textContent = nombreYo;
+  document.getElementById('if-nombre-ella').textContent = nombreElla;
+  document.getElementById('if-avatar-yo').textContent = nombreYo.slice(0,2).toUpperCase();
+  document.getElementById('if-avatar-ella').textContent = nombreElla.slice(0,2).toUpperCase();
+  document.getElementById('if-ingreso-yo').value = Number(cfg.ingresoYo || 0);
+  document.getElementById('if-ingreso-ella').value = Number(cfg.ingresoElla || 0);
+  closeModal('ajustesModal');
+  openModal('ingresosFijosModal');
+}
+
+async function guardarIngresosFijos() {
+  const ingresoYo = Math.max(0, parseFloat(document.getElementById('if-ingreso-yo').value) || 0);
+  const ingresoElla = Math.max(0, parseFloat(document.getElementById('if-ingreso-ella').value) || 0);
+  const cfg = await obtenerConfigActualizada();
+  const actualizado = await DB.updateConfig({ ingresoYo, ingresoElla });
+  if (!actualizado) {
+    alert('No se pudieron guardar los ingresos fijos.');
+    return;
+  }
+  configCache = normalizarConfigIdentidad({ ...cfg, ...actualizado, ingresoYo, ingresoElla });
+  closeModal('ingresosFijosModal');
+  showToast('Ingresos fijos actualizados ✓');
+  renderTodo();
+}
+
+async function openHogarDispositivosModal() {
+  const displayId = document.getElementById('display-hogar-id');
+  if (displayId) displayId.textContent = DB.hogarId || 'Sin código';
+  const input = document.getElementById('join-id-input');
+  if (input) input.value = '';
+  closeModal('ajustesModal');
+  openModal('hogarDispositivosModal');
+}
+
+function openDatosSeguridadModal() {
+  closeModal('ajustesModal');
+  openModal('datosSeguridadModal');
+}
+
+// Copia el código del hogar. En navegadores sin Clipboard API usa un método alternativo.
+async function copyHogarId() {
+  if (!DB.hogarId) return;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(DB.hogarId);
+    } else {
+      const temporal = document.createElement('textarea');
+      temporal.value = DB.hogarId;
+      temporal.style.position = 'fixed';
+      temporal.style.opacity = '0';
+      document.body.appendChild(temporal);
+      temporal.select();
+      document.execCommand('copy');
+      temporal.remove();
+    }
+    showToast('Código copiado ✓');
+  } catch (error) {
+    console.error('No se pudo copiar el código:', error);
+    showToast('Mantén pulsado el código para copiarlo');
+  }
+}
+
 async function unirseAHogar() {
   const input = document.getElementById('join-id-input');
   const code = input.value.trim().toUpperCase();
-  
-  if (!code) return;
-  
-  if (confirm("¿Estás seguro? Se borrará el acceso a los datos actuales de este dispositivo para unirte al nuevo hogar.")) {
+  if (!code) {
+    showToast('Ingresa el código del hogar');
+    return;
+  }
+  if (confirm('¿Vincular este dispositivo a otro hogar? El hogar actual no se eliminará.')) {
     await DB.joinHogar(code);
   }
 }
 
+// Compatibilidad con llamadas antiguas: guarda únicamente nombres e ingresos si aún existe algún formulario legado.
 async function guardarAjustes() {
-  const nombreYo = document.getElementById('aj-nombre-yo').value.trim();
-  const nombreElla = document.getElementById('aj-nombre-ella').value.trim();
-  const ingresoYo = parseFloat(document.getElementById('aj-ingreso-yo').value) || 0;
-  const ingresoElla = parseFloat(document.getElementById('aj-ingreso-ella').value) || 0;
-
-  if (!nombreYo || !nombreElla) {
-    alert('Por favor ingresa el nombre de ambos');
+  const nombreYoEl = document.getElementById('aj-nombre-yo');
+  const nombreEllaEl = document.getElementById('aj-nombre-ella');
+  if (!nombreYoEl || !nombreEllaEl) {
+    showToast('Los ajustes ahora se guardan por sección');
     return;
-  }
-
-  const cfg = {
-    nombreYo: nombreYo,
-    nombreElla: nombreElla,
-    ingresoYo: ingresoYo,
-    ingresoElla: ingresoElla,
-    presupEntret: 300,
-    metaAhorro: 200
-  };
-
-  const saved = await DB.saveConfig(cfg);
-  if (saved) {
-    closeModal('ajustesModal');
-    showToast('Configuración guardada correctamente ✓');
-
-    const freshCfg = await DB.getConfig();
-    if (freshCfg) {
-      iniciarApp(freshCfg);
-      actualizarNombresEnFormularios(freshCfg);
-      actualizarNombresEnDeudas(freshCfg);
-    }
   }
 }
 
@@ -290,7 +666,7 @@ function iniciarApp(cfg) {
   actualizarNombresEnDeudas(cfg);        // ← Nueva línea
   actualizarMesBtn();
   renderTodo();
-  registrarTokenFCM(); // <--- ¡Añade esto aquí!
+  sincronizarDispositivoSiAutorizado();
   iniciarEscuchaNotificaciones();
 
    // 🔥 ESCUCHA EN TIEMPO REAL: Si el hogar cambia en Firebase, refresca la UI
@@ -303,29 +679,33 @@ function iniciarApp(cfg) {
 
 // Se llama al cargar la app para ver si ya sabemos quién es el usuario
 function revisarIdentidad() {
-  const miTipo = localStorage.getItem('miUsuarioTipo');
-  if (!miTipo) {
-    // Si no hay identidad, mostramos el modal de selección
-    const overlay = document.getElementById('identidad-overlay');
-    if (overlay) {
-      overlay.style.display = 'flex';
-      // Intentar poner los nombres reales de la config si ya existen
-      DB.getConfig().then(cfg => {
-        if (cfg) {
-          document.getElementById('identidad-nombre-yo').textContent = cfg.nombreYo;
-          document.getElementById('identidad-nombre-ella').textContent = cfg.nombreElla;
-        }
-      });
-    }
+  // La verificación principal ocurre después de cargar la configuración.
+  // Aquí solo migramos la selección local de versiones anteriores.
+  const legacy = localStorage.getItem('miUsuarioTipo');
+  if (!localStorage.getItem('miembroActualId') && legacy && Object.keys(configCache || {}).length) {
+    const cfg = normalizarConfigIdentidad(configCache);
+    guardarPerfilDispositivo(legacy === 'pareja' ? cfg.miembroParejaId : cfg.miembroPrincipalId, cfg);
   }
 }
 
-// Se llama cuando el usuario hace clic en su nombre en el modal inicial
-function definirIdentidad(tipo) {
-  localStorage.setItem('miUsuarioTipo', tipo);
-  document.getElementById('identidad-overlay').style.display = 'none';
-  showToast("Identidad confirmada ✓");
-  renderTodo(); // Para actualizar el avatar del header
+function definirIdentidad(tipoOMiembroId) {
+  const cfg = normalizarConfigIdentidad(configCache || {});
+  const miembroId = tipoOMiembroId === 'pareja'
+    ? cfg.miembroParejaId
+    : tipoOMiembroId === 'yo'
+      ? cfg.miembroPrincipalId
+      : tipoOMiembroId;
+
+  if (!guardarPerfilDispositivo(miembroId, cfg)) {
+    showToast('No se pudo vincular este dispositivo');
+    return;
+  }
+
+  const overlay = document.getElementById('identidad-overlay');
+  if (overlay) overlay.style.display = 'none';
+  const miembro = cfg.miembros[miembroId];
+  showToast(`Dispositivo vinculado a ${miembro.nombre} ✓`);
+  iniciarApp(cfg);
 }
 
 function iniciarEscuchaNotificaciones() {
@@ -353,7 +733,8 @@ function iniciarEscuchaNotificaciones() {
 }
 
 function aplicarNombres(cfg) {
-  const miTipo = localStorage.getItem('miUsuarioTipo') || 'yo';
+  const miembroActual = obtenerMiembroActual(cfg);
+  const miTipo = miembroActual?.legacyTipo || localStorage.getItem('miUsuarioTipo') || 'yo';
   const yo = cfg.nombreYo || 'Tú';
   const ella = cfg.nombreElla || 'Pareja';
 
@@ -425,7 +806,10 @@ function actualizarNombresEnDeudas(cfg) {
 }
 
 function cerrarSesionIdentidad() {
+  if (!confirm('¿Cambiar el perfil vinculado a este dispositivo? Los datos del hogar no se borrarán.')) return;
+  localStorage.removeItem('miembroActualId');
   localStorage.removeItem('miUsuarioTipo');
+  localStorage.removeItem('perfilDispositivoConfigurado');
   location.reload();
 }
 
@@ -2284,16 +2668,23 @@ async function exportarAExcel() {
   }
 }
 
-async function notificarAlOtro(mensaje, cfg) {
+async function notificarAlOtro(mensaje, cfg, categoria = 'movimientos', url = './index.html') {
   if (!hogarId) return;
-  const miTipo = localStorage.getItem('miUsuarioTipo');
-  const tipoDestino = miTipo === 'yo' ? 'pareja' : 'yo';
+  const config = normalizarConfigIdentidad(cfg || configCache || await DB.getConfig() || {});
+  const miembroActual = obtenerMiembroActual(config);
+  if (!miembroActual) return;
+  const miembroDestino = miembroActual.id === config.miembroPrincipalId ? config.miembroParejaId : config.miembroPrincipalId;
+  const tipoDestino = miembroActual.legacyTipo === 'yo' ? 'pareja' : 'yo';
 
-  // Guardar notificación en Firestore (la Cloud Function la detectará)
   try {
     await db.collection("hogares").doc(hogarId).collection("notificaciones").add({
       texto: mensaje,
+      titulo: 'Hogar Finanzas',
+      categoria,
+      url,
       fecha: firebase.firestore.FieldValue.serverTimestamp(),
+      miembroOrigen: miembroActual.id,
+      miembroDestino,
       usuarioDestino: tipoDestino,
       usuarioId: auth.currentUser ? auth.currentUser.uid : 'anonimo'
     });
@@ -2672,31 +3063,6 @@ function closeModal(id) {
 
 function closeModalOutside(e, id) { 
   if (e.target.id === id) closeModal(id); 
-}
-
-async function configurarNotificaciones() {
-    try {
-        const messaging = firebase.messaging();
-        
-        // Pedir permiso al usuario
-        const permiso = await Notification.requestPermission();
-        
-        if (permiso === 'granted') {
-            // Obtener el token único de este celular
-            // Reemplaza 'TU_VAPID_KEY' por la que generaste en la consola de Firebase
-            const token = await messaging.getToken({ 
-                vapidKey: 'BJ2hOCo0ghqObiVlmWBrGd0QXux17QV8bzk6KxjT-1MwOhmPJHXCD3ArCbR_NeaSj2aFPr_jcQI7iyBdD_O_hl8' 
-            });
-
-            if (token) {
-                console.log("Token obtenido:", token);
-                // Aquí deberíamos guardar el token en Firestore asociado al usuario
-                guardarTokenEnDB(token);
-            }
-        }
-    } catch (error) {
-        console.error("Error al configurar notificaciones:", error);
-    }
 }
 
 function confirmarReset() {

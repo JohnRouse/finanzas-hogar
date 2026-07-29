@@ -7,6 +7,8 @@
 let hogarId = localStorage.getItem('hogarId'); 
 
 const DB = {
+  get hogarId() { return hogarId; },
+
   async init() {
     if (!hogarId) {
       console.log("ℹ️ No hay hogarId local. El usuario debe configurar uno nuevo o unirse.");
@@ -26,6 +28,19 @@ const DB = {
       return doc.exists ? doc.data() : null;
     } catch (e) {
       console.error("Error getConfig:", e);
+      return null;
+    }
+  },
+
+  async updateConfig(cambios) {
+    if (!hogarId) return null;
+    try {
+      const docRef = db.collection("hogares").doc(hogarId).collection("data").doc("config");
+      await docRef.set(cambios, { merge: true });
+      const actualizado = await docRef.get();
+      return actualizado.exists ? actualizado.data() : null;
+    } catch (e) {
+      console.error("Error updateConfig:", e);
       return null;
     }
   },
@@ -56,6 +71,9 @@ const DB = {
       return false;
     }
     localStorage.setItem('hogarId', id);
+    localStorage.removeItem('miembroActualId');
+    localStorage.removeItem('miUsuarioTipo');
+    localStorage.removeItem('perfilDispositivoConfigurado');
     hogarId = id;
     // Verificamos si ese hogar existe en Firebase
     const cfg = await this.getConfig();
@@ -444,6 +462,40 @@ async enviarNotificacion(mensaje) {
     console.log("📢 Notificación enviada a Firebase");
   } catch (e) {
     console.error("Error al enviar notificación:", e);
+  }
+},
+
+/* ── DISPOSITIVOS ── */
+async saveDispositivo(id, datos) {
+  if (!hogarId || !id) return false;
+  try {
+    await db.collection('hogares').doc(hogarId).collection('dispositivos').doc(id).set(datos, { merge: true });
+    return true;
+  } catch (e) {
+    console.error('Error saveDispositivo:', e);
+    return false;
+  }
+},
+
+async updateDispositivo(id, cambios) {
+  if (!hogarId || !id) return false;
+  try {
+    await db.collection('hogares').doc(hogarId).collection('dispositivos').doc(id).set(cambios, { merge: true });
+    return true;
+  } catch (e) {
+    console.error('Error updateDispositivo:', e);
+    return false;
+  }
+},
+
+async getDispositivos() {
+  if (!hogarId) return [];
+  try {
+    const snapshot = await db.collection('hogares').doc(hogarId).collection('dispositivos').get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (e) {
+    console.error('Error getDispositivos:', e);
+    return [];
   }
 },
 

@@ -325,97 +325,189 @@
      MODALES
 ══════════════════════════════════════════════════════════════ -->
 
-<!-- MODAL: AJUSTES (Versión Pulida y Mejorada) -->
+<!-- MODAL: AJUSTES -->
 <div class="modal-overlay" id="ajustesModal" onclick="closeModalOutside(event,'ajustesModal')">
-  <div class="modal-sheet" style="position:relative;">
+  <div class="modal-sheet settings-sheet" style="position:relative;">
     <button class="modal-close" onclick="closeModal('ajustesModal')">✕</button>
     <div class="modal-handle"></div>
-    
-    <div class="modal-title">⚙️ Configuración del Hogar</div>
-    <p style="font-size:13.5px; color:var(--text2); margin-bottom:24px; line-height:1.5;">
-      Bienvenido a Hogar Finanzas. Para empezar, crea un perfil nuevo guardando tus datos o ingresa un código de invitación para unirte.
-    </p>
+    <div class="modal-title">Ajustes</div>
+    <p class="settings-intro">Administra este dispositivo y la organización del hogar. Los datos financieros se gestionan en secciones independientes.</p>
 
-    <!-- Sección: Nombres -->
-    <div class="input-row">
-      <label class="input-label">Tu nombre (o apodo)</label>
-      <input type="text" class="input-field" id="aj-nombre-yo" placeholder="Ej: Christian">
+    <div class="settings-profile-card">
+      <div class="settings-profile-icon" id="aj-perfil-avatar">👤</div>
+      <div class="settings-profile-copy">
+        <span>Perfil de este dispositivo</span>
+        <strong id="aj-perfil-nombre">Sin vincular</strong>
+        <small id="aj-perfil-rol">Perfil local</small>
+      </div>
+      <button type="button" class="settings-profile-action" onclick="cerrarSesionIdentidad()">Cambiar</button>
     </div>
 
-    <div class="input-row">
-      <label class="input-label">Nombre de tu pareja</label>
-      <input type="text" class="input-field" id="aj-nombre-ella" placeholder="Ej: Sydney">
-    </div>
-
-    <!-- Sección: Sueldos -->
-    <div style="margin: 28px 0 12px;">
-      <div style="font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
-        Sueldos básicos mensuales
-      </div>
-      <div class="input-row input-row-two">
-        <div>
-          <label class="input-label">Tu sueldo (S/)</label>
-          <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="aj-ingreso-yo" placeholder="1500">
-        </div>
-        <div>
-          <label class="input-label">Sueldo de tu pareja (S/)</label>
-          <input type="number" inputmode="decimal" pattern="[0-9]*" class="input-field" id="aj-ingreso-ella" placeholder="1200">
-        </div>
-      </div>
-    </div>
-
-    <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--border);">
-
-    <!-- Sección: Sincronización -->
-    <div style="background: var(--surface2); padding: 16px; border-radius: 14px; margin-bottom: 20px;">
-      <div style="font-size: 12px; font-weight: 600; color: var(--text3); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.4px;">
-        Sincronización entre dispositivos
-      </div>
-      
-      <div style="margin-bottom: 12px;">
-        <label style="font-size: 13px; color: var(--text2);">Tu Código de Hogar</label>
-        <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px;">
-          <code id="display-hogar-id" style="flex: 1; background: var(--surface); padding: 10px 12px; border-radius: 8px; font-family: monospace; font-size: 15px; border: 1px solid var(--border);">
-            ---
-          </code>
-          <button onclick="copyHogarId()" style="padding: 8px 14px; background: var(--blue); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;">
-            Copiar
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <label style="font-size: 13px; color: var(--text2);">¿Quieres unirte a un hogar existente?</label>
-        <div style="display: flex; gap: 8px; margin-top: 6px;">
-          <input type="text" id="join-id-input" placeholder="HOGAR-XXXXXX" 
-                 style="flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); font-family: monospace;">
-          <button onclick="unirseAHogar()" 
-                  style="padding: 0 18px; background: var(--text); color: var(--surface); border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500;">
-            Unirme
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-actions-stack">
-      <button class="modal-btn primary" onclick="guardarAjustes()">
-        Guardar configuración
+    <div class="settings-section-label">Organización</div>
+    <div class="settings-menu">
+      <button class="settings-menu-row" onclick="openIntegrantesModal()">
+        <span class="settings-menu-icon">🏠</span>
+        <span class="settings-menu-copy"><strong>Hogar e integrantes</strong><small id="aj-hogar-resumen">Christian y Sydney</small></span>
+        <span class="settings-menu-arrow">›</span>
       </button>
-      <div style="text-align:center; margin: 16px 0;">
-  <button class="modal-btn-subtle" onclick="exportarAExcel()">
-    <span>📥</span> Exportar a Excel
-  </button>
+      <button class="settings-menu-row" onclick="openIngresosFijosModal()">
+        <span class="settings-menu-icon">💼</span>
+        <span class="settings-menu-copy"><strong>Ingresos fijos</strong><small id="aj-ingresos-resumen">Configurar ingresos mensuales</small></span>
+        <span class="settings-menu-arrow">›</span>
+      </button>
+      <button class="settings-menu-row" onclick="openHogarDispositivosModal()">
+        <span class="settings-menu-icon">📱</span>
+        <span class="settings-menu-copy"><strong>Hogar y dispositivos</strong><small id="aj-dispositivos-resumen">Vincular otro dispositivo</small></span>
+        <span class="settings-menu-arrow">›</span>
+      </button>
+    </div>
+
+    <div class="settings-section-label settings-label-spaced">Aplicación</div>
+    <div class="settings-menu">
+      <button class="settings-menu-row" onclick="configurarNotificaciones()">
+        <span class="settings-menu-icon">🔔</span>
+        <span class="settings-menu-copy"><strong>Notificaciones</strong><small id="aj-notificaciones-resumen">Configurar en este dispositivo</small></span>
+        <span class="settings-menu-arrow">›</span>
+      </button>
+      <button class="settings-menu-row" onclick="openDatosSeguridadModal()">
+        <span class="settings-menu-icon">🛡️</span>
+        <span class="settings-menu-copy"><strong>Datos y seguridad</strong><small>Exportación, cambio de hogar y borrado</small></span>
+        <span class="settings-menu-arrow">›</span>
+      </button>
+    </div>
+
+    <div class="settings-version">Hogar Finanzas · Datos sincronizados por hogar</div>
+  </div>
 </div>
 
-      <div class="modal-secondary-actions">
-        <button class="modal-btn-subtle" onclick="cerrarSesionIdentidad()">
-          <span>👤</span> Cambiar de Usuario
-        </button>
-        
-        <button class="modal-link-danger" onclick="confirmarReset()">
-          <span>🗑️</span> Borrar todos los datos
-        </button>
-      </div>
+<!-- MODAL: HOGAR E INTEGRANTES -->
+<div class="modal-overlay" id="integrantesModal" onclick="closeModalOutside(event,'integrantesModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('integrantesModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Hogar e integrantes</div>
+    <p class="settings-intro">Estos nombres identifican quién registra cada movimiento. Ambos integrantes pueden ver toda la información del hogar.</p>
+    <div class="input-row">
+      <label class="input-label">Nombre del hogar</label>
+      <input type="text" class="input-field" id="hogar-nombre" placeholder="Ej.: Nuestro hogar">
+    </div>
+    <div class="member-edit-card">
+      <span class="member-role-badge">Administrador</span>
+      <label class="input-label">Nombre</label>
+      <input type="text" class="input-field" id="hogar-nombre-yo" placeholder="Christian">
+      <small>Puede administrar integrantes, dispositivos y datos del hogar.</small>
+    </div>
+    <div class="member-edit-card">
+      <span class="member-role-badge secondary">Miembro</span>
+      <label class="input-label">Nombre</label>
+      <input type="text" class="input-field" id="hogar-nombre-ella" placeholder="Sydney">
+      <small>Puede registrar movimientos y consultar toda la información.</small>
+    </div>
+    <button class="modal-btn primary" onclick="guardarIntegrantes()">Guardar integrantes</button>
+  </div>
+</div>
+
+<!-- MODAL: NOTIFICACIONES -->
+<div class="modal-overlay" id="notificacionesModal" onclick="closeModalOutside(event,'notificacionesModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('notificacionesModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Notificaciones</div>
+    <p class="settings-intro">Configura los avisos de este dispositivo. Cada celular o navegador se registra de manera independiente.</p>
+
+    <div class="notification-status-card">
+      <div class="notification-status-icon">🔔</div>
+      <div><span>Estado</span><strong id="notif-status">Comprobando…</strong><small id="notif-status-detail">Revisando compatibilidad del dispositivo.</small></div>
+    </div>
+
+    <div id="notif-install-guide" class="ios-install-guide hidden">
+      <strong>Instalar en iPhone</strong>
+      <ol><li>Abre esta página en Safari.</li><li>Pulsa Compartir.</li><li>Elige “Agregar a pantalla de inicio”.</li><li>Abre Hogar Finanzas desde el nuevo icono.</li><li>Regresa aquí y pulsa “Activar notificaciones”.</li></ol>
+    </div>
+
+    <div class="input-row">
+      <label class="input-label">Nombre de este dispositivo</label>
+      <div class="device-name-row"><input type="text" class="input-field" id="notif-device-name" placeholder="Ej.: iPhone de Sydney"><button type="button" onclick="actualizarNombreDispositivo()">Guardar</button></div>
+    </div>
+
+    <div class="settings-section-label settings-label-spaced">Avisos que deseas recibir</div>
+    <div class="notification-preferences">
+      <label><span><strong>Movimientos compartidos</strong><small>Gastos, ingresos y pagos registrados por el otro integrante.</small></span><input type="checkbox" id="notif-pref-movimientos" onchange="actualizarPreferenciasNotificaciones()"></label>
+      <label><span><strong>Vencimientos</strong><small>Recordatorios de tarjetas y préstamos próximos.</small></span><input type="checkbox" id="notif-pref-vencimientos" onchange="actualizarPreferenciasNotificaciones()"></label>
+      <label><span><strong>Alertas del presupuesto</strong><small>Avisos cuando el dinero disponible requiere atención.</small></span><input type="checkbox" id="notif-pref-presupuesto" onchange="actualizarPreferenciasNotificaciones()"></label>
+      <label><span><strong>Estados de cuenta</strong><small>Recordatorio para registrar datos luego del cierre.</small></span><input type="checkbox" id="notif-pref-estados" onchange="actualizarPreferenciasNotificaciones()"></label>
+    </div>
+
+    <button class="modal-btn primary" id="notif-primary-btn" onclick="activarNotificacionesDesdeBoton()">Activar notificaciones</button>
+    <button class="modal-btn secondary" id="notif-disable-btn" onclick="desactivarNotificacionesDispositivo()" style="display:none;">Desactivar en este dispositivo</button>
+    <div class="settings-note">En iPhone se requiere iOS 16.4 o posterior y abrir la app desde la pantalla de inicio. Los avisos pueden ser silenciados por Concentración o por los ajustes del sistema.</div>
+  </div>
+</div>
+
+<!-- MODAL: DISPOSITIVOS REGISTRADOS -->
+<div class="modal-overlay" id="dispositivosRegistradosModal" onclick="closeModalOutside(event,'dispositivosRegistradosModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('dispositivosRegistradosModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Dispositivos registrados</div>
+    <p class="settings-intro">Cada instalación conserva su propio perfil y sus preferencias de notificación.</p>
+    <div id="lista-dispositivos" class="registered-device-list"></div>
+  </div>
+</div>
+
+<!-- MODAL: INGRESOS FIJOS -->
+<div class="modal-overlay" id="ingresosFijosModal" onclick="closeModalOutside(event,'ingresosFijosModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('ingresosFijosModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Ingresos fijos</div>
+    <p class="settings-intro">Registra los ingresos que se consideran automáticamente cada mes. Los ingresos ocasionales se agregan desde la pantalla Resumen.</p>
+    <div class="fixed-income-card">
+      <div class="fixed-income-person"><span class="fixed-income-avatar" id="if-avatar-yo">CH</span><div><strong id="if-nombre-yo">Christian</strong><small>Ingreso mensual recurrente</small></div></div>
+      <label class="input-label">Monto mensual (S/)</label>
+      <input type="number" min="0" step="0.01" inputmode="decimal" class="input-field" id="if-ingreso-yo" placeholder="0.00">
+    </div>
+    <div class="fixed-income-card">
+      <div class="fixed-income-person"><span class="fixed-income-avatar" id="if-avatar-ella">SY</span><div><strong id="if-nombre-ella">Sydney</strong><small>Ingreso mensual recurrente</small></div></div>
+      <label class="input-label">Monto mensual (S/)</label>
+      <input type="number" min="0" step="0.01" inputmode="decimal" class="input-field" id="if-ingreso-ella" placeholder="0.00">
+    </div>
+    <div class="settings-note">Estos montos no crean movimientos editables. Se suman automáticamente al total mensual.</div>
+    <button class="modal-btn primary" onclick="guardarIngresosFijos()">Guardar ingresos fijos</button>
+  </div>
+</div>
+
+<!-- MODAL: HOGAR Y DISPOSITIVOS -->
+<div class="modal-overlay" id="hogarDispositivosModal" onclick="closeModalOutside(event,'hogarDispositivosModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('hogarDispositivosModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Hogar y dispositivos</div>
+    <p class="settings-intro">Usa el código del hogar para instalar la aplicación en otro celular y acceder a la misma información.</p>
+    <div class="house-code-card">
+      <span>Código de vinculación</span>
+      <strong id="display-hogar-id">---</strong>
+      <button class="modal-btn secondary" onclick="copyHogarId()">Copiar código</button>
+    </div>
+    <div class="settings-subsection">
+      <strong>Vincular este dispositivo a otro hogar</strong>
+      <small>Se cerrará el acceso al hogar actual en este dispositivo, pero los datos no se eliminarán.</small>
+      <input type="text" id="join-id-input" class="input-field code-input" placeholder="HOGAR-XXXXXXXX">
+      <button class="modal-btn" onclick="unirseAHogar()">Unirme a otro hogar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DATOS Y SEGURIDAD -->
+<div class="modal-overlay" id="datosSeguridadModal" onclick="closeModalOutside(event,'datosSeguridadModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('datosSeguridadModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Datos y seguridad</div>
+    <div class="settings-action-list">
+      <button class="settings-action-button" onclick="exportarAExcel()"><span>📥</span><div><strong>Exportar información</strong><small>Descarga una copia en formato Excel.</small></div></button>
+      <button class="settings-action-button" onclick="cerrarSesionIdentidad()"><span>👤</span><div><strong>Cambiar perfil del dispositivo</strong><small>Selecciona qué integrante usa principalmente este equipo.</small></div></button>
+      <button class="settings-action-button danger" onclick="confirmarReset()"><span>🗑️</span><div><strong>Borrar todos los datos</strong><small>Elimina la información financiera del hogar.</small></div></button>
     </div>
   </div>
 </div>
@@ -889,18 +981,20 @@
 <!-- Pantalla de Identificación Local (Solo se ve una vez por dispositivo) -->
 <div id="identidad-overlay" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:10001; align-items:center; justify-content:center; padding:20px;">
   <div class="card" style="width:100%; max-width:350px; text-align:center; padding:30px; border-radius:28px;">
-    <h2 style="font-family:'DM Serif Display', serif; font-size:24px; margin-bottom:10px;">¿Quién eres?</h2>
-    <p style="color:var(--text2); font-size:14px; margin-bottom:25px;">Personalizaremos la experiencia para este dispositivo.</p>
+    <div class="device-setup-badge">CONFIGURACIÓN INICIAL</div>
+    <h2 style="font-family:'DM Serif Display', serif; font-size:24px; margin-bottom:10px;">Configura este dispositivo</h2>
+    <p id="identidad-hogar-nombre" style="font-weight:600; margin-bottom:6px;">Hogar Finanzas</p>
+    <p style="color:var(--text2); font-size:14px; margin-bottom:25px;">Selecciona quién usará principalmente este celular. Podrás cambiarlo después sin borrar ningún dato.</p>
     
     <div style="display:grid; gap:15px;">
       <button onclick="definirIdentidad('yo')" class="choice-btn" style="display:flex; align-items:center; gap:15px; padding:15px; border-radius:18px; border:1px solid var(--border); background:var(--surface); cursor:pointer;">
-        <div class="avatar yo" style="width:45px; height:45px; margin:0;">CH</div>
-        <span style="font-weight:600; font-size:16px;" id="identidad-nombre-yo">Christian</span>
+        <div id="identidad-avatar-yo" class="avatar yo" style="width:45px; height:45px; margin:0;">CH</div>
+        <div style="text-align:left"><span style="display:block;font-weight:600;font-size:16px" id="identidad-nombre-yo">Christian</span><small style="color:var(--text3)">Administrador del hogar</small></div>
       </button>
 
       <button onclick="definirIdentidad('pareja')" class="choice-btn" style="display:flex; align-items:center; gap:15px; padding:15px; border-radius:18px; border:1px solid var(--border); background:var(--surface); cursor:pointer;">
-        <div class="avatar ella" style="width:45px; height:45px; margin:0;">SY</div>
-        <span style="font-weight:600; font-size:16px;" id="identidad-nombre-ella">Sydney</span>
+        <div id="identidad-avatar-ella" class="avatar ella" style="width:45px; height:45px; margin:0;">SY</div>
+        <div style="text-align:left"><span style="display:block;font-weight:600;font-size:16px" id="identidad-nombre-ella">Sydney</span><small style="color:var(--text3)">Integrante del hogar</small></div>
       </button>
     </div>
   </div>
@@ -1075,11 +1169,6 @@
   window.auth = auth;
   window.db = db;
 
-  if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./firebase-messaging-sw.js')
-    .then(reg => console.log('SW registrado'))
-    .catch(err => console.error('Error SW:', err));
-}
   // Login anónimo
   auth.signInAnonymously()
     .then(() => {

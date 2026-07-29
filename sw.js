@@ -1,5 +1,3 @@
-// sw.js mejorado
-self.addEventListener('fetch', (event) => {
-  // Responde con el contenido de la red normalmente
-  event.respondWith(fetch(event.request));
-});
+// Conservado solo por compatibilidad con instalaciones antiguas.
+// La aplicación utiliza firebase-messaging-sw.js como único service worker.
+self.addEventListener('install', () => self.skipWaiting());
