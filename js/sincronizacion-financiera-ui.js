@@ -1,9 +1,10 @@
-/* Hogar Finanzas — Etapa 11.4.3: sincronización reactiva entre Outlook, deuda y UI */
+/* Hogar Finanzas — Etapa 13.5: sincronización reactiva, UI y arranque avanzado */
 (() => {
   'use strict';
 
   let temporizador = null;
   let ultimoResumen = null;
+  let bootstrapSolicitado = false;
 
   function toast(mensaje) {
     if (typeof window.showToast === 'function') window.showToast(mensaje);
@@ -20,6 +21,14 @@
     }).format(numero);
   }
 
+  function registrarIncidencia(origen, error, contexto = {}) {
+    if (window.HFEstabilidadApp?.registrarError) {
+      window.HFEstabilidadApp.registrarError(origen, error, contexto);
+    } else {
+      console.warn(origen, error, contexto);
+    }
+  }
+
   function refrescarVistas(forzar = true) {
     clearTimeout(temporizador);
     temporizador = setTimeout(() => {
@@ -29,7 +38,7 @@
         if (typeof window.cargarDeudas === 'function') window.cargarDeudas();
         if (typeof window.actualizarDashboard === 'function') window.actualizarDashboard();
       } catch (error) {
-        console.warn('No se pudieron refrescar todas las vistas financieras:', error);
+        registrarIncidencia('sincronizacion-ui:refrescar-vistas', error, { forzar });
       }
     }, 120);
   }
@@ -37,16 +46,20 @@
   function destacarTarjeta(tarjetaId) {
     if (!tarjetaId) return;
     setTimeout(() => {
-      const nodos = document.querySelectorAll('.hf-card-status');
-      nodos.forEach(nodo => {
-        const coincide = nodo.dataset.tarjetaId === tarjetaId || nodo.querySelector(`[data-tarjeta-id="${tarjetaId}"]`);
-        if (!coincide) return;
-        nodo.animate([
-          { transform: 'scale(1)', boxShadow: '0 0 0 rgba(59,130,246,0)' },
-          { transform: 'scale(1.012)', boxShadow: '0 0 0 4px rgba(59,130,246,.18)' },
-          { transform: 'scale(1)', boxShadow: '0 0 0 rgba(59,130,246,0)' }
-        ], { duration: 1300, easing: 'ease-out' });
-      });
+      try {
+        const nodos = document.querySelectorAll('.hf-card-status');
+        nodos.forEach(nodo => {
+          const coincide = nodo.dataset.tarjetaId === tarjetaId || nodo.querySelector(`[data-tarjeta-id="${tarjetaId}"]`);
+          if (!coincide || typeof nodo.animate !== 'function') return;
+          nodo.animate([
+            { transform: 'scale(1)', boxShadow: '0 0 0 rgba(59,130,246,0)' },
+            { transform: 'scale(1.012)', boxShadow: '0 0 0 4px rgba(59,130,246,.18)' },
+            { transform: 'scale(1)', boxShadow: '0 0 0 rgba(59,130,246,0)' }
+          ], { duration: 1300, easing: 'ease-out' });
+        });
+      } catch (error) {
+        registrarIncidencia('sincronizacion-ui:destacar-tarjeta', error, { tarjetaId });
+      }
     }, 350);
   }
 
@@ -60,6 +73,29 @@
     }
     ultimoResumen = resumen;
     toast(mensaje);
+  }
+
+  function cargarBootstrapAvanzado() {
+    if (bootstrapSolicitado || window.HFBootstrapAvanzado) return;
+    bootstrapSolicitado = true;
+
+    const existente = document.querySelector('script[data-hf-bootstrap-principal]');
+    if (existente) return;
+
+    const script = document.createElement('script');
+    script.src = new URL('js/bootstrap-avanzado.js?v=13.5.1', document.baseURI).href;
+    script.async = false;
+    script.dataset.hfBootstrapPrincipal = 'true';
+    script.onload = () => {
+      window.HFBootstrapAvanzado?.iniciar?.().catch?.(error => {
+        registrarIncidencia('sincronizacion-ui:iniciar-bootstrap', error);
+      });
+    };
+    script.onerror = () => {
+      bootstrapSolicitado = false;
+      registrarIncidencia('sincronizacion-ui:cargar-bootstrap', new Error('No se pudo cargar bootstrap-avanzado.js'));
+    };
+    document.body.appendChild(script);
   }
 
   window.addEventListener('hf:deuda-actualizada', event => {
@@ -84,5 +120,15 @@
     if (!document.hidden && document.getElementById('page-deudas')?.classList.contains('active')) refrescarVistas(false);
   });
 
-  window.HFSincronizacionFinancieraUI = Object.freeze({ refrescarVistas, destacarTarjeta });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(cargarBootstrapAvanzado, 150));
+  } else {
+    setTimeout(cargarBootstrapAvanzado, 150);
+  }
+
+  window.HFSincronizacionFinancieraUI = Object.freeze({
+    refrescarVistas,
+    destacarTarjeta,
+    cargarBootstrapAvanzado
+  });
 })();
