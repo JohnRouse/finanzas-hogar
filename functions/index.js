@@ -78,11 +78,13 @@ exports.enviarNotificacionPago = onDocumentCreated(
       .collection('dispositivos').get();
 
     const categoria = notif.categoria || 'movimientos';
+    const dispositivoDestino = notif.dispositivoDestino || null;
     const docsDestino = dispositivosSnap.docs.filter(doc => {
       const d = doc.data();
-      const coincide = miembroDestino ? d.miembroId === miembroDestino : d.usuario === usuarioDestino;
+      const coincideMiembro = miembroDestino ? d.miembroId === miembroDestino : d.usuario === usuarioDestino;
+      const coincideDispositivo = !dispositivoDestino || doc.id === dispositivoDestino;
       const permitido = d.preferencias?.[categoria] !== false;
-      return coincide && permitido && d.notificacionesActivas === true && !!d.token;
+      return coincideMiembro && coincideDispositivo && permitido && d.notificacionesActivas === true && !!d.token;
     });
 
     let tokens = docsDestino.map(doc => doc.data().token).filter(Boolean);

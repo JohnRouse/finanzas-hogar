@@ -357,21 +357,34 @@ async function probarNotificacionEnEsteDispositivo() {
     const cfg = normalizarConfigIdentidad(configCache || await DB.getConfig() || {});
     const miembro = obtenerMiembroActual(cfg);
     if (!miembro) throw new Error('No hay un perfil asociado a este dispositivo.');
+
+    const dispositivoId = obtenerIdDispositivo();
+    const dispositivoSnap = await db.collection('hogares').doc(hogarId)
+      .collection('dispositivos').doc(dispositivoId).get();
+    const dispositivo = dispositivoSnap.exists ? dispositivoSnap.data() : null;
+
+    if (!dispositivo?.notificacionesActivas || !dispositivo?.token) {
+      showToast('Este dispositivo no tiene un canal push activo. Los avisos internos seguirán disponibles al abrir la app.');
+      await actualizarModalNotificaciones();
+      return;
+    }
+
     await db.collection('hogares').doc(hogarId).collection('notificaciones').add({
       titulo: 'Prueba correcta',
       texto: 'Este dispositivo ya puede recibir avisos de Hogar Finanzas.',
       categoria: 'vencimientos',
       miembroDestino: miembro.id,
       usuarioDestino: miembro.legacyTipo,
+      dispositivoDestino: dispositivoId,
       url: './index.html',
-      tag: `prueba-${obtenerIdDispositivo()}`,
+      tag: `prueba-${dispositivoId}`,
       fecha: firebase.firestore.FieldValue.serverTimestamp(),
-      origen: 'prueba-manual'
+      origen: 'prueba-dispositivo'
     });
-    showToast('Prueba enviada. Puede tardar unos segundos.');
+    showToast('Prueba enviada únicamente a este dispositivo.');
   } catch (error) {
     console.error('Error enviando prueba:', error);
-    showToast('No se pudo enviar la prueba');
+    showToast('No se pudo enviar la prueba a este dispositivo');
   }
 }
 async function activarNotificacionesDesdeBoton() {
@@ -402,7 +415,7 @@ async function activarNotificacionesDesdeBoton() {
     await actualizarModalNotificaciones();
   } catch (error) {
     console.error('Error activando notificaciones:', error);
-    showToast('No se pudieron activar. Revisa el navegador y vuelve a intentar.');
+    showToast(error?.name === 'AbortError' ? 'El servicio push del dispositivo no pudo registrarse. La app seguirá mostrando avisos internos.' : 'No se pudieron activar. Revisa el navegador y vuelve a intentar.');
     await actualizarModalNotificaciones();
   }
 }
