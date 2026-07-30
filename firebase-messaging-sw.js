@@ -11,10 +11,10 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v3-etapa10';
+const CACHE_NAME = 'hogar-finanzas-v3-etapa11-1';
 const APP_SHELL = [
   './', './index.html', './css/styles.css?v=10.0', './js/data.js?v=10.0', './js/app.js?v=10.0',
-  './manifest.json', './icons/icon-192.png', './icons/icon-512.png'
+  './js/importaciones.js?v=11.1', './css/importaciones.css?v=11.1', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'
 ];
 
 self.addEventListener('install', event => {

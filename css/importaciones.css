@@ -1,0 +1,38 @@
+
+/* Etapa 11.1 — Bandeja de movimientos detectados */
+.hf-import-count{display:inline-flex;min-width:19px;height:19px;padding:0 5px;border-radius:999px;align-items:center;justify-content:center;background:#c43030;color:#fff;font-size:11px;font-weight:700;margin-left:4px}
+.hf-import-sheet{max-height:92vh;overflow:auto}
+.hf-import-help{color:var(--muted,#6b6a66);font-size:13px;line-height:1.45;margin:0 0 14px}
+.hf-import-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+.hf-import-filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.hf-import-filters button{white-space:nowrap;border:1px solid var(--border,#e5e2db);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;cursor:pointer}
+.hf-import-filters button.active{background:#1f2937;color:#fff;border-color:#1f2937}
+.hf-import-list{display:grid;gap:10px;padding-bottom:20px}
+.hf-import-card{display:flex;gap:12px;background:#fff;border:1px solid var(--border,#e5e2db);border-radius:16px;padding:13px}
+.hf-import-card.requiere-revision{border-color:#d99b22}
+.hf-import-card.duplicado{border-color:#c43030}
+.hf-import-card.confirmado{opacity:.72}
+.hf-import-icon{width:42px;height:42px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:21px;flex:0 0 auto}
+.hf-import-main{min-width:0;flex:1}
+.hf-import-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.hf-import-top strong{font-size:14px;overflow:hidden;text-overflow:ellipsis}
+.hf-import-amount{font-weight:700;white-space:nowrap}
+.hf-import-main small{display:block;color:var(--muted,#6b6a66);margin:3px 0 8px}
+.hf-import-tags{display:flex;gap:5px;flex-wrap:wrap}
+.hf-import-tags span{font-size:10px;background:#f1f0ec;padding:4px 7px;border-radius:999px}
+.hf-import-tags .danger{background:#fde8e8;color:#a52020}
+.hf-import-card-actions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.hf-import-card-actions button{border:0;border-radius:9px;padding:7px 10px;background:#edece7;cursor:pointer;font-size:12px}
+.hf-import-card-actions .confirm{background:#e7f4e4;color:#28651c}
+.hf-import-card-actions .discard{background:#fdebea;color:#a52c25}
+.hf-import-editor .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.hf-import-editor label{font-size:12px;color:var(--muted,#6b6a66);display:flex;flex-direction:column;gap:5px}
+.hf-import-editor label.wide{grid-column:1/-1}
+.hf-import-editor input,.hf-import-editor select,.hf-import-editor textarea{width:100%;border:1px solid var(--border,#dedbd4);border-radius:10px;padding:10px;background:#fff;font:inherit;color:inherit;box-sizing:border-box}
+.hf-import-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+@media(max-width:640px){
+  .hf-import-toolbar{flex-direction:column}
+  .hf-import-editor .form-grid{grid-template-columns:1fr}
+  .hf-import-editor label.wide{grid-column:auto}
+  .hf-import-top{flex-direction:column;gap:4px}
+}

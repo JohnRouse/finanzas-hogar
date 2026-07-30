@@ -1,0 +1,16 @@
+ETAPA 11.1 — INSTALACIÓN
+
+1. Descomprime este ZIP en cualquier carpeta de la workstation.
+2. Ejecuta:
+
+   python3 APLICAR_ETAPA11_1.py ~/finanzas-hogar
+
+3. Publica los cambios:
+
+   cd ~/finanzas-hogar
+   git status
+   git add .
+   git commit -m "Etapa 11.1: bandeja de movimientos importados"
+   git push origin master
+
+No necesitas desplegar Cloud Functions en esta etapa.
