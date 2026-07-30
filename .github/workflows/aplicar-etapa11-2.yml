@@ -10,6 +10,8 @@ on:
       - 'js/modelo-financiero.js'
       - 'js/motor-conciliacion.js'
       - 'js/reglas-bancarias.js'
+      - 'js/importaciones.js'
+      - 'js/vinculacion-tarjetas-outlook.js'
       - 'js/pipeline-outlook.js'
       - 'js/outlook-graph.js'
       - 'js/outlook-ui.js'
@@ -34,22 +36,24 @@ jobs:
           from pathlib import Path
           import re
 
-          VERSION = '11.3.3'
-          CACHE_NAME = 'hogar-finanzas-v3-etapa11-3-3'
+          VERSION = '11.3.6'
+          CACHE_NAME = 'hogar-finanzas-v3-etapa11-3-6'
 
           css_assets = [
               'css/deudas-inteligentes.css?v=11.2.1',
           ]
 
-          # El orden es importante: primero motores y reglas, después pipeline,
-          # cliente Graph y finalmente la interfaz.
+          # El orden es importante: motores y reglas, bandeja de importación,
+          # vinculación de tarjetas, pipeline, cliente Graph e interfaz.
           js_assets = [
-              'js/modelo-financiero.js?v=11.3.3',
-              'js/motor-conciliacion.js?v=11.3.3',
-              'js/reglas-bancarias.js?v=11.3.3',
-              'js/pipeline-outlook.js?v=11.3.3',
-              'js/outlook-graph.js?v=11.3.3',
-              'js/outlook-ui.js?v=11.3.3',
+              f'js/modelo-financiero.js?v={VERSION}',
+              f'js/motor-conciliacion.js?v={VERSION}',
+              f'js/reglas-bancarias.js?v={VERSION}',
+              f'js/importaciones.js?v={VERSION}',
+              f'js/vinculacion-tarjetas-outlook.js?v={VERSION}',
+              f'js/pipeline-outlook.js?v={VERSION}',
+              f'js/outlook-graph.js?v={VERSION}',
+              f'js/outlook-ui.js?v={VERSION}',
               'js/deudas-inteligentes.js?v=11.2.1',
           ]
 
@@ -107,6 +111,8 @@ jobs:
           node --check js/modelo-financiero.js
           node --check js/motor-conciliacion.js
           node --check js/reglas-bancarias.js
+          node --check js/importaciones.js
+          node --check js/vinculacion-tarjetas-outlook.js
           node --check js/pipeline-outlook.js
           node --check js/outlook-graph.js
           node --check js/outlook-ui.js
@@ -117,9 +123,12 @@ jobs:
           grep -q 'js/modelo-financiero.js' index.html
           grep -q 'js/motor-conciliacion.js' index.html
           grep -q 'js/reglas-bancarias.js' index.html
+          grep -q 'js/importaciones.js' index.html
+          grep -q 'js/vinculacion-tarjetas-outlook.js' index.html
           grep -q 'js/pipeline-outlook.js' index.html
           grep -q 'js/outlook-graph.js' index.html
           grep -q 'js/outlook-ui.js' index.html
+          grep -q 'js/vinculacion-tarjetas-outlook.js' firebase-messaging-sw.js
           grep -q 'js/outlook-ui.js' firebase-messaging-sw.js
 
       - name: Guardar integración
@@ -131,5 +140,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '4189828+github-actions[bot]@users.noreply.github.com'
           git add index.html firebase-messaging-sw.js
-          git commit -m 'Etapa 11.3.3: activa integración Outlook [auto-etapa11]'
+          git commit -m 'Etapa 11.3.6: integra vinculación Outlook [auto-etapa11]'
           git push origin etapa-11-2-motor-importacion
