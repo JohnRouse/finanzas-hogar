@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v3-etapa11-3-3';
+const CACHE_NAME = 'hogar-finanzas-v3-etapa11-3-6';
 const APP_SHELL = [
   './', './index.html', './css/styles.css?v=10.0', './js/data.js?v=10.0', './js/app.js?v=10.0',
   './js/importaciones.js?v=11.1', './css/importaciones.css?v=11.1', './js/deudas-inteligentes.js?v=11.2.1', './css/deudas-inteligentes.css?v=11.2.1', './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
@@ -20,7 +20,15 @@ const APP_SHELL = [
   './js/reglas-bancarias.js?v=11.3.3',
   './js/pipeline-outlook.js?v=11.3.3',
   './js/outlook-graph.js?v=11.3.3',
-  './js/outlook-ui.js?v=11.3.3'
+  './js/outlook-ui.js?v=11.3.3',
+  './js/modelo-financiero.js?v=11.3.6',
+  './js/motor-conciliacion.js?v=11.3.6',
+  './js/reglas-bancarias.js?v=11.3.6',
+  './js/importaciones.js?v=11.3.6',
+  './js/vinculacion-tarjetas-outlook.js?v=11.3.6',
+  './js/pipeline-outlook.js?v=11.3.6',
+  './js/outlook-graph.js?v=11.3.6',
+  './js/outlook-ui.js?v=11.3.6'
 ];
 
 self.addEventListener('install', event => {
