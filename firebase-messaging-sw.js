@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v3-etapa11-4-4';
+const CACHE_NAME = 'hogar-finanzas-v3-etapa11-5-4';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
@@ -22,17 +22,20 @@ const APP_SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './css/deudas-inteligentes.css?v=11.2.1',
-  './js/modelo-financiero.js?v=11.4.4',
-  './js/motor-conciliacion.js?v=11.4.4',
-  './js/reglas-bancarias.js?v=11.4.4',
-  './js/importaciones.js?v=11.4.4',
-  './js/vinculacion-tarjetas-outlook.js?v=11.4.4',
-  './js/pipeline-outlook.js?v=11.4.4',
-  './js/outlook-graph.js?v=11.4.4',
-  './js/actualizador-tarjetas-outlook.js?v=11.4.4',
-  './js/outlook-ui.js?v=11.4.4',
+  './js/modelo-financiero.js?v=11.5.4',
+  './js/motor-conciliacion.js?v=11.5.4',
+  './js/reglas-bancarias.js?v=11.5.4',
+  './js/importaciones.js?v=11.5.4',
+  './js/vinculacion-tarjetas-outlook.js?v=11.5.4',
+  './js/pipeline-outlook.js?v=11.5.4',
+  './js/outlook-graph.js?v=11.5.4',
+  './js/actualizador-tarjetas-outlook.js?v=11.5.4',
+  './js/outlook-ui.js?v=11.5.4',
   './js/deudas-inteligentes.js?v=11.2.1',
-  './js/sincronizacion-financiera-ui.js?v=11.4.4'
+  './js/sincronizacion-financiera-ui.js?v=11.5.4',
+  './js/motor-predictivo-financiero.js?v=11.5.4',
+  './js/panel-predicciones-financieras.js?v=11.5.4',
+  './js/optimizador-pagos.js?v=11.5.4'
 ];
 
 self.addEventListener('install', event => {
