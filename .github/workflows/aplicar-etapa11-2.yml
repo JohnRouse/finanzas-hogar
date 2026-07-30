@@ -1,4 +1,4 @@
-name: Integrar Etapas 11.2, 11.3 y 11.4
+name: Integrar Etapas 11.2 a 11.5
 
 on:
   push:
@@ -17,6 +17,9 @@ on:
       - 'js/outlook-ui.js'
       - 'js/actualizador-tarjetas-outlook.js'
       - 'js/sincronizacion-financiera-ui.js'
+      - 'js/motor-predictivo-financiero.js'
+      - 'js/panel-predicciones-financieras.js'
+      - 'js/optimizador-pagos.js'
       - '.github/workflows/aplicar-etapa11-2.yml'
 
 permissions:
@@ -38,8 +41,8 @@ jobs:
           from pathlib import Path
           import re
 
-          VERSION = '11.4.4'
-          CACHE_NAME = 'hogar-finanzas-v3-etapa11-4-4'
+          VERSION = '11.5.4'
+          CACHE_NAME = 'hogar-finanzas-v3-etapa11-5-4'
 
           css_assets = [
               'css/deudas-inteligentes.css?v=11.2.1',
@@ -57,6 +60,9 @@ jobs:
               f'js/outlook-ui.js?v={VERSION}',
               'js/deudas-inteligentes.js?v=11.2.1',
               f'js/sincronizacion-financiera-ui.js?v={VERSION}',
+              f'js/motor-predictivo-financiero.js?v={VERSION}',
+              f'js/panel-predicciones-financieras.js?v={VERSION}',
+              f'js/optimizador-pagos.js?v={VERSION}',
           ]
 
           index = Path('index.html')
@@ -115,6 +121,9 @@ jobs:
           node --check js/outlook-ui.js
           node --check js/deudas-inteligentes.js
           node --check js/sincronizacion-financiera-ui.js
+          node --check js/motor-predictivo-financiero.js
+          node --check js/panel-predicciones-financieras.js
+          node --check js/optimizador-pagos.js
 
       - name: Verificar integración
         run: |
@@ -129,8 +138,12 @@ jobs:
           grep -q 'js/outlook-ui.js' index.html
           grep -q 'js/deudas-inteligentes.js' index.html
           grep -q 'js/sincronizacion-financiera-ui.js' index.html
-          grep -q 'js/actualizador-tarjetas-outlook.js' firebase-messaging-sw.js
-          grep -q 'js/sincronizacion-financiera-ui.js' firebase-messaging-sw.js
+          grep -q 'js/motor-predictivo-financiero.js' index.html
+          grep -q 'js/panel-predicciones-financieras.js' index.html
+          grep -q 'js/optimizador-pagos.js' index.html
+          grep -q 'js/motor-predictivo-financiero.js' firebase-messaging-sw.js
+          grep -q 'js/panel-predicciones-financieras.js' firebase-messaging-sw.js
+          grep -q 'js/optimizador-pagos.js' firebase-messaging-sw.js
 
       - name: Guardar integración
         run: |
@@ -141,5 +154,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '4189828+github-actions[bot]@users.noreply.github.com'
           git add index.html firebase-messaging-sw.js
-          git commit -m 'Etapa 11.4.4: integra automatización financiera [auto-etapa11]'
+          git commit -m 'Etapa 11.5.4: integra inteligencia financiera [auto-etapa11]'
           git push origin etapa-11-2-motor-importacion
