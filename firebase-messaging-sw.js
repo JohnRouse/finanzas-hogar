@@ -11,10 +11,16 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v3-etapa11-2-1';
+const CACHE_NAME = 'hogar-finanzas-v3-etapa11-3-3';
 const APP_SHELL = [
   './', './index.html', './css/styles.css?v=10.0', './js/data.js?v=10.0', './js/app.js?v=10.0',
-  './js/importaciones.js?v=11.1', './css/importaciones.css?v=11.1', './js/deudas-inteligentes.js?v=11.2.1', './css/deudas-inteligentes.css?v=11.2.1', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'
+  './js/importaciones.js?v=11.1', './css/importaciones.css?v=11.1', './js/deudas-inteligentes.js?v=11.2.1', './css/deudas-inteligentes.css?v=11.2.1', './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
+  './js/modelo-financiero.js?v=11.3.3',
+  './js/motor-conciliacion.js?v=11.3.3',
+  './js/reglas-bancarias.js?v=11.3.3',
+  './js/pipeline-outlook.js?v=11.3.3',
+  './js/outlook-graph.js?v=11.3.3',
+  './js/outlook-ui.js?v=11.3.3'
 ];
 
 self.addEventListener('install', event => {
