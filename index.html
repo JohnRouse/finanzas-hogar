@@ -68,39 +68,39 @@
   <!-- ══════════ RESUMEN ══════════ -->
   <div id="page-resumen" class="page active">
 
-    <div id="alertas-resumen"></div>
+    <div id="estado-mes"></div>
 
-    <div id="estado-financiero"></div>
+    <div class="month-money-grid">
+      <div class="month-money-card primary">
+        <div class="month-money-label">Disponible hoy</div>
+        <div class="month-money-value" id="kpi-disponible">S/ 0</div>
+        <div class="month-money-help">Ingresos menos pagos realizados con dinero del mes</div>
+      </div>
+      <div class="month-money-card">
+        <div class="month-money-label">Compras con crédito</div>
+        <div class="month-money-value" id="kpi-credito-mes">S/ 0</div>
+        <div class="month-money-help">Aumentan la deuda, pero no reducen el efectivo de inmediato</div>
+      </div>
+      <div class="month-money-card">
+        <div class="month-money-label">Ahorro reservado</div>
+        <div class="month-money-value" id="kpi-ahorro-real">S/ 0</div>
+        <div class="month-money-help">Dinero registrado expresamente en tus metas</div>
+      </div>
+    </div>
 
-    <div class="kpi-grid four">
-      <div class="kpi blue">
-        <div class="kpi-label">Ingresos</div>
-        <div class="kpi-val" id="kpi-ingresos">
-      <span class="skeleton" style="width: 80%; height: 24px; display: block; border-radius: 6px;"></span>
-        </div>
-        <div class="kpi-sub">Ambos juntos</div>
-      </div>
-      <div class="kpi red">
-        <div class="kpi-label">Gastos</div>
-        <div class="kpi-val" id="kpi-gastos">
-  <span class="skeleton" style="width: 80%; height: 24px; display: block; border-radius: 6px;"></span>
+    <div class="section" id="atencion-section">
+      <div class="section-title" style="margin-bottom:10px;">Necesita atención</div>
+      <div class="card attention-list" id="necesita-atencion"></div>
     </div>
-        <div class="kpi-sub" id="kpi-gastos-sub">0% del ingreso</div>
-      </div>
-      <div class="kpi amber">
-        <div class="kpi-label">Entret.</div>
-        <div class="kpi-val" id="kpi-entret">
-  <span class="skeleton" style="width: 80%; height: 24px; display: block; border-radius: 6px;"></span>
-</div>
-        <div class="kpi-sub" id="kpi-entret-sub">S/ 0 libre</div>
-      </div>
-      <div class="kpi green">
-        <div class="kpi-label">Ahorro</div>
-        <div class="kpi-val" id="kpi-ahorro">
-      <span class="skeleton" style="width: 80%; height: 24px; display: block; border-radius: 6px;"></span>
+
+    <div class="section">
+      <div class="section-title" style="margin-bottom:10px;">En qué se fue el dinero</div>
+      <div class="card category-bars" id="categorias-resumen"></div>
     </div>
-        <div class="kpi-sub" id="kpi-ahorro-sub">0% de meta</div>
-      </div>
+
+    <div class="section">
+      <div class="section-title" style="margin-bottom:10px;">Participación del hogar</div>
+      <div class="card household-participation" id="participacion-hogar"></div>
     </div>
 
     <div class="income-toolbar">
@@ -113,27 +113,6 @@
       <div class="card" id="distribucion-card">
         <div id="distribucion-content">
           <div class="empty-state">Configura tus ingresos y gastos para ver la distribución</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="legend" id="legend-donut"></div>
-      <div class="card" style="padding:16px;">
-        <div class="chart-wrap" style="height:230px;">
-          <canvas id="donutChart" role="img" aria-label="Distribución de gastos por categoría.">Sin datos aún.</canvas>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="legend" id="legend-bar-resumen">
-        <div class="legend-item"><div class="legend-dot" style="background:#2a7de1"></div><span id="label-yo">Tú</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background:#c94b7b"></div><span id="label-ella">Pareja</span></div>
-      </div>
-      <div class="card" style="padding:16px;">
-        <div class="chart-wrap" style="height:210px;">
-          <canvas id="barChart" role="img" aria-label="Comparación de gastos por categoría entre los dos.">Sin datos aún.</canvas>
         </div>
       </div>
     </div>
@@ -157,7 +136,14 @@
   <div class="section-title">Movimientos del mes</div>
   <div style="display:flex;gap:8px"><button class="btn-recurrentes" onclick="openGastoRapidoModal()">⚡ Gasto rápido</button><button class="btn-recurrentes" onclick="abrirGestionRecurrentes()">🔄 Recurrentes</button></div>
 </div>
-      <div class="card">
+      <div class="expense-filter-bar" aria-label="Filtros de movimientos">
+        <button class="expense-filter active" data-filter="todos" onclick="setFiltroGastos('todos', this)">Todos</button>
+        <button class="expense-filter" data-filter="yo" onclick="setFiltroGastos('yo', this)">Christian</button>
+        <button class="expense-filter" data-filter="pareja" onclick="setFiltroGastos('pareja', this)">Sydney</button>
+        <button class="expense-filter" data-filter="hoy" onclick="setFiltroGastos('hoy', this)">Hoy</button>
+        <button class="expense-filter" data-filter="semana" onclick="setFiltroGastos('semana', this)">Semana</button>
+      </div>
+      <div class="card expense-card-shell">
         <div class="expense-list" id="expenseList">
           <!-- Skeletons iniciales -->
   <div class="skeleton-item" style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px;">
@@ -220,9 +206,9 @@
         <div class="kpi-sub">Préstamos + tarjetas</div>
       </div>
       <div class="kpi amber">
-        <div class="kpi-label">Cuotas fijas</div>
+        <div class="kpi-label">Compromisos del mes</div>
         <div class="kpi-val" id="kpi-pago-mensual">S/ 0</div>
-        <div class="kpi-sub" id="kpi-pago-sub">Solo préstamos activos</div>
+        <div class="kpi-sub" id="kpi-pago-sub">Cuotas + mínimos informados</div>
       </div>
     </div>
 
@@ -440,6 +426,7 @@
 
     <button class="modal-btn primary" id="notif-primary-btn" onclick="activarNotificacionesDesdeBoton()">Activar notificaciones</button>
     <button class="modal-btn secondary" id="notif-disable-btn" onclick="desactivarNotificacionesDispositivo()" style="display:none;">Desactivar en este dispositivo</button>
+    <button class="modal-btn secondary" id="notif-test-btn" onclick="probarNotificacionEnEsteDispositivo()" style="display:none;">Enviar notificación de prueba</button>
     <div class="settings-note">En iPhone se requiere iOS 16.4 o posterior y abrir la app desde la pantalla de inicio. Los avisos pueden ser silenciados por Concentración o por los ajustes del sistema.</div>
   </div>
 </div>
@@ -680,7 +667,41 @@
       </div>
     </div>
 
+    <div class="input-row statement-initial-box">
+      <div class="input-label">Estado de cuenta actual (opcional)</div>
+      <small class="field-help">Registra solo datos informados por el banco. La app nunca calculará el pago mínimo.</small>
+      <div class="input-row input-row-two">
+        <div><label class="input-label">Pago mínimo (S/)</label><input type="number" inputmode="decimal" step="0.01" class="input-field" id="t-pago-minimo" placeholder="0.00"></div>
+        <div><label class="input-label">Pago total (S/)</label><input type="number" inputmode="decimal" step="0.01" class="input-field" id="t-pago-total" placeholder="0.00"></div>
+      </div>
+      <div class="input-row input-row-two">
+        <div><label class="input-label">Fecha de vencimiento</label><input type="date" class="input-field" id="t-estado-vence"></div>
+        <div><label class="input-label">Periodo</label><input type="text" class="input-field" id="t-periodo" placeholder="Ej.: julio 2026"></div>
+      </div>
+    </div>
+
     <button class="modal-btn" id="tarjeta-submit-btn" onclick="agregarTarjeta()">Guardar tarjeta</button>
+  </div>
+</div>
+
+<!-- MODAL: ESTADO DE CUENTA -->
+<div class="modal-overlay" id="estadoCuentaModal" onclick="closeModalOutside(event,'estadoCuentaModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('estadoCuentaModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar estado de cuenta</div>
+    <div id="estado-cuenta-tarjeta" class="statement-card-name"></div>
+    <div class="statement-notice">Ingresa exactamente lo que figura en el estado del banco. El pago mínimo no se estima.</div>
+    <div class="input-row input-row-two">
+      <div><label class="input-label">Pago mínimo informado</label><input type="number" inputmode="decimal" step="0.01" class="input-field" id="ec-minimo" placeholder="0.00"></div>
+      <div><label class="input-label">Pago total del estado</label><input type="number" inputmode="decimal" step="0.01" class="input-field" id="ec-total" placeholder="0.00"></div>
+    </div>
+    <div class="input-row input-row-two">
+      <div><label class="input-label">Fecha del estado</label><input type="date" class="input-field" id="ec-fecha"></div>
+      <div><label class="input-label">Fecha de vencimiento</label><input type="date" class="input-field" id="ec-vence"></div>
+    </div>
+    <div class="input-row"><label class="input-label">Periodo</label><input type="text" class="input-field" id="ec-periodo" placeholder="Ej.: julio 2026"></div>
+    <button class="modal-btn" onclick="guardarEstadoCuenta()">Guardar estado de cuenta</button>
   </div>
 </div>
 
@@ -724,6 +745,22 @@
       <div>
         <label class="input-label">Total de cuotas</label>
         <input type="number" class="input-field" id="p-total" placeholder="0">
+      </div>
+    </div>
+
+    <div class="input-row input-row-two">
+      <div>
+        <label class="input-label">Próximo vencimiento</label>
+        <input type="date" class="input-field" id="p-proximo-vencimiento">
+      </div>
+      <div>
+        <label class="input-label">Frecuencia</label>
+        <select class="select-field" id="p-frecuencia">
+          <option value="mensual">Mensual</option>
+          <option value="quincenal">Quincenal</option>
+          <option value="semanal">Semanal</option>
+          <option value="otro">Otra</option>
+        </select>
       </div>
     </div>
 
@@ -855,7 +892,23 @@
       <input type="text" class="input-field" id="prestamo-pago-nota" placeholder="Ej: Cuota #4">
     </div>
 
+    <label class="payment-check">
+      <input type="checkbox" id="prestamo-pago-completa" checked>
+      <span>Marcar una cuota como pagada y avanzar el próximo vencimiento</span>
+    </label>
+
     <button class="modal-btn" onclick="registrarPagoPrestamo()">Registrar pago de cuota</button>
+  </div>
+</div>
+
+<!-- MODAL: HISTORIAL DE PRÉSTAMO -->
+<div class="modal-overlay" id="historialPrestamoModal" onclick="closeModalOutside(event,'historialPrestamoModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('historialPrestamoModal')">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="historial-prestamo-titulo">Historial del préstamo</div>
+    <div id="historial-prestamo-resumen" class="card-history-summary"></div>
+    <div id="historial-prestamo-lista" class="card-history-list"></div>
   </div>
 </div>
 
@@ -1180,8 +1233,8 @@
 </script>
 
 <!-- data.js y app.js (SIN type="module") -->
-<script src="js/data.js"></script>
-<script src="js/app.js"></script>
+<script src="js/data.js?v=8.0"></script>
+<script src="js/app.js?v=8.0"></script>
 
 </body>
 </html>

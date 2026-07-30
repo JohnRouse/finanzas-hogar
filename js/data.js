@@ -320,6 +320,75 @@ const DB = {
     }
   },
 
+  async registrarPagoPrestamo(prestamoId, pago, cambiosPrestamo) {
+    if (!hogarId || !prestamoId) return false;
+    try {
+      const hogarRef = db.collection("hogares").doc(hogarId);
+      const prestamoRef = hogarRef.collection("prestamos").doc(prestamoId);
+      const pagoRef = prestamoRef.collection("pagos").doc();
+      const gastoRef = hogarRef.collection("gastos").doc();
+      const batch = db.batch();
+
+      batch.set(pagoRef, { ...pago, creadoEn: pago.creadoEn || new Date().toISOString() });
+      batch.set(gastoRef, {
+        desc: `Pago Préstamo: ${pago.prestamoNombre}${pago.nota ? ' - ' + pago.nota : ''}`,
+        monto: pago.monto,
+        quien: pago.quien || 'yo',
+        cat: 'Deudas',
+        icono: '🏦',
+        tipoMovimiento: 'pagoPrestamo',
+        prestamoId,
+        prestamoNombre: pago.prestamoNombre,
+        pagoRegistroId: pagoRef.id,
+        nota: pago.nota || '',
+        cuotaMarcada: !!pago.cuotaMarcada,
+        proximoVencimientoAnterior: pago.proximoVencimientoAnterior || '',
+        proximoVencimientoPosterior: pago.proximoVencimientoPosterior || '',
+        fecha: pago.fecha,
+        creadoEn: pago.creadoEn || new Date().toISOString()
+      });
+      batch.update(prestamoRef, { ...cambiosPrestamo, actualizadoEn: new Date().toISOString() });
+      await batch.commit();
+      return true;
+    } catch (e) {
+      console.error("Error registrarPagoPrestamo:", e);
+      return false;
+    }
+  },
+
+  async getPagosPrestamo(prestamoId) {
+    if (!hogarId || !prestamoId) return [];
+    try {
+      const snapshot = await db.collection("hogares").doc(hogarId)
+        .collection("prestamos").doc(prestamoId)
+        .collection("pagos").orderBy("fecha", "desc").limit(60).get();
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (e) {
+      console.error("Error getPagosPrestamo:", e);
+      return [];
+    }
+  },
+
+  async revertirPagoPrestamo(prestamoId, pagoRegistroId, cambiosPrestamo) {
+    if (!hogarId || !prestamoId) return false;
+    try {
+      const hogarRef = db.collection("hogares").doc(hogarId);
+      const batch = db.batch();
+      batch.update(hogarRef.collection("prestamos").doc(prestamoId), {
+        ...cambiosPrestamo,
+        actualizadoEn: new Date().toISOString()
+      });
+      if (pagoRegistroId) {
+        batch.delete(hogarRef.collection("prestamos").doc(prestamoId).collection("pagos").doc(pagoRegistroId));
+      }
+      await batch.commit();
+      return true;
+    } catch (e) {
+      console.error("Error revertirPagoPrestamo:", e);
+      return false;
+    }
+  },
+
   /* ── METAS ── */
   async getMetas() {
     if (!hogarId) return [];

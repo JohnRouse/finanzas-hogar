@@ -332,6 +332,48 @@ async function sincronizarDispositivoSiAutorizado() {
   }
 }
 
+
+let escuchaMensajesPrimerPlanoIniciada = false;
+function iniciarEscuchaMensajesPrimerPlano() {
+  if (escuchaMensajesPrimerPlanoIniciada || !firebase?.messaging) return;
+  try {
+    const messaging = firebase.messaging();
+    messaging.onMessage(payload => {
+      const data = payload?.data || {};
+      showToast(`${data.title || 'Hogar Finanzas'}: ${data.body || 'Tienes una nueva notificación'}`);
+    });
+    escuchaMensajesPrimerPlanoIniciada = true;
+  } catch (error) {
+    console.warn('No se pudo iniciar la escucha de mensajes en primer plano:', error);
+  }
+}
+
+async function probarNotificacionEnEsteDispositivo() {
+  if (!hogarId || Notification.permission !== 'granted') {
+    showToast('Primero activa las notificaciones en este dispositivo');
+    return;
+  }
+  try {
+    const cfg = normalizarConfigIdentidad(configCache || await DB.getConfig() || {});
+    const miembro = obtenerMiembroActual(cfg);
+    if (!miembro) throw new Error('No hay un perfil asociado a este dispositivo.');
+    await db.collection('hogares').doc(hogarId).collection('notificaciones').add({
+      titulo: 'Prueba correcta',
+      texto: 'Este dispositivo ya puede recibir avisos de Hogar Finanzas.',
+      categoria: 'vencimientos',
+      miembroDestino: miembro.id,
+      usuarioDestino: miembro.legacyTipo,
+      url: './index.html',
+      tag: `prueba-${obtenerIdDispositivo()}`,
+      fecha: firebase.firestore.FieldValue.serverTimestamp(),
+      origen: 'prueba-manual'
+    });
+    showToast('Prueba enviada. Puede tardar unos segundos.');
+  } catch (error) {
+    console.error('Error enviando prueba:', error);
+    showToast('No se pudo enviar la prueba');
+  }
+}
 async function activarNotificacionesDesdeBoton() {
   const capacidades = capacidadesNotificaciones();
   if (!capacidades.compatible) {
@@ -355,6 +397,7 @@ async function activarNotificacionesDesdeBoton() {
     const nombre = document.getElementById('notif-device-name')?.value.trim() || nombrePredeterminadoDispositivo();
     localStorage.setItem('nombreDispositivo', nombre);
     await guardarDispositivo(token, { nombre });
+    iniciarEscuchaMensajesPrimerPlano();
     showToast('Notificaciones activadas en este dispositivo ✓');
     await actualizarModalNotificaciones();
   } catch (error) {
@@ -419,7 +462,9 @@ async function actualizarModalNotificaciones() {
   const button = document.getElementById('notif-primary-btn');
   const disable = document.getElementById('notif-disable-btn');
   const guide = document.getElementById('notif-install-guide');
+  const testButton = document.getElementById('notif-test-btn');
   const nameInput = document.getElementById('notif-device-name');
+  if (testButton) testButton.style.display = 'none';
   if (nameInput) nameInput.value = localStorage.getItem('nombreDispositivo') || nombrePredeterminadoDispositivo();
 
   const prefs = JSON.parse(localStorage.getItem('preferenciasNotificaciones') || '{}');
@@ -443,6 +488,8 @@ async function actualizarModalNotificaciones() {
     button.textContent = 'Sincronizar nuevamente';
     button.style.display = '';
     disable.style.display = '';
+    if (testButton) testButton.style.display = '';
+    iniciarEscuchaMensajesPrimerPlano();
     await sincronizarDispositivoSiAutorizado();
   } else if (Notification.permission === 'denied') {
     status.textContent = 'Bloqueadas';
@@ -660,18 +707,32 @@ async function guardarAjustes() {
   }
 }
 
-function iniciarApp(cfg) {
+let gastosRealtimeUnsubscribe = null;
+const arrastresVerificadosEnSesion = new Set();
+let renderTodoEnCurso = false;
+let renderTodoPendiente = false;
+
+async function iniciarApp(cfg) {
   aplicarNombres(cfg);
   actualizarNombresEnFormularios(cfg);   // si ya la tienes
   actualizarNombresEnDeudas(cfg);        // ← Nueva línea
   actualizarMesBtn();
-  renderTodo();
+  await renderTodo();
   sincronizarDispositivoSiAutorizado();
   iniciarEscuchaNotificaciones();
 
-   // 🔥 ESCUCHA EN TIEMPO REAL: Si el hogar cambia en Firebase, refresca la UI
-  db.collection("hogares").doc(hogarId).collection("gastos")
+  // Mantener una sola escucha activa. La primera instantánea solo confirma el estado
+  // que acabamos de cargar y no necesita provocar un segundo renderizado.
+  if (typeof gastosRealtimeUnsubscribe === 'function') {
+    gastosRealtimeUnsubscribe();
+  }
+  let primeraInstantanea = true;
+  gastosRealtimeUnsubscribe = db.collection("hogares").doc(hogarId).collection("gastos")
     .onSnapshot(() => {
+      if (primeraInstantanea) {
+        primeraInstantanea = false;
+        return;
+      }
       console.log("🔄 Cambio detectado en la nube, actualizando...");
       renderTodo();
     });
@@ -774,15 +835,21 @@ function actualizarNombresEnFormularios(cfg) {
     selectQuien.options[1].text = nombreElla;   // Pareja
   }
 
-  // También actualizar los labels en la leyenda (por si acaso)
-  document.getElementById('label-yo').textContent = nombreYo;
-  document.getElementById('label-yo-2').textContent = nombreYo;
-  document.getElementById('label-ella').textContent = nombreElla;
-  document.getElementById('label-ella-2').textContent = nombreElla;
+  // Actualizar solo los elementos que existan en la vista actual.
+  // Algunos labels fueron retirados del Inicio en la etapa 4.
+  const textos = {
+    'label-yo': nombreYo,
+    'label-yo-2': nombreYo,
+    'label-ella': nombreElla,
+    'label-ella-2': nombreElla,
+    'avatarYo': nombreYo.slice(0, 2).toUpperCase(),
+    'avatarElla': nombreElla.slice(0, 2).toUpperCase()
+  };
 
-  // Actualizar avatares
-  document.getElementById('avatarYo').textContent = nombreYo.slice(0,2).toUpperCase();
-  document.getElementById('avatarElla').textContent = nombreElla.slice(0,2).toUpperCase();
+  Object.entries(textos).forEach(([id, texto]) => {
+    const elemento = document.getElementById(id);
+    if (elemento) elemento.textContent = texto;
+  });
 }
 
 // Actualiza los nombres en los selectores de Tarjetas y Préstamos
@@ -839,8 +906,8 @@ function showPage(id, idx) {
   // 3. UX de navegación: Volver al inicio del scroll al cambiar de pestaña
   window.scrollTo({ top: 0, behavior: 'instant' });
 
-  // 4. Actualizar datos de la pantalla
-  renderTodo();
+  // 4. Los datos ya están sincronizados en memoria. Cambiar de pestaña no debe
+  // volver a consultar Firebase ni reconstruir todos los KPI y gráficos.
 }
 
 const FAB_CONFIG = {
@@ -966,10 +1033,18 @@ async function procesarRecurrentes(mes) {
    RENDER PRINCIPAL (COMPLETO)
 ══════════════════════ */
 async function renderTodo() {
+  // Evita renderizados superpuestos cuando una escritura local y Firestore
+  // notifican el mismo cambio casi al mismo tiempo.
+  if (renderTodoEnCurso) {
+    renderTodoPendiente = true;
+    return;
+  }
+  renderTodoEnCurso = true;
+
   try {
     mostrarSkeletons();
 
-  const kpiIds = ['kpi-ingresos', 'kpi-gastos', 'kpi-entret', 'kpi-ahorro', 'kpi-deuda-total', 'kpi-pago-mensual', 'kpi-fondo'];
+  const kpiIds = ['kpi-disponible', 'kpi-credito-mes', 'kpi-ahorro-real', 'kpi-deuda-total', 'kpi-pago-mensual', 'kpi-fondo'];
   kpiIds.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = '<span class="skeleton" style="width:80px; height:20px; display:inline-block"></span>';
@@ -988,66 +1063,68 @@ async function renderTodo() {
   await procesarRecurrentes(mesActual);
   gastos = await DB.getGastos(mesActual);
   
-  await DB.generarArrastreSiNecesario(mesActual);
+  if (!arrastresVerificadosEnSesion.has(mesActual)) {
+    await DB.generarArrastreSiNecesario(mesActual);
+    arrastresVerificadosEnSesion.add(mesActual);
+  }
 
   const ingresosMes = await DB.getIngresosMes(mesActual);
   const ingresoTotal = ingresosMes.reduce((sum, ing) => sum + (parseFloat(ing.monto) || 0), 0);
 
-  const gastoTotal = Array.isArray(gastos) ? gastos.reduce((a,g) => a + (g.monto||0), 0) : 0;
-  
-  // Gastos que NO son con tarjeta (efectivo, débito, transferencia)
-  const gastosEfectivo = Array.isArray(gastos)
-  ? gastos.filter(g => g.medio !== 'tarjeta').reduce((a,g) => a + (g.monto||0), 0)
-  : 0;
+  const gastosConsumo = Array.isArray(gastos) ? gastos.filter(g => !esPagoDeuda(g)) : [];
+  const pagosDeuda = Array.isArray(gastos) ? gastos.filter(esPagoDeuda) : [];
+  const gastoTotal = gastosConsumo.reduce((a,g) => a + (Number(g.monto)||0), 0);
 
-// Gastos con tarjeta (no afectan el efectivo disponible)
-  const gastosTarjeta = gastoTotal - gastosEfectivo;
+  // El efectivo disponible sí disminuye por consumos pagados y por pagos de deudas.
+  const gastosEfectivoConsumo = gastosConsumo
+    .filter(g => g.medio !== 'tarjeta')
+    .reduce((a,g) => a + (Number(g.monto)||0), 0);
+  const pagosDeudaEfectivo = pagosDeuda.reduce((a,g) => a + (Number(g.monto)||0), 0);
+  const gastosEfectivo = gastosEfectivoConsumo + pagosDeudaEfectivo;
+
+  // Compras con crédito del mes: solo consumos nuevos, nunca pagos de deuda.
+  const gastosTarjeta = gastosConsumo
+    .filter(g => g.medio === 'tarjeta')
+    .reduce((a,g) => a + (Number(g.monto)||0), 0);
 
   const gastoEntret = Array.isArray(gastos) ? gastos.filter(g => g.cat === 'Entret.').reduce((a,g) => a + (g.monto||0), 0) : 0;
   
-  const ahorro = Math.max(0, ingresoTotal - gastosEfectivo);
+  const disponible = ingresoTotal - gastosEfectivo;
+  const ahorroEstimado = Math.max(0, disponible);
 
-  setVal('kpi-ingresos', `S/ ${ingresoTotal.toLocaleString()}`);
-  const elSubIngreso = document.getElementById('kpi-ingresos')?.nextElementSibling;
-  if (elSubIngreso && elSubIngreso.classList.contains('kpi-sub')) {
-    elSubIngreso.textContent = 'Total ingresos del mes';
-  }
-  
-  setVal('kpi-gastos', `S/ ${gastoTotal.toLocaleString()}`);
-  setVal('kpi-gastos-sub', ingresoTotal > 0 ? `${Math.round(gastoTotal / ingresoTotal * 100)}% del ingreso` : '0%');
-  
-  const presupEntret = parseFloat(cfg.presupEntret) || 300;
-  setVal('kpi-entret', `S/ ${gastoEntret.toLocaleString()}`);
-  setVal('kpi-entret-sub', `Presupuesto: S/ ${presupEntret.toLocaleString()} · Gastado: S/ ${gastoEntret.toLocaleString()}`);
-
-  setVal('kpi-ahorro', `S/ ${ahorro.toLocaleString()}`);
-  setVal('kpi-ahorro-sub', `${Math.round(ahorro / (cfg.metaAhorro||200) * 100)}% de meta`);
-  setVal('kpi-ahorro2', `S/ ${ahorro.toLocaleString()}`);
-  setVal('kpi-ahorro2-sub', `${Math.round(ahorro / (cfg.metaAhorro||200) * 100)}% de la meta`);
+  const fondoReservado = metas.reduce((a, m) => a + (parseFloat(m.actual) || 0), 0);
+  setVal('kpi-disponible', `S/ ${disponible.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+  setVal('kpi-credito-mes', `S/ ${gastosTarjeta.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+  setVal('kpi-ahorro-real', `S/ ${fondoReservado.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+  setVal('kpi-ahorro2', `S/ ${fondoReservado.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+  setVal('kpi-ahorro2-sub', 'Total reservado en metas');
 
   const deudaTotal = [...tarjetas, ...prestamos].reduce((a, d) => a + (parseFloat(d.deuda || d.saldo) || 0), 0);
-  const pagoMensual = [
-    ...prestamos.map(p => parseFloat(p.cuota) || 0)
-  ].reduce((a, b) => a + b, 0);
+  const pagoPrestamos = prestamos.reduce((s,p) => s + (parseFloat(p.cuota) || 0), 0);
+  const minimosInformados = tarjetas.reduce((s,t) => s + (Number(t.estadoCuenta?.pagoMinimo) || 0), 0);
+  const pagoMensual = pagoPrestamos + minimosInformados;
 
   setVal('kpi-deuda-total', `S/ ${deudaTotal.toLocaleString()}`);
-  setVal('kpi-pago-mensual', `S/ ${pagoMensual.toLocaleString()}`);
-  setVal('kpi-pago-sub', ingresoTotal > 0 ? `${Math.round(pagoMensual / ingresoTotal * 100)}% del ingreso · solo préstamos` : 'Solo préstamos activos');
+  setVal('kpi-pago-mensual', `S/ ${pagoMensual.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2})}`);
+  setVal('kpi-pago-sub', minimosInformados > 0
+    ? `Cuotas + S/ ${minimosInformados.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2})} en mínimos`
+    : 'Cuotas de préstamos; mínimos aún no informados');
 
-  const fondoTotal = metas.reduce((a, m) => a + (parseFloat(m.actual) || 0), 0);
+  const fondoTotal = fondoReservado;
   setVal('kpi-fondo', `S/ ${fondoTotal.toLocaleString()}`);
 
   renderGastos(gastos, cfg);
+  renderResumenClaro({ gastos: gastosConsumo, tarjetas, prestamos, metas, cfg, ingresoTotal, gastoTotal, gastosEfectivo, gastosTarjeta, disponible });
   renderEstadoFinanciero(tarjetas);
   renderTarjetas(tarjetas, cfg);
   renderPrestamos(prestamos, cfg);
   renderMetas(metas);
-  await renderCharts(gastos, cfg, tarjetas, prestamos, ingresoTotal, 0);
-  renderDistribucion(ingresoTotal, gastoTotal, gastoEntret, ahorro, deudaTotal, 0);
-  renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorro, 0);
+  await renderCharts(gastosConsumo, cfg, tarjetas, prestamos, ingresoTotal, 0);
+  renderDistribucion(ingresoTotal, gastoTotal, gastoEntret, ahorroEstimado, deudaTotal, 0);
+  renderPresupuesto(gastosConsumo, cfg, tarjetas, prestamos, ingresoTotal, ahorroEstimado, 0);
   renderAlertas(tarjetas, prestamos, gastoTotal, ingresoTotal);
 
-    console.log(`Renderizado completado - Ingresos: ${ingresoTotal} | Deuda Total: ${deudaTotal} | Ahorro: ${ahorro}`);
+    console.log(`Renderizado completado - Ingresos: ${ingresoTotal} | Disponible: ${disponible} | Crédito del mes: ${gastosTarjeta}`);
   } catch (error) {
     console.error('Error al renderizar la aplicación:', error);
     if (typeof showToast === 'function') {
@@ -1055,6 +1132,11 @@ async function renderTodo() {
     }
   } finally {
     ocultarSplash();
+    renderTodoEnCurso = false;
+    if (renderTodoPendiente) {
+      renderTodoPendiente = false;
+      queueMicrotask(() => renderTodo());
+    }
   }
 }
 
@@ -1067,6 +1149,7 @@ function generarGastoHTML(g, cfg) {
   const badgeTarjeta = g.medio === 'tarjeta' && g.tarjetaNombre
     ? `<span class="expense-badge-tarjeta">💳 ${g.tarjetaNombre}</span>`
     : '';
+  const badgeMovimiento = esPagoDeuda(g) ? `<span class="expense-badge-debt">Pago de deuda · no suma al consumo</span>` : '';
 
   return `
   <div class="expense-item" data-id="${g.id}">
@@ -1077,6 +1160,7 @@ function generarGastoHTML(g, cfg) {
           <div class="expense-name">${g.desc}</div>
           <div class="expense-cat"><span class="expense-cat-text">${g.cat}</span><span class="expense-cat-date"> · ${fechaStr}</span></div>
           ${badgeTarjeta}
+          ${badgeMovimiento}
         </div>
         <div class="expense-right">
           <div class="expense-amount">S/ ${g.monto}</div>
@@ -1085,8 +1169,8 @@ function generarGastoHTML(g, cfg) {
         <div class="expense-more-wrap">
           <button class="expense-more-btn" onclick="toggleExpenseMenu(event, 'expense-menu-${g.id}')" aria-label="Opciones de ${g.desc}">⋮</button>
           <div class="expense-more-menu" id="expense-menu-${g.id}">
-            ${g.tipoMovimiento === 'pagoTarjeta'
-              ? '<span class="expense-menu-note">Pago de tarjeta</span>'
+            ${esPagoDeuda(g)
+              ? `<span class="expense-menu-note">${g.tipoMovimiento === 'pagoPrestamo' ? 'Pago de préstamo' : 'Pago de tarjeta'}</span>`
               : `<button onclick="abrirEditarGasto('${g.id}')">Editar</button>`}
             <button class="danger" onclick="eliminarGasto('${g.id}')">Eliminar</button>
           </div>
@@ -1109,6 +1193,26 @@ function ocultarSplash() {
 }
 
 // 2. Tu función principal modificada
+let filtroGastosActivo = 'todos';
+
+function setFiltroGastos(filtro, boton) {
+  filtroGastosActivo = filtro;
+  document.querySelectorAll('.expense-filter').forEach(b => b.classList.remove('active'));
+  if (boton) boton.classList.add('active');
+  renderGastos(gastosDelMesCache, configCache || {});
+}
+
+function aplicarFiltroGastos(lista) {
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  const inicioSemana = new Date(hoy);
+  inicioSemana.setDate(hoy.getDate() - ((hoy.getDay()+6)%7));
+  if (filtroGastosActivo === 'yo' || filtroGastosActivo === 'pareja') return lista.filter(g => g.quien === filtroGastosActivo);
+  if (filtroGastosActivo === 'hoy') return lista.filter(g => g.fecha === hoy.toISOString().slice(0,10));
+  if (filtroGastosActivo === 'semana') return lista.filter(g => { const d = fechaLocalISO(g.fecha); return d && d >= inicioSemana && d <= hoy; });
+  return lista;
+}
+
 function renderGastos(gastos, cfg) {
   const el = document.getElementById('expenseList');
   if (!el) return;
@@ -1128,13 +1232,19 @@ function renderGastos(gastos, cfg) {
     return;
   }
 
+  const gastosFiltrados = aplicarFiltroGastos(gastosDelMesCache);
+  if (gastosFiltrados.length === 0) {
+    el.innerHTML = '<div class="empty-state">No hay movimientos para este filtro.</div>';
+    return;
+  }
+
   // Tomamos solo los primeros 5 para la vista principal
-  const resumen = gastosDelMesCache.slice(0, 5);
+  const resumen = gastosFiltrados.slice(0, 5);
   
   let html = resumen.map(g => generarGastoHTML(g, cfg)).join('');
 
   // Si hay más de 5, añadimos el botón "Ver todo"
-  if (gastosDelMesCache.length > 5) {
+  if (gastosFiltrados.length > 5) {
     const mesTexto = DB.formatMes(mesActual); // mesActual es global, definido al inicio
 html += `
   <div class="ver-todo-container">
@@ -1225,6 +1335,60 @@ function obtenerEstadoTarjeta(uso) {
   return { clave:'saludable', etiqueta:'Saludable', clase:'success' };
 }
 
+function renderResumenClaro({ gastos, tarjetas, prestamos, metas, cfg, ingresoTotal, gastoTotal, gastosEfectivo, gastosTarjeta, disponible }) {
+  const moneda = n => `S/ ${(parseFloat(n) || 0).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  const pctConsumido = ingresoTotal > 0 ? Math.round((gastosEfectivo / ingresoTotal) * 100) : 0;
+  const estadoEl = document.getElementById('estado-mes');
+  if (estadoEl) {
+    let tono = 'good', titulo = 'Vamos bien', texto = 'Todavía hay margen para los gastos del mes.';
+    if (disponible < 0) { tono = 'danger'; titulo = 'Gastamos más de lo ingresado'; texto = `Faltan ${moneda(Math.abs(disponible))} para cubrir los pagos realizados.`; }
+    else if (pctConsumido >= 85) { tono = 'warning'; titulo = 'Debemos cuidar los gastos'; texto = `Ya utilizamos el ${pctConsumido}% del dinero disponible del mes.`; }
+    else if (pctConsumido >= 65) { tono = 'caution'; titulo = 'Vamos ajustados'; texto = `Queda ${moneda(disponible)} para el resto del mes.`; }
+    else if (ingresoTotal > 0) {
+      const hoy = new Date();
+      const diasTranscurridos = Math.max(1, hoy.getDate());
+      const diasMes = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0).getDate();
+      const proyeccion = gastosEfectivo / diasTranscurridos * diasMes;
+      const cierreEstimado = ingresoTotal - proyeccion;
+      texto = cierreEstimado >= 0
+        ? `Al ritmo actual podrías cerrar el mes con ${moneda(cierreEstimado)} libres.`
+        : `Al ritmo actual faltarían ${moneda(Math.abs(cierreEstimado))} al cierre del mes.`;
+    }
+    estadoEl.innerHTML = `<div class="month-status-card ${tono}"><div class="month-status-eyebrow">Estado del mes</div><div class="month-status-title">${titulo}</div><div class="month-status-text">${texto}</div><div class="month-status-progress"><span style="width:${Math.min(100, Math.max(0, pctConsumido))}%"></span></div><div class="month-status-foot"><span>${pctConsumido}% utilizado</span><span>${moneda(disponible)} disponible</span></div></div>`;
+  }
+
+  const atencion = [];
+  tarjetas.forEach(t => {
+    const deuda = parseFloat(t.deuda) || 0, limite = parseFloat(t.limite) || 0;
+    const uso = limite > 0 ? deuda / limite : 0;
+    const dias = diasHastaFechaMensual(t.vence || t.diaCierre || t.cierre);
+    if (deuda > limite && limite > 0) atencion.push({nivel:'danger', titulo:`${t.nombre} está excedida`, detalle:`Supera el límite por ${moneda(deuda-limite)}.`});
+    else if (uso >= .8) atencion.push({nivel:'warning', titulo:`${t.nombre} necesita atención`, detalle:`Está usando el ${Math.round(uso*100)}% de su línea.`});
+    if (deuda > 0 && dias !== null && dias <= 5) atencion.push({nivel:'info', titulo:`Pago próximo: ${t.nombre}`, detalle:dias === 0 ? 'Vence hoy.' : `Vence en ${dias} día${dias===1?'':'s'}.`});
+  });
+  if (disponible < 0) atencion.unshift({nivel:'danger', titulo:'Dinero del mes insuficiente', detalle:`El faltante actual es ${moneda(Math.abs(disponible))}.`});
+  else if (ingresoTotal > 0 && gastosEfectivo / ingresoTotal >= .8) atencion.unshift({nivel:'warning', titulo:'Presupuesto casi consumido', detalle:`Solo queda ${moneda(disponible)} del dinero ingresado.`});
+  const attEl = document.getElementById('necesita-atencion');
+  const conteoAtencion = atencion.reduce((acc, item) => { acc[item.nivel] = (acc[item.nivel] || 0) + 1; return acc; }, {});
+  const attSection = document.getElementById('atencion-section');
+  if (attEl) attEl.innerHTML = atencion.length ? atencion.slice(0,4).map(x=>`<div class="attention-item ${x.nivel}"><div><strong>${x.titulo}</strong><span>${x.detalle}</span></div></div>`).join('') : '<div class="attention-empty">No hay alertas importantes por ahora.</div>';
+  if (attSection) attSection.style.display = '';
+
+  const porCategoria = {};
+  (gastos || []).forEach(g => porCategoria[g.cat || 'Otros'] = (porCategoria[g.cat || 'Otros'] || 0) + (parseFloat(g.monto)||0));
+  const categorias = Object.entries(porCategoria).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const max = categorias[0]?.[1] || 1;
+  const catEl = document.getElementById('categorias-resumen');
+  if (catEl) catEl.innerHTML = categorias.length ? categorias.map(([cat,monto])=>`<div class="category-row"><div class="category-row-head"><span>${cat}</span><strong>${moneda(monto)}</strong></div><div class="category-row-track"><span style="width:${Math.max(4, Math.round(monto/max*100))}%"></span></div></div>`).join('') : '<div class="empty-state">Todavía no hay gastos registrados este mes.</div>';
+
+  const nombres = [cfg.nombreYo || 'Tú', cfg.nombreElla || 'Pareja'];
+  const totales = [0,0];
+  (gastos || []).forEach(g => { if (g.quien === 'yo') totales[0] += parseFloat(g.monto)||0; else if (g.quien === 'pareja') totales[1] += parseFloat(g.monto)||0; else if (g.quien === 'ambos') { totales[0] += (parseFloat(g.monto)||0)/2; totales[1] += (parseFloat(g.monto)||0)/2; } });
+  const totalMiembros = totales[0] + totales[1];
+  const partEl = document.getElementById('participacion-hogar');
+  if (partEl) partEl.innerHTML = nombres.map((nombre,i)=>{ const pct=totalMiembros>0?Math.round(totales[i]/totalMiembros*100):0; return `<div class="participation-row"><div><strong>${nombre}</strong><span>${moneda(totales[i])} registrado</span></div><div class="participation-pct">${pct}%</div></div>`; }).join('') + (gastosTarjeta>0 ? `<div class="participation-note">De los gastos del mes, ${moneda(gastosTarjeta)} fueron compras con tarjeta de crédito.</div>` : '');
+}
+
 function renderEstadoFinanciero(tarjetas) {
   const el = document.getElementById('estado-financiero');
   if (!el) return;
@@ -1265,6 +1429,15 @@ function renderEstadoFinanciero(tarjetas) {
       </summary>
       <div id="alertas-deuda" class="financial-health-content"></div>
     </details>`;
+}
+
+function toggleDebtDetails(event, cardId) {
+  event?.stopPropagation();
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  const open = card.classList.toggle('expanded');
+  const btn = card.querySelector('.debt-details-toggle');
+  if (btn) btn.textContent = open ? 'Ocultar' : 'Detalles';
 }
 
 /* ── RENDER TARJETAS (VERSIÓN ACTUALIZADA) ── */
@@ -1311,6 +1484,69 @@ function etiquetaFechaTarjeta(dia, tipo) {
   return `<span class="card-date-chip ${clase}">${texto}</span>`;
 }
 
+function formatoSoles(valor) {
+  return `S/ ${(Number(valor)||0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+}
+
+function diasHastaFechaISO(fechaISO) {
+  if (!fechaISO) return null;
+  const [y,m,d] = fechaISO.split('-').map(Number);
+  const objetivo = new Date(y,m-1,d,12);
+  const hoy = new Date();
+  const base = new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate(),12);
+  return Math.round((objetivo-base)/86400000);
+}
+
+function prioridadTarjeta(t) {
+  const deuda=Number(t.deuda)||0, limite=Number(t.limite)||0;
+  const ec=t.estadoCuenta||{};
+  const dias=diasHastaFechaISO(ec.fechaVencimiento);
+  if (limite>0 && deuda>limite) return {nivel:0,clase:'critical',texto:'Excedida'};
+  if (dias!==null && dias<0 && (Number(ec.pagoTotal)||Number(ec.pagoMinimo))) return {nivel:0,clase:'critical',texto:'Vencida'};
+  if (dias!==null && dias<=3) return {nivel:1,clase:'urgent',texto:dias===0?'Vence hoy':`Vence en ${dias} días`};
+  if (limite>0 && deuda/limite>=.8) return {nivel:2,clase:'warning',texto:'Uso alto'};
+  if (dias!==null && dias<=7) return {nivel:3,clase:'soon',texto:`Vence en ${dias} días`};
+  return {nivel:4,clase:'normal',texto:'Al día'};
+}
+
+let estadoCuentaTarjetaId = null;
+async function abrirEstadoCuenta(id) {
+  cerrarMenusDeuda();
+  const t=(await DB.getTarjetas()).find(x=>x.id===id);
+  if(!t) return;
+  estadoCuentaTarjetaId=id;
+  const ec=t.estadoCuenta||{};
+  document.getElementById('estado-cuenta-tarjeta').textContent=t.nombre;
+  document.getElementById('ec-minimo').value=ec.pagoMinimo ?? '';
+  document.getElementById('ec-total').value=ec.pagoTotal ?? '';
+  document.getElementById('ec-fecha').value=ec.fechaEstado || '';
+  document.getElementById('ec-vence').value=ec.fechaVencimiento || '';
+  document.getElementById('ec-periodo').value=ec.periodo || '';
+  openModal('estadoCuentaModal');
+}
+
+async function guardarEstadoCuenta() {
+  if(!estadoCuentaTarjetaId) return;
+  const minimo=document.getElementById('ec-minimo').value;
+  const total=document.getElementById('ec-total').value;
+  const fechaEstado=document.getElementById('ec-fecha').value;
+  const fechaVencimiento=document.getElementById('ec-vence').value;
+  const periodo=document.getElementById('ec-periodo').value.trim();
+  if(!minimo && !total){ alert('Ingresa el pago mínimo o el pago total informado por el banco.'); return; }
+  const tarjetas=await DB.getTarjetas();
+  const actual=tarjetas.find(t=>t.id===estadoCuentaTarjetaId);
+  const anterior=actual?.estadoCuenta;
+  const historial=[...(actual?.historialEstados||[])];
+  if(anterior && (anterior.pagoMinimo!=null || anterior.pagoTotal!=null)) historial.unshift(anterior);
+  await DB.updateTarjeta(estadoCuentaTarjetaId,{
+    estadoCuenta:{pagoMinimo:minimo===''?null:Number(minimo),pagoTotal:total===''?null:Number(total),fechaEstado,fechaVencimiento,periodo,actualizadoEn:new Date().toISOString()},
+    historialEstados:historial.slice(0,24), actualizadoEn:new Date().toISOString()
+  });
+  closeModal('estadoCuentaModal');
+  showToast('Estado de cuenta actualizado');
+  renderTodo();
+}
+
 function renderTarjetas(tarjetas, cfg) {
   const el = document.getElementById('tarjetas-grid');
   tarjetas = [...tarjetas].sort((a, b) => {
@@ -1329,11 +1565,7 @@ function renderTarjetas(tarjetas, cfg) {
   }
 
    // ✅ ORDENAR: de mayor a menor porcentaje de utilización (riesgo)
-  const ordenadas = [...tarjetas].sort((a, b) => {
-    const usoA = (parseFloat(a.limite) || 0) > 0 ? (parseFloat(a.deuda) || 0) / (parseFloat(a.limite) || 1) : 0;
-    const usoB = (parseFloat(b.limite) || 0) > 0 ? (parseFloat(b.deuda) || 0) / (parseFloat(b.limite) || 1) : 0;
-    return usoB - usoA; // descendente
-  });
+  const ordenadas = [...tarjetas].sort((a,b) => prioridadTarjeta(a).nivel - prioridadTarjeta(b).nivel);
 
   const nombreYo = cfg.nombreYo || 'Christian';
   const nombreElla = cfg.nombreElla || 'Sydney';
@@ -1348,6 +1580,8 @@ function renderTarjetas(tarjetas, cfg) {
     const anchoBarra = Math.min(100, Math.max(0, uso));
     const color = uso >= 100 ? '#c43030' : uso > 80 ? '#c43030' : uso > 60 ? '#b06a10' : '#2a7de1';
     const estado = obtenerEstadoTarjeta(limite > 0 ? deuda / limite : 0);
+    const prioridad = prioridadTarjeta(t);
+    const ec = t.estadoCuenta || {};
     const pendienteConciliar = t.pendienteConciliar === true || t.saldoEstimado === true;
     const ultimaConciliacion = t.ultimaConciliacion
       ? new Date(t.ultimaConciliacion).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })
@@ -1360,7 +1594,7 @@ function renderTarjetas(tarjetas, cfg) {
     else quienTexto = 'COMPARTIDA';
 
     html += `
-      <div class="debt-card">
+      <div class="debt-card collapsible" id="tarjeta-card-${t.id}">
         <div class="debt-more-wrap">
           <button class="debt-more-btn" aria-label="Opciones de ${t.nombre}" onclick="toggleDebtMenu(event, 'tarjeta-menu-${t.id}')">⋮</button>
           <div class="debt-more-menu" id="tarjeta-menu-${t.id}">
@@ -1369,11 +1603,18 @@ function renderTarjetas(tarjetas, cfg) {
           </div>
         </div>
         <div class="debt-type">TARJETA · ${quienTexto}</div>
-        <div class="debt-name-row"><div class="debt-name">${t.nombre}</div><span class="card-status status-${estado.clase}">${estado.etiqueta}</span></div>
+        <div class="debt-name-row"><div class="debt-name">${t.nombre}</div><span class="priority-badge ${prioridad.clase}">${prioridad.texto}</span></div>
         
         <div class="debt-label-main">Deuda actual</div>
         <div class="debt-total" style="color:${deuda > limite && limite > 0 ? '#c43030' : 'var(--text)'}">
           S/ ${deuda.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+        </div>
+        <div class="statement-summary ${ec.pagoMinimo==null && ec.pagoTotal==null ? 'empty' : ''}">
+          ${ec.pagoMinimo!=null || ec.pagoTotal!=null ? `
+            <div><small>Pago mínimo informado</small><strong>${ec.pagoMinimo!=null ? formatoSoles(ec.pagoMinimo) : 'No informado'}</strong></div>
+            <div><small>Pago total del estado</small><strong>${ec.pagoTotal!=null ? formatoSoles(ec.pagoTotal) : 'No informado'}</strong></div>
+            <span>${ec.periodo || 'Periodo no indicado'}${ec.fechaVencimiento ? ` · vence ${new Date(ec.fechaVencimiento+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'})}` : ''}</span>` : `
+            <span>Sin estado de cuenta registrado. Añádelo para conocer el mínimo real y su vencimiento.</span>`}
         </div>
         <div class="debt-sub debt-card-details">
           <span>Línea: S/ ${limite.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
@@ -1414,13 +1655,52 @@ function renderTarjetas(tarjetas, cfg) {
           </div>
         </div>
         <div class="debt-card-actions compact-actions">
+          <button class="debt-details-toggle" onclick="toggleDebtDetails(event, 'tarjeta-card-${t.id}')">Detalles</button>
           <button class="debt-action-primary" onclick="abrirPagoTarjeta('${t.id}', '${escapeInlineString(t.nombre)}', ${deuda})">Pagar</button>
+          <button class="debt-action-statement" onclick="abrirEstadoCuenta('${t.id}')">Estado</button>
           <button class="debt-action-secondary" onclick="abrirAjusteTarjeta('${t.id}', '${escapeInlineString(t.nombre)}', ${deuda}, ${limite})">Conciliar</button>
           <button class="debt-action-history" onclick="abrirHistorialTarjeta('${t.id}', '${escapeInlineString(t.nombre)}')">Historial</button>
         </div>
       </div>`;
   });
   el.innerHTML = html;
+}
+
+function esPagoDeuda(g) {
+  return g?.tipoMovimiento === 'pagoTarjeta' || g?.tipoMovimiento === 'pagoPrestamo';
+}
+
+function fechaLocalISO(fecha) {
+  if (!fecha) return null;
+  const d = new Date(`${fecha}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function diasHastaFecha(fecha) {
+  const destino = fechaLocalISO(fecha);
+  if (!destino) return null;
+  const hoy = new Date();
+  hoy.setHours(12,0,0,0);
+  return Math.ceil((destino - hoy) / 86400000);
+}
+
+function avanzarVencimiento(fecha, frecuencia='mensual') {
+  const d = fechaLocalISO(fecha) || new Date();
+  if (frecuencia === 'semanal') d.setDate(d.getDate() + 7);
+  else if (frecuencia === 'quincenal') d.setDate(d.getDate() + 15);
+  else d.setMonth(d.getMonth() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function estadoPrestamo(p) {
+  const saldo = Number(p.saldo) || 0;
+  if (saldo <= 0) return { nivel: 5, clase: 'paid', texto: 'Pagado' };
+  const dias = diasHastaFecha(p.proximoVencimiento);
+  if (dias !== null && dias < 0) return { nivel: 0, clase: 'critical', texto: 'Vencido' };
+  if (dias === 0) return { nivel: 1, clase: 'critical', texto: 'Vence hoy' };
+  if (dias !== null && dias <= 5) return { nivel: 2, clase: 'warning', texto: `Vence en ${dias} d` };
+  if (dias !== null && dias <= 12) return { nivel: 3, clase: 'attention', texto: 'Próximo' };
+  return { nivel: 4, clase: 'ok', texto: p.proximoVencimiento ? 'Al día' : 'Sin fecha' };
 }
 
 /* ── RENDER PRÉSTAMOS (con nombres reales) ── */
@@ -1435,38 +1715,44 @@ function renderPrestamos(prestamos, cfg) {
 
   const nombreYo = cfg.nombreYo || 'Christian';
   const nombreElla = cfg.nombreElla || 'Sydney';
-  
+  const ordenados = [...prestamos].sort((a,b) => estadoPrestamo(a).nivel - estadoPrestamo(b).nivel);
   let html = '';
 
-  prestamos.forEach(p => {
-    let quienTexto = '';
-    if (p.quien === 'yo') quienTexto = nombreYo.toUpperCase();
-    else if (p.quien === 'pareja') quienTexto = nombreElla.toUpperCase();
-    else quienTexto = 'COMPARTIDO';
+  ordenados.forEach(p => {
+    let quienTexto = p.quien === 'yo' ? nombreYo.toUpperCase() : p.quien === 'pareja' ? nombreElla.toUpperCase() : 'COMPARTIDO';
+    const saldo = Number(p.saldo) || 0;
+    const cuota = Number(p.cuota) || 0;
+    const pagadas = Number(p.pagadas) || 0;
+    const total = Number(p.total) || 0;
+    const progreso = total > 0 ? Math.min(100, Math.round((pagadas / total) * 100)) : 0;
+    const estado = estadoPrestamo(p);
+    const vencimiento = p.proximoVencimiento
+      ? new Date(`${p.proximoVencimiento}T12:00:00`).toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})
+      : 'No informado';
 
-    const saldo = parseFloat(p.saldo) || 0;
-    const cuota = parseFloat(p.cuota) || 0;
-    const progreso = p.total > 0 ? Math.round((p.pagadas / p.total) * 100) : 0;
-    
     html += `
-      <div class="debt-card">
+      <div class="debt-card loan-card collapsible ${estado.clase}" id="prestamo-card-${p.id}">
         <div class="debt-more-wrap">
           <button class="debt-more-btn" aria-label="Opciones de ${p.nombre}" onclick="toggleDebtMenu(event, 'prestamo-menu-${p.id}')">⋮</button>
           <div class="debt-more-menu" id="prestamo-menu-${p.id}">
-            <button onclick="abrirEditarPrestamo('${p.id}', '${escapeInlineString(p.nombre)}', ${saldo}, ${cuota}, ${parseInt(p.pagadas)||0}, ${parseInt(p.total)||0}, '${p.quien || 'yo'}')">Editar</button>
+            <button onclick="abrirEditarPrestamo('${p.id}', '${escapeInlineString(p.nombre)}', ${saldo}, ${cuota}, ${pagadas}, ${total}, '${p.quien || 'yo'}', '${p.proximoVencimiento || ''}', '${p.frecuencia || 'mensual'}')">Editar</button>
+            <button onclick="abrirHistorialPrestamo('${p.id}', '${escapeInlineString(p.nombre)}', ${saldo})">Historial</button>
             <button class="danger" onclick="eliminarPrestamo('${p.id}')">Eliminar</button>
           </div>
         </div>
         <div class="debt-type">PRÉSTAMO · ${quienTexto}</div>
+        <div class="loan-status-row"><span class="debt-status ${estado.clase}">${estado.texto}</span><span>Vence: ${vencimiento}</span></div>
         <div class="debt-name">${p.nombre}</div>
-        <div class="debt-total">S/ ${saldo.toLocaleString()}</div>
-        <div class="debt-sub">
-          Cuota mensual: S/ ${parseFloat(p.cuota||0).toLocaleString()} 
-          · ${p.pagadas || 0}/${p.total || '?'} cuotas
-        </div>
+        <div class="debt-total">S/ ${saldo.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div class="debt-sub">Cuota: S/ ${cuota.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2})} · ${pagadas}/${total || '?'} cuotas</div>
         <div class="debt-prog-bg"><div class="debt-prog-fill" style="width:${progreso}%; background:#3e7d2a;"></div></div>
-        <div class="debt-hint">${p.pagadas} de ${p.total} cuotas pagadas · ${progreso}%</div>     
-        </div>`;
+        <div class="debt-hint">${progreso}% del plan completado</div>
+        <div class="debt-card-actions">
+          <button class="debt-details-toggle" onclick="toggleDebtDetails(event, 'prestamo-card-${p.id}')">Detalles</button>
+          <button class="debt-action-primary" onclick="abrirPagoPrestamo('${p.id}', '${escapeInlineString(p.nombre)}', ${saldo}, ${cuota}, '${p.proximoVencimiento || ''}', '${p.frecuencia || 'mensual'}', '${p.quien || 'yo'}')">Pagar cuota</button>
+          <button class="debt-action-history" onclick="abrirHistorialPrestamo('${p.id}', '${escapeInlineString(p.nombre)}', ${saldo})">Historial</button>
+        </div>
+      </div>`;
   });
   el.innerHTML = html;
 }
@@ -1488,8 +1774,8 @@ function renderMetas(metas) {
         <div class="saving-icon" style="background:${colors.bg};">${m.icono}</div>
         <div class="saving-info">
           <div class="saving-name">${m.nombre}</div>
-          <div class="saving-pct">${progreso}% completado</div>
-          <div class="saving-bar-bg"><div class="saving-bar" style="width:${progreso}%; background:${colors.fill};"></div></div>
+          <div class="saving-goal-head"><div class="saving-pct">${progreso}% completado</div><strong>${progreso >= 100 ? 'Meta cumplida' : `Faltan S/ ${Math.max(0,(Number(m.objetivo)||0)-(Number(m.actual)||0)).toLocaleString('es-PE')}`}</strong></div>
+          <div class="saving-bar-bg"><div class="saving-bar" style="width:${Math.min(100,progreso)}%; background:${colors.fill};"></div></div>
           <div class="saving-amounts">
             <span>S/ ${parseFloat(m.actual||0).toLocaleString()}</span>
             <span>S/ ${parseFloat(m.objetivo||0).toLocaleString()}</span>
@@ -1974,6 +2260,7 @@ function limpiarFormularioTarjeta() {
   document.getElementById('t-cierre').value = '';
   document.getElementById('t-vence').value = '';
   document.getElementById('t-quien').value = 'yo';
+  ['t-pago-minimo','t-pago-total','t-estado-vence','t-periodo'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
   document.getElementById('tarjeta-modal-title').textContent = 'Nueva tarjeta de crédito';
   document.getElementById('tarjeta-submit-btn').textContent = 'Guardar tarjeta';
 }
@@ -1983,7 +2270,7 @@ function abrirNuevaTarjeta() {
   openModal('tarjetaModal');
 }
 
-function abrirEditarTarjeta(id, nombre, deuda, limite, cierre, vence, quien) {
+async function abrirEditarTarjeta(id, nombre, deuda, limite, cierre, vence, quien) {
   cerrarMenusDeuda();
   tarjetaEditandoId = id;
   document.getElementById('t-nombre').value = nombre;
@@ -1992,6 +2279,12 @@ function abrirEditarTarjeta(id, nombre, deuda, limite, cierre, vence, quien) {
   document.getElementById('t-cierre').value = cierre;
   document.getElementById('t-vence').value = vence;
   document.getElementById('t-quien').value = quien || 'yo';
+  const tarjeta = (await DB.getTarjetas()).find(x => x.id === id);
+  const ec = tarjeta?.estadoCuenta || {};
+  document.getElementById('t-pago-minimo').value = ec.pagoMinimo ?? '';
+  document.getElementById('t-pago-total').value = ec.pagoTotal ?? '';
+  document.getElementById('t-estado-vence').value = ec.fechaVencimiento || '';
+  document.getElementById('t-periodo').value = ec.periodo || '';
   document.getElementById('tarjeta-modal-title').textContent = 'Editar tarjeta';
   document.getElementById('tarjeta-submit-btn').textContent = 'Guardar cambios';
   openModal('tarjetaModal');
@@ -2004,6 +2297,10 @@ async function agregarTarjeta() {
   const cierre = document.getElementById('t-cierre').value || '';
   const vence = document.getElementById('t-vence').value || '';
   const quien = document.getElementById('t-quien').value;
+  const pagoMinimoRaw = document.getElementById('t-pago-minimo')?.value;
+  const pagoTotalRaw = document.getElementById('t-pago-total')?.value;
+  const estadoVence = document.getElementById('t-estado-vence')?.value || '';
+  const periodo = document.getElementById('t-periodo')?.value.trim() || '';
 
   if (!nombre) {
     alert('Escribe el nombre de la tarjeta');
@@ -2012,6 +2309,11 @@ async function agregarTarjeta() {
 
   const datos = {
     nombre, deuda, limite, cierre, vence, quien,
+    estadoCuenta: (pagoMinimoRaw || pagoTotalRaw || estadoVence || periodo) ? {
+      pagoMinimo: pagoMinimoRaw === '' ? null : Number(pagoMinimoRaw),
+      pagoTotal: pagoTotalRaw === '' ? null : Number(pagoTotalRaw),
+      fechaVencimiento: estadoVence, periodo, actualizadoEn: new Date().toISOString()
+    } : null,
     actualizadoEn: new Date().toISOString()
   };
 
@@ -2036,6 +2338,8 @@ function limpiarFormularioPrestamo() {
   document.getElementById('p-pagadas').value = '';
   document.getElementById('p-total').value = '';
   document.getElementById('p-quien').value = 'yo';
+  document.getElementById('p-proximo-vencimiento').value = '';
+  document.getElementById('p-frecuencia').value = 'mensual';
   document.getElementById('prestamo-modal-title').textContent = 'Nuevo préstamo';
   document.getElementById('prestamo-submit-btn').textContent = 'Guardar préstamo';
 }
@@ -2045,7 +2349,7 @@ function abrirNuevoPrestamo() {
   openModal('prestamoModal');
 }
 
-function abrirEditarPrestamo(id, nombre, saldo, cuota, pagadas, total, quien) {
+function abrirEditarPrestamo(id, nombre, saldo, cuota, pagadas, total, quien, proximoVencimiento='', frecuencia='mensual') {
   cerrarMenusDeuda();
   prestamoEditandoId = id;
   document.getElementById('p-nombre').value = nombre;
@@ -2054,6 +2358,8 @@ function abrirEditarPrestamo(id, nombre, saldo, cuota, pagadas, total, quien) {
   document.getElementById('p-pagadas').value = pagadas;
   document.getElementById('p-total').value = total;
   document.getElementById('p-quien').value = quien || 'yo';
+  document.getElementById('p-proximo-vencimiento').value = proximoVencimiento || '';
+  document.getElementById('p-frecuencia').value = frecuencia || 'mensual';
   document.getElementById('prestamo-modal-title').textContent = 'Editar préstamo';
   document.getElementById('prestamo-submit-btn').textContent = 'Guardar cambios';
   openModal('prestamoModal');
@@ -2066,6 +2372,8 @@ async function agregarPrestamo() {
   const pagadas = parseInt(document.getElementById('p-pagadas').value) || 0;
   const total = parseInt(document.getElementById('p-total').value) || 0;
   const quien = document.getElementById('p-quien').value;
+  const proximoVencimiento = document.getElementById('p-proximo-vencimiento').value;
+  const frecuencia = document.getElementById('p-frecuencia').value || 'mensual';
 
   if (!nombre) {
     alert('Escribe el nombre del préstamo');
@@ -2073,7 +2381,7 @@ async function agregarPrestamo() {
   }
 
   const datos = {
-    nombre, saldo, cuota, pagadas, total, quien,
+    nombre, saldo, cuota, pagadas, total, quien, proximoVencimiento, frecuencia,
     actualizadoEn: new Date().toISOString()
   };
 
@@ -2156,21 +2464,35 @@ function eliminarGasto(id) {
     labelOk: 'Sí, eliminar',
     danger: true,
     onOk: async () => {
-      if (gasto?.medio === 'tarjeta' && gasto.tarjetaId) {
+      if (gasto?.tarjetaId) {
         const tarjetas = await DB.getTarjetas();
         const tarjeta = tarjetas.find(t => t.id === gasto.tarjetaId);
         if (tarjeta) {
           let nuevaDeuda;
           if (gasto.tipoMovimiento === 'pagoTarjeta') {
             nuevaDeuda = (parseFloat(tarjeta.deuda) || 0) + (parseFloat(gasto.monto) || 0);
-          } else {
+          } else if (gasto.medio === 'tarjeta') {
             nuevaDeuda = Math.max(0, (parseFloat(tarjeta.deuda) || 0) - (parseFloat(gasto.monto) || 0));
           }
-          await DB.updateTarjeta(gasto.tarjetaId, {
-            deuda: nuevaDeuda,
-            saldoEstimado: true,
-            pendienteConciliar: true,
-            actualizadoEn: new Date().toISOString()
+          if (nuevaDeuda !== undefined) {
+            await DB.updateTarjeta(gasto.tarjetaId, {
+              deuda: nuevaDeuda,
+              saldoEstimado: true,
+              pendienteConciliar: true,
+              actualizadoEn: new Date().toISOString()
+            });
+          }
+        }
+      }
+
+      if (gasto?.tipoMovimiento === 'pagoPrestamo' && gasto.prestamoId) {
+        const prestamos = await DB.getPrestamos();
+        const prestamo = prestamos.find(p => p.id === gasto.prestamoId);
+        if (prestamo) {
+          await DB.revertirPagoPrestamo(gasto.prestamoId, gasto.pagoRegistroId, {
+            saldo: (Number(prestamo.saldo)||0) + (Number(gasto.monto)||0),
+            pagadas: Math.max(0, (Number(prestamo.pagadas)||0) - (gasto.cuotaMarcada ? 1 : 0)),
+            proximoVencimiento: gasto.proximoVencimientoAnterior || prestamo.proximoVencimiento || ''
           });
         }
       }
@@ -2793,26 +3115,29 @@ async function abrirHistorialTarjeta(id, nombre) {
   }).join('');
 }
 
-function abrirPagoPrestamo(id, nombre, saldoActual, cuota) {
+function abrirPagoPrestamo(id, nombre, saldoActual, cuota, proximoVencimiento='', frecuencia='mensual', quien='yo') {
   prestamoActualId = id;
   prestamoActualNombre = nombre;
-  prestamoSaldoMax = parseFloat(saldoActual) || 0;
-  cuotaMensual = parseFloat(cuota) || 0;
+  prestamoSaldoMax = Number(saldoActual) || 0;
+  cuotaMensual = Number(cuota) || 0;
+  window.prestamoPagoContexto = { proximoVencimiento, frecuencia, quien };
 
+  const venceTexto = proximoVencimiento
+    ? new Date(`${proximoVencimiento}T12:00:00`).toLocaleDateString('es-PE',{day:'2-digit',month:'long',year:'numeric'})
+    : 'No informado';
   document.getElementById('pago-prestamo-info').innerHTML = `
     <strong>${nombre}</strong><br>
-    <small>Deuda Total: <b>S/ ${prestamoSaldoMax.toLocaleString()}</b><br>
-    Cuota mensual: S/ ${parseFloat(cuota).toLocaleString()}</small>
-  `;
+    <small>Saldo: <b>S/ ${prestamoSaldoMax.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2})}</b><br>
+    Cuota: S/ ${cuotaMensual.toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2})}<br>
+    Próximo vencimiento: ${venceTexto}</small>`;
 
   const inputMonto = document.getElementById('prestamo-pago-monto');
   inputMonto.max = prestamoSaldoMax;
-  inputMonto.value = Math.min(parseFloat(cuota) || 0, prestamoSaldoMax);
+  inputMonto.value = Math.min(cuotaMensual || prestamoSaldoMax, prestamoSaldoMax);
   inputMonto.placeholder = `Máx. S/ ${prestamoSaldoMax.toLocaleString()}`;
-
   document.getElementById('prestamo-pago-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('prestamo-pago-nota').value = '';
-
+  document.getElementById('prestamo-pago-completa').checked = cuotaMensual > 0 && Number(inputMonto.value) >= cuotaMensual;
   openModal('pagoPrestamoModal');
 }
 
@@ -3341,66 +3666,74 @@ function preventBackgroundScroll(e) {
 }
 
 async function registrarPagoPrestamo() {
-  const monto = parseFloat(document.getElementById('prestamo-pago-monto').value);
+  const monto = Number(document.getElementById('prestamo-pago-monto').value);
   const fecha = document.getElementById('prestamo-pago-fecha').value;
   const nota = document.getElementById('prestamo-pago-nota').value.trim();
+  const marcarCuota = document.getElementById('prestamo-pago-completa').checked;
 
-  if (!monto || monto <= 0) {
-    alert('Ingresa un monto válido');
-    return;
-  }
-
-  if (monto > prestamoSaldoMax) {
-    alert(`El monto no puede superar el saldo actual de S/ ${prestamoSaldoMax.toLocaleString()}`);
-    return;
-  }
-
+  if (!monto || monto <= 0) { alert('Ingresa un monto válido'); return; }
+  if (monto > prestamoSaldoMax) { alert(`El monto no puede superar el saldo actual de S/ ${prestamoSaldoMax.toLocaleString()}`); return; }
+  if (!fecha) { alert('Selecciona la fecha del pago'); return; }
   if (!prestamoActualId) return;
 
   try {
-    // 1. Registrar el pago como gasto
-    await DB.addGasto({
-  desc: `Pago Préstamo: ${prestamoActualNombre} ${nota ? '- ' + nota : ''}`,
-  monto: monto,
-  quien: 'yo',
-  cat: 'Deudas',   // antes 'Otros'
-  icono: '🏦',
-  fecha: fecha,
-  creadoEn: new Date().toISOString(),
-});
-
-    // 2. Actualizar el préstamo
     const prestamos = await DB.getPrestamos();
     const prestamo = prestamos.find(p => p.id === prestamoActualId);
+    if (!prestamo) throw new Error('Préstamo no encontrado');
 
-    if (prestamo) {
-      const nuevoSaldo = Math.max(0, parseFloat(prestamo.saldo) - monto);
-      const nuevasPagadas = parseInt(prestamo.pagadas) + 1;
+    const nuevoSaldo = Math.max(0, (Number(prestamo.saldo)||0) - monto);
+    const nuevasPagadas = (Number(prestamo.pagadas)||0) + (marcarCuota ? 1 : 0);
+    const proximoVencimiento = marcarCuota && prestamo.proximoVencimiento
+      ? avanzarVencimiento(prestamo.proximoVencimiento, prestamo.frecuencia || 'mensual')
+      : (prestamo.proximoVencimiento || '');
 
-      await db.collection("hogares").doc(hogarId)
-        .collection("prestamos")
-        .doc(prestamoActualId)
-        .update({
-          saldo: nuevoSaldo,
-          pagadas: nuevasPagadas
-        });
-    }
+    const ok = await DB.registrarPagoPrestamo(prestamoActualId, {
+      monto, fecha, nota,
+      prestamoNombre: prestamoActualNombre,
+      quien: prestamo.quien || window.prestamoPagoContexto?.quien || 'yo',
+      cuotaMarcada: marcarCuota,
+      saldoAnterior: Number(prestamo.saldo)||0,
+      saldoPosterior: nuevoSaldo,
+      proximoVencimientoAnterior: prestamo.proximoVencimiento || '',
+      proximoVencimientoPosterior: proximoVencimiento,
+      creadoEn: new Date().toISOString()
+    }, {
+      saldo: nuevoSaldo,
+      pagadas: nuevasPagadas,
+      proximoVencimiento
+    });
+    if (!ok) throw new Error('No se pudo guardar el pago');
 
-    // Cerrar modal primero
     closeModal('pagoPrestamoModal');
-
-    // Mostrar toast después (ya sin el overlay encima)
-    showToast('Pago de préstamo registrado exitosamente ✓');
-
-    // Actualizar la interfaz
+    showToast(marcarCuota ? 'Cuota registrada y vencimiento actualizado ✓' : 'Abono registrado correctamente ✓');
     renderTodo();
     const cfg = configCache || await DB.getConfig();
     await notificarAlOtro(`${cfg.nombreYo} pagó S/ ${monto} del préstamo ${prestamoActualNombre}`);
-
   } catch (e) {
-    console.error("Error al registrar pago de préstamo:", e);
-    alert("Error al procesar el pago. Inténtalo nuevamente.");
+    console.error('Error al registrar pago de préstamo:', e);
+    alert('Error al procesar el pago. Inténtalo nuevamente.');
   }
+}
+
+async function abrirHistorialPrestamo(id, nombre, saldoActual) {
+  cerrarMenusDeuda();
+  document.getElementById('historial-prestamo-titulo').textContent = `Historial · ${nombre}`;
+  document.getElementById('historial-prestamo-resumen').innerHTML = '<span class="skeleton" style="width:100%;height:68px;display:block"></span>';
+  document.getElementById('historial-prestamo-lista').innerHTML = '<span class="skeleton" style="width:100%;height:120px;display:block"></span>';
+  openModal('historialPrestamoModal');
+
+  const pagos = await DB.getPagosPrestamo(id);
+  const totalPagado = pagos.reduce((s,p)=>s+(Number(p.monto)||0),0);
+  document.getElementById('historial-prestamo-resumen').innerHTML = `
+    <div><span>Pagos registrados</span><strong>${pagos.length}</strong></div>
+    <div><span>Total pagado</span><strong>${formatoSoles(totalPagado)}</strong></div>
+    <div><span>Saldo actual</span><strong>${formatoSoles(saldoActual)}</strong></div>`;
+  document.getElementById('historial-prestamo-lista').innerHTML = pagos.length ? pagos.map(p=>`
+    <div class="card-history-item payment">
+      <div class="card-history-icon">↓</div>
+      <div class="card-history-info"><strong>${p.cuotaMarcada ? 'Cuota pagada' : 'Abono al préstamo'}</strong><span>${formatearFechaHistorial(p.fecha)}${p.nota ? ' · '+p.nota : ''}</span><small>Saldo después: ${formatoSoles(p.saldoPosterior)}</small></div>
+      <div class="card-history-amount">− ${formatoSoles(p.monto)}</div>
+    </div>`).join('') : '<div class="empty-state">Todavía no hay pagos registrados.</div>';
 }
 
 async function registrarPagoTarjeta() {
@@ -4189,11 +4522,14 @@ function renderPresupuesto(gastos, cfg, tarjetas, prestamos, ingresoTotal, ahorr
   }
 
   el.innerHTML =
-    filaPresupuesto('Gastos fijos del hogar',    gastoHogar,    limHogar,    '#c43030', '#e8850a', '#c43030') +
-    filaPresupuesto('Tarjetas de crédito',        deudaTarjetas, limTarjeta,  '#e8850a', '#e8850a', '#c43030') +
-    filaPresupuesto('Entretenimiento y salidas',  gastoEntret,   limEntret,   '#2a7de1', '#e8850a', '#c43030') +
-    filaPresupuesto('Cuotas de préstamos',        cuotasPrest,   limPrest,    '#c43030', '#c43030', '#c43030') +
-    filaPresupuesto('Ahorro mensual',             ahorroReal,    limAhorro,   '#2d6a2d', '#4a9a4a', '#888780', true);
+    '<div class="budget-group-title">Consumo del hogar</div>' +
+    filaPresupuesto('Gastos fijos del hogar',    gastoHogar,    limHogar,    '#2a7de1', '#e8850a', '#c43030') +
+    filaPresupuesto('Entretenimiento y salidas', gastoEntret,   limEntret,   '#2a7de1', '#e8850a', '#c43030') +
+    '<div class="budget-group-title">Compromisos financieros</div>' +
+    filaPresupuesto('Tarjetas de crédito',       deudaTarjetas, limTarjeta,  '#e8850a', '#e8850a', '#c43030') +
+    filaPresupuesto('Cuotas de préstamos',       cuotasPrest,   limPrest,    '#c43030', '#c43030', '#c43030') +
+    '<div class="budget-group-title">Construcción de patrimonio</div>' +
+    filaPresupuesto('Ahorro mensual',            ahorroReal,    limAhorro,   '#2d6a2d', '#4a9a4a', '#888780', true);
 }
 
 function resetAndGetCanvas(canvasId) {

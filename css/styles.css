@@ -2619,3 +2619,68 @@ html {
 .registered-device-copy small { color:var(--text3); font-size:11.5px; line-height:1.4; }
 .current-device-badge { font-size:10px; font-weight:700; color:var(--blue); background:rgba(37,99,235,.08); border-radius:999px; padding:5px 8px; }
 @media (max-width:420px) { .device-name-row { grid-template-columns:1fr; } .device-name-row button { min-height:42px; } }
+
+/* ══ ETAPA 4 · RESUMEN CLARO ══ */
+.month-status-card{padding:22px;border-radius:22px;margin-bottom:14px;background:var(--surface);border:1px solid var(--border);box-shadow:0 8px 24px rgba(28,28,26,.06)}
+.month-status-card.good{background:linear-gradient(145deg,#effaf1,#fff)}.month-status-card.caution{background:linear-gradient(145deg,#fff8e7,#fff)}.month-status-card.warning,.month-status-card.danger{background:linear-gradient(145deg,#fff0ed,#fff)}
+.month-status-eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:700}.month-status-title{font-family:'DM Serif Display',serif;font-size:29px;margin-top:4px}.month-status-text{color:var(--text2);margin-top:4px;line-height:1.45}
+.month-status-progress{height:9px;background:rgba(0,0,0,.08);border-radius:99px;margin-top:18px;overflow:hidden}.month-status-progress span{display:block;height:100%;background:#2563eb;border-radius:inherit}.month-status-card.warning .month-status-progress span,.month-status-card.danger .month-status-progress span{background:#c43030}.month-status-foot{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-top:8px}
+.month-money-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}.month-money-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px;min-width:0}.month-money-card.primary{border-color:rgba(37,99,235,.35)}.month-money-label{font-size:12px;color:var(--text2);font-weight:600}.month-money-value{font-size:21px;font-weight:700;margin:5px 0;white-space:nowrap}.month-money-help{font-size:11px;color:var(--text3);line-height:1.35}
+.attention-list,.category-bars,.household-participation{padding:4px 16px}.attention-item{padding:14px 0;border-bottom:1px solid var(--border)}.attention-item:last-child{border-bottom:0}.attention-item strong,.attention-item span{display:block}.attention-item span{font-size:12px;color:var(--text2);margin-top:3px}.attention-item.danger strong{color:#b42318}.attention-item.warning strong{color:#9a5b00}.attention-item.info strong{color:#245fb5}.attention-empty{padding:16px 0;color:var(--text2);font-size:13px}
+.category-row{padding:12px 0;border-bottom:1px solid var(--border)}.category-row:last-child{border-bottom:0}.category-row-head{display:flex;justify-content:space-between;gap:12px;font-size:13px}.category-row-track{height:7px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-top:8px}.category-row-track span{display:block;height:100%;background:#2563eb;border-radius:inherit}
+.participation-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border)}.participation-row strong,.participation-row span{display:block}.participation-row span{font-size:12px;color:var(--text2);margin-top:2px}.participation-pct{font-size:20px;font-weight:700}.participation-note{font-size:12px;color:var(--text2);padding:13px 0;line-height:1.45}
+@media(max-width:640px){.month-money-grid{grid-template-columns:1fr}.month-money-card{display:grid;grid-template-columns:1fr auto;column-gap:10px}.month-money-value{grid-column:2;grid-row:1/3;align-self:center}.month-money-help{grid-column:1}.month-status-title{font-size:26px}}
+
+
+/* Etapa 5 · Deudas y estados de cuenta */
+.statement-initial-box{padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface2)}
+.field-help{display:block;color:var(--text3);font-size:12px;margin:4px 0 12px}
+.statement-card-name{font-size:18px;font-weight:700;margin-bottom:10px}
+.statement-notice{padding:10px 12px;border-radius:10px;background:#fff8e6;color:#765100;font-size:12px;margin-bottom:14px;border:1px solid #f0d596}
+.priority-badge{font-size:10px;font-weight:800;padding:5px 8px;border-radius:999px;white-space:nowrap}
+.priority-badge.critical,.priority-badge.urgent{background:#feeceb;color:#a52b2b}
+.priority-badge.warning,.priority-badge.soon{background:#fff4dc;color:#835500}
+.priority-badge.normal{background:#eaf7ed;color:#246b35}
+.statement-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:11px;border-radius:12px;background:var(--surface2);border:1px solid var(--border)}
+.statement-summary>div{display:flex;flex-direction:column;gap:3px}
+.statement-summary small{font-size:10px;color:var(--text3)}
+.statement-summary strong{font-size:13px;color:var(--text)}
+.statement-summary>span{grid-column:1/-1;font-size:11px;color:var(--text3)}
+.statement-summary.empty{display:block;background:transparent;border-style:dashed}
+.debt-card-actions.compact-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.debt-card-actions.compact-actions button{margin:0!important}
+.debt-action-statement{background:#eef5ff!important;color:#1e5ca8!important;border-color:#cfe0f5!important;font-weight:700}
+@media(max-width:380px){.statement-summary{grid-template-columns:1fr}.statement-summary>span{grid-column:1}.debt-card-actions.compact-actions{grid-template-columns:1fr 1fr}}
+
+/* Etapa 6 · Préstamos, vencimientos y pagos */
+.loan-status-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 10px;font-size:11px;color:var(--text3)}
+.debt-status{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:800}
+.debt-status.critical{background:#feeceb;color:#a52b2b}.debt-status.warning{background:#fff1dc;color:#885300}.debt-status.attention{background:#fff8e6;color:#765100}.debt-status.ok{background:#eaf7ed;color:#246b35}.debt-status.paid{background:#e8f4ff;color:#165f9e}
+.loan-card.critical{border-color:#efb2ae}.loan-card.warning{border-color:#efd39b}.loan-card.paid{opacity:.84}
+.payment-check{display:flex;align-items:flex-start;gap:10px;padding:12px;margin:4px 0 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);font-size:13px;line-height:1.35;color:var(--text2)}
+.payment-check input{width:18px;height:18px;margin-top:1px;accent-color:var(--accent)}
+.expense-badge-debt{display:inline-flex;margin-top:5px;padding:3px 7px;border-radius:999px;background:#f2f0fa;color:#5e4b8b;font-size:10px;font-weight:700}
+
+
+/* ══ ETAPA 7 · EXPERIENCIA PREMIUM ══ */
+.page.active { animation: pageEnter .22s ease-out; }
+@keyframes pageEnter { from { opacity:.25; transform:translateY(6px); } to { opacity:1; transform:none; } }
+.card, .debt-card, .month-status-card, .kpi { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+@media (hover:hover) { .card:hover, .debt-card:hover { transform:translateY(-2px); box-shadow:0 10px 26px rgba(22,34,58,.10); } }
+.expense-filter-bar { display:flex; gap:7px; overflow-x:auto; scrollbar-width:none; padding:2px 1px 10px; }
+.expense-filter-bar::-webkit-scrollbar{display:none}.expense-filter{border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:999px;padding:8px 13px;font-size:12px;font-weight:700;white-space:nowrap}.expense-filter.active{background:#eaf2ff;color:#1f63c5;border-color:#b9d2fb}.expense-card-shell{overflow:hidden}
+.attention-overview{display:flex;flex-wrap:wrap;gap:7px;padding-bottom:12px;margin-bottom:4px;border-bottom:1px solid var(--border)}.attention-count{padding:6px 9px;border-radius:999px;font-size:11px;font-weight:800}.attention-count.danger{background:#fee8e8;color:#b42318}.attention-count.warning{background:#fff3d7;color:#9a5a00}.attention-count.info{background:#eaf2ff;color:#235ea7}
+.debt-card.collapsible:not(.expanded) .statement-summary,
+.debt-card.collapsible:not(.expanded) .debt-card-details,
+.debt-card.collapsible:not(.expanded) .card-date-status,
+.debt-card.collapsible:not(.expanded) .reconcile-status,
+.debt-card.collapsible:not(.expanded) .credit-overflow,
+.debt-card.collapsible:not(.expanded) .credit-line-visual,
+.debt-card.loan-card.collapsible:not(.expanded) .debt-prog-bg,
+.debt-card.loan-card.collapsible:not(.expanded) .debt-hint { display:none; }
+.debt-card.collapsible .debt-details-toggle{background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:9px;font-weight:700;font-size:12px;min-height:38px}.debt-card.collapsible.expanded{box-shadow:0 12px 30px rgba(20,35,65,.10)}
+.debt-card.collapsible:not(.expanded) .debt-card-actions{margin-top:12px}.debt-card.collapsible:not(.expanded) .debt-action-secondary,.debt-card.collapsible:not(.expanded) .debt-action-history,.debt-card.collapsible:not(.expanded) .debt-action-statement{display:none}
+.saving-goal{border:1px solid var(--border);border-radius:16px;padding:15px;margin-bottom:10px;background:linear-gradient(135deg,var(--surface),var(--surface2))}.saving-goal-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.saving-goal-head strong{font-size:11px;color:var(--text2)}.saving-bar-bg{height:9px!important;border-radius:999px!important;overflow:hidden}.saving-bar{border-radius:999px;transition:width .55s cubic-bezier(.2,.8,.2,1)}
+.budget-group-title{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 8px;padding-top:4px}.budget-group-title:first-child{margin-top:0}.presup-fila{padding:12px 0}.presup-fila+.budget-group-title{border-top:1px solid var(--border);padding-top:18px}
+.month-status-progress span,.dist-bar-fill,.presup-bar-fill,.regla-bar-fill,.credit-line-fill{transition:width .55s cubic-bezier(.2,.8,.2,1)}
+@media(max-width:520px){.debt-card-actions.compact-actions{grid-template-columns:1fr 1fr}.debt-card.collapsible:not(.expanded) .debt-card-actions.compact-actions{grid-template-columns:1fr 1fr}.attention-overview{gap:5px}}
