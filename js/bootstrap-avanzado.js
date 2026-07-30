@@ -23,7 +23,9 @@
   async function iniciar() {
     if (promesaInicio) return promesaInicio;
     promesaInicio = (async () => {
-      const resultados = [await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=16.2')];
+      const resultados = [];
+      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=16.3'));
+      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=16.3'));
       try {
         window.HFRecuperacionProducto?.iniciar?.();
         await window.HFDeudasActuales?.actualizar?.(true);
