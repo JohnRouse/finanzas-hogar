@@ -1,4 +1,4 @@
-name: Integrar Etapas 11.2 y 11.3
+name: Integrar Etapas 11.2, 11.3 y 11.4
 
 on:
   push:
@@ -15,6 +15,8 @@ on:
       - 'js/pipeline-outlook.js'
       - 'js/outlook-graph.js'
       - 'js/outlook-ui.js'
+      - 'js/actualizador-tarjetas-outlook.js'
+      - 'js/sincronizacion-financiera-ui.js'
       - '.github/workflows/aplicar-etapa11-2.yml'
 
 permissions:
@@ -36,15 +38,13 @@ jobs:
           from pathlib import Path
           import re
 
-          VERSION = '11.3.6'
-          CACHE_NAME = 'hogar-finanzas-v3-etapa11-3-6'
+          VERSION = '11.4.4'
+          CACHE_NAME = 'hogar-finanzas-v3-etapa11-4-4'
 
           css_assets = [
               'css/deudas-inteligentes.css?v=11.2.1',
           ]
 
-          # El orden es importante: motores y reglas, bandeja de importación,
-          # vinculación de tarjetas, pipeline, cliente Graph e interfaz.
           js_assets = [
               f'js/modelo-financiero.js?v={VERSION}',
               f'js/motor-conciliacion.js?v={VERSION}',
@@ -53,8 +53,10 @@ jobs:
               f'js/vinculacion-tarjetas-outlook.js?v={VERSION}',
               f'js/pipeline-outlook.js?v={VERSION}',
               f'js/outlook-graph.js?v={VERSION}',
+              f'js/actualizador-tarjetas-outlook.js?v={VERSION}',
               f'js/outlook-ui.js?v={VERSION}',
               'js/deudas-inteligentes.js?v=11.2.1',
+              f'js/sincronizacion-financiera-ui.js?v={VERSION}',
           ]
 
           index = Path('index.html')
@@ -65,14 +67,14 @@ jobs:
               if path not in text:
                   text = text.replace('</head>', f'  <link rel="stylesheet" href="{asset}">\n</head>')
 
-          missing_scripts = []
           for asset in js_assets:
               path = asset.split('?')[0]
-              if path not in text:
-                  missing_scripts.append(f'  <script src="{asset}"></script>')
-
-          if missing_scripts:
-              text = text.replace('</body>', '\n'.join(missing_scripts) + '\n</body>')
+              pattern = rf'<script\s+src=["\']{re.escape(path)}(?:\?[^"\']*)?["\']></script>'
+              replacement = f'<script src="{asset}"></script>'
+              if re.search(pattern, text):
+                  text = re.sub(pattern, replacement, text)
+              else:
+                  text = text.replace('</body>', f'  {replacement}\n</body>')
 
           index.write_text(text, encoding='utf-8')
 
@@ -89,19 +91,13 @@ jobs:
               assets = css_assets + js_assets
               match = re.search(r'const APP_SHELL = \[(.*?)\];', st, flags=re.S)
               if match:
-                  body = match.group(1)
-                  existing = set(re.findall(r"['\"](\./[^'\"]+)['\"]", body))
-                  additions = []
-                  for asset in assets:
-                      cache_path = './' + asset
-                      if cache_path not in existing:
-                          additions.append(f"  '{cache_path}'")
-                  if additions:
-                      cleaned = body.rstrip()
-                      if cleaned and not cleaned.rstrip().endswith(','):
-                          cleaned += ','
-                      replacement = 'const APP_SHELL = [' + cleaned + '\n' + ',\n'.join(additions) + '\n]'
-                      st = st[:match.start()] + replacement + ';' + st[match.end():]
+                  existing_lines = re.findall(r"['\"](\./[^'\"]+)['\"]", match.group(1))
+                  managed_paths = {asset.split('?')[0] for asset in assets}
+                  preserved = [item for item in existing_lines if item[2:].split('?')[0] not in managed_paths]
+                  managed = ['./' + asset for asset in assets]
+                  all_assets = preserved + managed
+                  replacement = 'const APP_SHELL = [\n' + ',\n'.join(f"  '{item}'" for item in all_assets) + '\n]'
+                  st = st[:match.start()] + replacement + ';' + st[match.end():]
 
               sw.write_text(st, encoding='utf-8')
           PY
@@ -115,8 +111,10 @@ jobs:
           node --check js/vinculacion-tarjetas-outlook.js
           node --check js/pipeline-outlook.js
           node --check js/outlook-graph.js
+          node --check js/actualizador-tarjetas-outlook.js
           node --check js/outlook-ui.js
           node --check js/deudas-inteligentes.js
+          node --check js/sincronizacion-financiera-ui.js
 
       - name: Verificar integración
         run: |
@@ -127,9 +125,12 @@ jobs:
           grep -q 'js/vinculacion-tarjetas-outlook.js' index.html
           grep -q 'js/pipeline-outlook.js' index.html
           grep -q 'js/outlook-graph.js' index.html
+          grep -q 'js/actualizador-tarjetas-outlook.js' index.html
           grep -q 'js/outlook-ui.js' index.html
-          grep -q 'js/vinculacion-tarjetas-outlook.js' firebase-messaging-sw.js
-          grep -q 'js/outlook-ui.js' firebase-messaging-sw.js
+          grep -q 'js/deudas-inteligentes.js' index.html
+          grep -q 'js/sincronizacion-financiera-ui.js' index.html
+          grep -q 'js/actualizador-tarjetas-outlook.js' firebase-messaging-sw.js
+          grep -q 'js/sincronizacion-financiera-ui.js' firebase-messaging-sw.js
 
       - name: Guardar integración
         run: |
@@ -140,5 +141,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '4189828+github-actions[bot]@users.noreply.github.com'
           git add index.html firebase-messaging-sw.js
-          git commit -m 'Etapa 11.3.6: integra vinculación Outlook [auto-etapa11]'
+          git commit -m 'Etapa 11.4.4: integra automatización financiera [auto-etapa11]'
           git push origin etapa-11-2-motor-importacion
