@@ -1236,12 +1236,35 @@ function setFiltroGastos(filtro, boton) {
 
 function aplicarFiltroGastos(lista) {
   const hoy = new Date();
-  hoy.setHours(0,0,0,0);
+  hoy.setHours(0, 0, 0, 0);
+
+  const finHoy = new Date(hoy);
+  finHoy.setHours(23, 59, 59, 999);
+
   const inicioSemana = new Date(hoy);
-  inicioSemana.setDate(hoy.getDate() - ((hoy.getDay()+6)%7));
-  if (filtroGastosActivo === 'yo' || filtroGastosActivo === 'pareja') return lista.filter(g => g.quien === filtroGastosActivo);
-  if (filtroGastosActivo === 'hoy') return lista.filter(g => g.fecha === hoy.toISOString().slice(0,10));
-  if (filtroGastosActivo === 'semana') return lista.filter(g => { const d = fechaLocalISO(g.fecha); return d && d >= inicioSemana && d <= hoy; });
+  inicioSemana.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
+
+  if (filtroGastosActivo === 'yo' || filtroGastosActivo === 'pareja') {
+    return lista.filter(g => g.quien === filtroGastosActivo);
+  }
+
+  const hoyISO = [
+    hoy.getFullYear(),
+    String(hoy.getMonth() + 1).padStart(2, '0'),
+    String(hoy.getDate()).padStart(2, '0')
+  ].join('-');
+
+  if (filtroGastosActivo === 'hoy') {
+    return lista.filter(g => g.fecha === hoyISO);
+  }
+
+  if (filtroGastosActivo === 'semana') {
+    return lista.filter(g => {
+      const d = fechaLocalISO(g.fecha);
+      return d && d >= inicioSemana && d <= finHoy;
+    });
+  }
+
   return lista;
 }
 

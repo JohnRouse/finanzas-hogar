@@ -2684,3 +2684,65 @@ html {
 .budget-group-title{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:18px 0 8px;padding-top:4px}.budget-group-title:first-child{margin-top:0}.presup-fila{padding:12px 0}.presup-fila+.budget-group-title{border-top:1px solid var(--border);padding-top:18px}
 .month-status-progress span,.dist-bar-fill,.presup-bar-fill,.regla-bar-fill,.credit-line-fill{transition:width .55s cubic-bezier(.2,.8,.2,1)}
 @media(max-width:520px){.debt-card-actions.compact-actions{grid-template-columns:1fr 1fr}.debt-card.collapsible:not(.expanded) .debt-card-actions.compact-actions{grid-template-columns:1fr 1fr}.attention-overview{gap:5px}}
+
+
+/* ETAPA 11.1.1 — AJUSTES RESPONSIVE Y FILTRO SEMANA */
+#page-gastos > .section:first-child .section-head {
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  align-items:stretch;
+  margin-bottom:12px;
+}
+#page-gastos > .section:first-child .section-head > .section-title {
+  width:100%;
+  line-height:1.25;
+}
+#page-gastos > .section:first-child .section-head > div[style*="display:flex"] {
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px !important;
+  width:100%;
+}
+#page-gastos > .section:first-child .section-head .btn-recurrentes {
+  min-width:0;
+  width:100%;
+  min-height:42px;
+  padding:7px 6px;
+  line-height:1.15;
+  white-space:normal;
+  text-align:center;
+  justify-content:center;
+}
+#page-gastos .expense-filter-bar {
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:1px 1px 7px;
+  margin-bottom:9px;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+#page-gastos .expense-filter-bar::-webkit-scrollbar { display:none; }
+#page-gastos .expense-filter {
+  flex:0 0 auto;
+  padding-left:14px;
+  padding-right:14px;
+  white-space:nowrap;
+}
+@media (min-width:700px) {
+  #page-gastos > .section:first-child .section-head {
+    grid-template-columns:minmax(180px,1fr) minmax(330px,auto);
+    align-items:center;
+  }
+  #page-gastos > .section:first-child .section-head > div[style*="display:flex"] {
+    width:auto;
+  }
+}
+@media (max-width:390px) {
+  #page-gastos > .section:first-child .section-head .btn-recurrentes {
+    font-size:11px;
+    padding-left:4px;
+    padding-right:4px;
+  }
+}
