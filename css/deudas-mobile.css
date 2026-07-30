@@ -1,0 +1,44 @@
+/* Hogar Finanzas — Etapa 15.2: experiencia mobile-first para Deudas */
+#page-deudas{padding-bottom:28px}
+#page-deudas .kpi-grid{gap:10px;margin-bottom:14px}
+#page-deudas .kpi{padding:14px;border-radius:16px;min-width:0}
+#page-deudas .kpi-label{font-size:11px;line-height:1.3}
+#page-deudas .kpi-val{font-size:22px;line-height:1.15;overflow-wrap:anywhere}
+#page-deudas .kpi-sub{font-size:10px;line-height:1.35}
+#page-deudas .section{margin-top:14px}
+#page-deudas .section-head{gap:10px;align-items:center}
+#page-deudas .section-title{font-size:15px;line-height:1.3}
+#page-deudas .debt-grid{display:grid;grid-template-columns:1fr;gap:12px}
+#page-deudas .card,#page-deudas .debt-card,#page-deudas .hf-card-status{min-width:0;overflow:hidden}
+#page-deudas button,#page-deudas input,#page-deudas select,#page-deudas textarea{min-height:42px;font-size:14px}
+#page-deudas input,#page-deudas select,#page-deudas textarea{width:100%;max-width:100%;box-sizing:border-box}
+
+.hf-mobile-fold{border:1px solid var(--border);border-radius:18px;background:var(--surface);overflow:hidden;margin-top:12px}
+.hf-mobile-fold>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;cursor:pointer;font-weight:700;font-size:15px;min-height:50px}
+.hf-mobile-fold>summary::-webkit-details-marker{display:none}
+.hf-mobile-fold>summary::after{content:'⌄';font-size:18px;color:var(--text2);transition:transform .2s ease}
+.hf-mobile-fold[open]>summary::after{transform:rotate(180deg)}
+.hf-mobile-fold-body{padding:0 14px 14px}
+.hf-mobile-fold .section{margin:0}
+.hf-mobile-fold .section-title,.hf-mobile-fold .section-head>.section-title{display:none}
+
+.hf-outlook-pending{padding:16px;border:1px solid #d7e2f8;background:#f6f9ff;border-radius:18px;margin-bottom:14px}
+.hf-outlook-pending strong{display:block;font-size:15px;margin-bottom:6px}
+.hf-outlook-pending p{margin:0;color:var(--text2);font-size:13px;line-height:1.5}
+.hf-outlook-technical-hidden{display:none!important}
+
+@media(max-width:420px){
+  #page-deudas .kpi-grid{grid-template-columns:1fr 1fr}
+  #page-deudas .kpi{padding:12px}
+  #page-deudas .kpi-val{font-size:19px}
+  #page-deudas .hf-debt-kpis{grid-template-columns:1fr 1fr}
+  #page-deudas .hf-payment-grid{grid-template-columns:1fr}
+  #page-deudas .hf-card-metrics{grid-template-columns:1fr 1fr}
+  #page-deudas .hf-card-status-head{flex-direction:column}
+  #page-deudas .hf-card-debt{font-size:20px;white-space:normal}
+  #page-deudas .chart-wrap,#page-deudas .hf-debt-chart-wrap{min-height:220px;height:220px!important}
+}
+
+@media(min-width:421px) and (max-width:759px){
+  #page-deudas .debt-grid{grid-template-columns:1fr}
+}
