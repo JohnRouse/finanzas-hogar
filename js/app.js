@@ -254,7 +254,10 @@ function detectarPlataforma() {
 }
 
 function estaEnModoInstalado() {
-  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  return window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+    window.navigator.standalone === true ||
+    document.referrer.startsWith('android-app://');
 }
 
 function nombrePredeterminadoDispositivo() {
@@ -348,7 +351,7 @@ function iniciarEscuchaMensajesPrimerPlano() {
   }
 }
 
-async function probarNotificacionEnEsteDispositivo() {
+async function probarNotificacionEnEsteDispositivo(pruebaEnSegundoPlano = false) {
   if (!hogarId || Notification.permission !== 'granted') {
     showToast('Primero activa las notificaciones en este dispositivo');
     return;
@@ -369,19 +372,30 @@ async function probarNotificacionEnEsteDispositivo() {
       return;
     }
 
+    const retrasoSegundos = pruebaEnSegundoPlano ? 10 : 0;
     await db.collection('hogares').doc(hogarId).collection('notificaciones').add({
-      titulo: 'Prueba correcta',
-      texto: 'Este dispositivo ya puede recibir avisos de Hogar Finanzas.',
+      titulo: pruebaEnSegundoPlano ? 'Prueba en segundo plano' : 'Prueba correcta',
+      texto: pruebaEnSegundoPlano
+        ? 'La notificación llegó con Hogar Finanzas cerrado o en segundo plano.'
+        : 'Este dispositivo ya puede recibir avisos de Hogar Finanzas.',
       categoria: 'vencimientos',
       miembroDestino: miembro.id,
       usuarioDestino: miembro.legacyTipo,
       dispositivoDestino: dispositivoId,
+      nombreDispositivoDestino: dispositivo.nombre || nombrePredeterminadoDispositivo(),
+      retrasoSegundos,
       url: './index.html',
-      tag: `prueba-${dispositivoId}`,
+      tag: `${pruebaEnSegundoPlano ? 'prueba-fondo' : 'prueba'}-${dispositivoId}-${Date.now()}`,
       fecha: firebase.firestore.FieldValue.serverTimestamp(),
-      origen: 'prueba-dispositivo'
+      origen: pruebaEnSegundoPlano ? 'prueba-segundo-plano' : 'prueba-dispositivo'
     });
-    showToast('Prueba enviada únicamente a este dispositivo.');
+
+    if (pruebaEnSegundoPlano) {
+      showToast(`Prueba programada para ${dispositivo.nombre || 'este dispositivo'}. Cierra la app ahora; llegará en unos 10 segundos.`);
+      setTimeout(() => closeModal('notificacionesModal'), 900);
+    } else {
+      showToast(`Prueba enviada únicamente a ${dispositivo.nombre || 'este dispositivo'}.`);
+    }
   } catch (error) {
     console.error('Error enviando prueba:', error);
     showToast('No se pudo enviar la prueba a este dispositivo');
@@ -476,8 +490,10 @@ async function actualizarModalNotificaciones() {
   const disable = document.getElementById('notif-disable-btn');
   const guide = document.getElementById('notif-install-guide');
   const testButton = document.getElementById('notif-test-btn');
+  const backgroundTestButton = document.getElementById('notif-test-background-btn');
   const nameInput = document.getElementById('notif-device-name');
   if (testButton) testButton.style.display = 'none';
+  if (backgroundTestButton) backgroundTestButton.style.display = 'none';
   if (nameInput) nameInput.value = localStorage.getItem('nombreDispositivo') || nombrePredeterminadoDispositivo();
 
   const prefs = JSON.parse(localStorage.getItem('preferenciasNotificaciones') || '{}');
@@ -502,6 +518,7 @@ async function actualizarModalNotificaciones() {
     button.style.display = '';
     disable.style.display = '';
     if (testButton) testButton.style.display = '';
+    if (backgroundTestButton) backgroundTestButton.style.display = '';
     iniciarEscuchaMensajesPrimerPlano();
     await sincronizarDispositivoSiAutorizado();
   } else if (Notification.permission === 'denied') {

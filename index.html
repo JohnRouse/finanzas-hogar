@@ -426,7 +426,8 @@
 
     <button class="modal-btn primary" id="notif-primary-btn" onclick="activarNotificacionesDesdeBoton()">Activar notificaciones</button>
     <button class="modal-btn secondary" id="notif-disable-btn" onclick="desactivarNotificacionesDispositivo()" style="display:none;">Desactivar en este dispositivo</button>
-    <button class="modal-btn secondary" id="notif-test-btn" onclick="probarNotificacionEnEsteDispositivo()" style="display:none;">Enviar notificación de prueba</button>
+    <button class="modal-btn secondary" id="notif-test-btn" onclick="probarNotificacionEnEsteDispositivo(false)" style="display:none;">Enviar prueba ahora</button>
+    <button class="modal-btn secondary" id="notif-test-background-btn" onclick="probarNotificacionEnEsteDispositivo(true)" style="display:none;">Probar con la app cerrada · 10 segundos</button>
     <div class="settings-note">En iPhone se requiere iOS 16.4 o posterior y abrir la app desde la pantalla de inicio. Los avisos pueden ser silenciados por Concentración o por los ajustes del sistema.</div>
   </div>
 </div>
@@ -1233,8 +1234,8 @@
 </script>
 
 <!-- data.js y app.js (SIN type="module") -->
-<script src="js/data.js?v=8.1"></script>
-<script src="js/app.js?v=8.1"></script>
+<script src="js/data.js?v=8.2"></script>
+<script src="js/app.js?v=8.2"></script>
 
 </body>
 </html>

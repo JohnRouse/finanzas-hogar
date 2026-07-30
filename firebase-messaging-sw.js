@@ -11,9 +11,9 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v3-etapa8-1';
+const CACHE_NAME = 'hogar-finanzas-v3-etapa8-2';
 const APP_SHELL = [
-  './', './index.html', './css/styles.css?v=8.1', './js/data.js?v=8.1', './js/app.js?v=8.1',
+  './', './index.html', './css/styles.css?v=8.2', './js/data.js?v=8.2', './js/app.js?v=8.2',
   './manifest.json', './icons/icon-192.png', './icons/icon-512.png'
 ];
 

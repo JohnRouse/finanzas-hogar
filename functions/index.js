@@ -10,6 +10,8 @@ const db = admin.firestore();
 const REGION = 'southamerica-east1';
 const TIME_ZONE = 'America/Lima';
 
+const esperar = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 function fechaLima(date = new Date()) {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: TIME_ZONE,
@@ -67,6 +69,9 @@ exports.enviarNotificacionPago = onDocumentCreated(
     const hogarId = event.params.hogarId;
     if (!notif || notif.estado === 'enviada') return;
 
+    const retrasoSegundos = Math.min(Math.max(Number(notif.retrasoSegundos) || 0, 0), 30);
+    if (retrasoSegundos > 0) await esperar(retrasoSegundos * 1000);
+
     const miembroDestino = notif.miembroDestino || null;
     const usuarioDestino = notif.usuarioDestino || null;
     if (!miembroDestino && !usuarioDestino) {
@@ -88,7 +93,7 @@ exports.enviarNotificacionPago = onDocumentCreated(
     });
 
     let tokens = docsDestino.map(doc => doc.data().token).filter(Boolean);
-    if (!tokens.length && usuarioDestino) {
+    if (!tokens.length && usuarioDestino && !dispositivoDestino) {
       const legacy = await db.collection('hogares').doc(hogarId)
         .collection('tokens').where('usuario', '==', usuarioDestino).get();
       tokens = legacy.docs.map(doc => doc.data().token).filter(Boolean);
@@ -96,7 +101,10 @@ exports.enviarNotificacionPago = onDocumentCreated(
 
     tokens = [...new Set(tokens)];
     if (!tokens.length) {
-      await snap.ref.set({ estado: 'sin-dispositivos', procesadaEn: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      await snap.ref.set({
+        estado: dispositivoDestino ? 'dispositivo-sin-push' : 'sin-dispositivos',
+        procesadaEn: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
       return;
     }
 
@@ -127,10 +135,13 @@ exports.enviarNotificacionPago = onDocumentCreated(
         if (doc) batch.set(doc.ref, { token: null, notificacionesActivas: false }, { merge: true });
       }
     });
+    const primerError = response.responses.find(r => !r.success)?.error?.code || null;
+    const tokenInvalido = !response.successCount && invalidCodes.has(primerError);
     batch.set(snap.ref, {
-      estado: response.successCount ? 'enviada' : 'fallida',
+      estado: response.successCount ? 'enviada' : tokenInvalido ? 'token-invalido' : 'fallida',
       exitosas: response.successCount,
       fallidas: response.failureCount,
+      errorCodigo: primerError,
       procesadaEn: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     await batch.commit();
