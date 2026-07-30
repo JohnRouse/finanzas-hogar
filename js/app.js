@@ -310,6 +310,7 @@ async function guardarDispositivo(token = null, cambios = {}) {
       vencimientos: preferenciasGuardadas.vencimientos !== false,
       presupuesto: preferenciasGuardadas.presupuesto !== false,
       estadosCuenta: preferenciasGuardadas.estadosCuenta !== false,
+      resumenDiario: preferenciasGuardadas.resumenDiario !== false,
       ...cambios.preferencias
     },
     userAgent: navigator.userAgent,
@@ -467,7 +468,8 @@ async function actualizarPreferenciasNotificaciones() {
     movimientos: !!document.getElementById('notif-pref-movimientos')?.checked,
     vencimientos: !!document.getElementById('notif-pref-vencimientos')?.checked,
     presupuesto: !!document.getElementById('notif-pref-presupuesto')?.checked,
-    estadosCuenta: !!document.getElementById('notif-pref-estados')?.checked
+    estadosCuenta: !!document.getElementById('notif-pref-estados')?.checked,
+    resumenDiario: !!document.getElementById('notif-pref-resumen-diario')?.checked
   };
   localStorage.setItem('preferenciasNotificaciones', JSON.stringify(preferencias));
   await guardarDispositivo(null, { preferencias });
@@ -497,7 +499,7 @@ async function actualizarModalNotificaciones() {
   if (nameInput) nameInput.value = localStorage.getItem('nombreDispositivo') || nombrePredeterminadoDispositivo();
 
   const prefs = JSON.parse(localStorage.getItem('preferenciasNotificaciones') || '{}');
-  const map = [['notif-pref-movimientos','movimientos'],['notif-pref-vencimientos','vencimientos'],['notif-pref-presupuesto','presupuesto'],['notif-pref-estados','estadosCuenta']];
+  const map = [['notif-pref-movimientos','movimientos'],['notif-pref-vencimientos','vencimientos'],['notif-pref-presupuesto','presupuesto'],['notif-pref-estados','estadosCuenta'],['notif-pref-resumen-diario','resumenDiario']];
   map.forEach(([id,key]) => { const el=document.getElementById(id); if(el) el.checked = prefs[key] !== false; });
 
   if (!capacidades.compatible) {
