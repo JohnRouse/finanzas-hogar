@@ -1,4 +1,4 @@
-/* Hogar Finanzas — Etapa 11.3.1: Microsoft Graph + OAuth PKCE */
+/* Hogar Finanzas — Etapa 11.3.4: Microsoft Graph + OAuth PKCE + Delta API */
 (() => {
   'use strict';
 
@@ -9,10 +9,13 @@
     token: 'hf_outlook_token',
     verifier: 'hf_outlook_pkce_verifier',
     state: 'hf_outlook_oauth_state',
-    returnUrl: 'hf_outlook_return_url'
+    returnUrl: 'hf_outlook_return_url',
+    delta: 'hf_outlook_delta_inbox',
+    ultimaSync: 'hf_outlook_ultima_sync'
   };
 
   const DEFAULT_SCOPES = ['openid', 'profile', 'offline_access', 'User.Read', 'Mail.Read'];
+  const MESSAGE_SELECT = 'id,internetMessageId,subject,from,receivedDateTime,lastModifiedDateTime,body,bodyPreview,hasAttachments,webLink,isRead';
 
   function configurar(opciones = {}) {
     const actual = leerConfig();
@@ -110,6 +113,7 @@
     if (!respuesta.ok) throw new Error(datos.error_description || datos.error || 'No se pudo obtener el token.');
 
     guardarToken(datos);
+    limpiarDelta();
     sessionStorage.removeItem(STORAGE.verifier);
     sessionStorage.removeItem(STORAGE.state);
     const returnUrl = sessionStorage.getItem(STORAGE.returnUrl) || config.redirectUri;
@@ -192,7 +196,12 @@
     }
 
     const datos = respuesta.status === 204 ? null : await respuesta.json().catch(() => null);
-    if (!respuesta.ok) throw new Error(datos?.error?.message || `Microsoft Graph respondió ${respuesta.status}.`);
+    if (!respuesta.ok) {
+      const error = new Error(datos?.error?.message || `Microsoft Graph respondió ${respuesta.status}.`);
+      error.status = respuesta.status;
+      error.codigo = datos?.error?.code || null;
+      throw error;
+    }
     return datos;
   }
 
@@ -206,6 +215,9 @@
   }
 
   function adaptarMensaje(mensaje = {}) {
+    const cuerpo = mensaje.body?.contentType === 'html'
+      ? limpiarHtml(mensaje.body.content)
+      : (mensaje.body?.content || mensaje.bodyPreview || '');
     return {
       id: mensaje.id,
       messageId: mensaje.id,
@@ -215,11 +227,12 @@
       remitente: mensaje.from?.emailAddress?.address || '',
       from: mensaje.from?.emailAddress?.address || '',
       nombreRemitente: mensaje.from?.emailAddress?.name || '',
-      cuerpo: mensaje.body?.contentType === 'html' ? limpiarHtml(mensaje.body.content) : (mensaje.body?.content || mensaje.bodyPreview || ''),
-      body: mensaje.body?.contentType === 'html' ? limpiarHtml(mensaje.body.content) : (mensaje.body?.content || mensaje.bodyPreview || ''),
+      cuerpo,
+      body: cuerpo,
       html: mensaje.body?.contentType === 'html' ? mensaje.body.content : '',
       recibidoEn: mensaje.receivedDateTime || null,
       receivedDateTime: mensaje.receivedDateTime || null,
+      modificadoEn: mensaje.lastModifiedDateTime || null,
       webLink: mensaje.webLink || null,
       tieneAdjuntos: Boolean(mensaje.hasAttachments)
     };
@@ -235,7 +248,7 @@
     const params = new URLSearchParams({
       '$top': String(top),
       '$orderby': 'receivedDateTime desc',
-      '$select': 'id,internetMessageId,subject,from,receivedDateTime,body,bodyPreview,hasAttachments,webLink,isRead'
+      '$select': MESSAGE_SELECT
     });
     if (filtros.length) params.set('$filter', filtros.join(' and '));
     if (opciones.buscar) params.set('$search', `"${String(opciones.buscar).replace(/"/g, '')}"`);
@@ -250,11 +263,121 @@
     return mensajes.slice(0, Number(opciones.maximo || top));
   }
 
-  async function sincronizar(opciones = {}) {
+  function leerDelta() {
+    try { return JSON.parse(localStorage.getItem(STORAGE.delta) || '{}'); }
+    catch { return {}; }
+  }
+
+  function guardarDelta(datos = {}) {
+    const estado = {
+      deltaLink: datos.deltaLink || null,
+      cuentaId: datos.cuentaId || null,
+      actualizadoEn: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE.delta, JSON.stringify(estado));
+    return estado;
+  }
+
+  function limpiarDelta() {
+    localStorage.removeItem(STORAGE.delta);
+    localStorage.removeItem(STORAGE.ultimaSync);
+  }
+
+  function obtenerEstadoSincronizacion() {
+    const delta = leerDelta();
+    let ultima = {};
+    try { ultima = JSON.parse(localStorage.getItem(STORAGE.ultimaSync) || '{}'); }
+    catch { ultima = {}; }
+    return {
+      inicializada: Boolean(delta.deltaLink),
+      deltaActualizadoEn: delta.actualizadoEn || null,
+      ...ultima
+    };
+  }
+
+  async function descargarCambiosDelta(opciones = {}, reintento = false) {
+    const perfil = await obtenerPerfil();
+    const estado = leerDelta();
+    const mismaCuenta = !estado.cuentaId || estado.cuentaId === perfil.id;
+    let siguiente = mismaCuenta ? estado.deltaLink : null;
+    const esInicial = !siguiente;
+
+    if (!siguiente) {
+      const top = Math.min(100, Math.max(10, Number(opciones.top || 50)));
+      siguiente = `/me/mailFolders/inbox/messages/delta?$select=${encodeURIComponent(MESSAGE_SELECT)}&$top=${top}`;
+    }
+
+    const mensajes = [];
+    const eliminados = [];
+    let paginas = 0;
+    let deltaLink = null;
+    const maxPaginas = Math.max(1, Number(opciones.maxPaginas || 100));
+
+    try {
+      while (siguiente) {
+        if (++paginas > maxPaginas) {
+          throw new Error('La sincronización inicial contiene demasiados correos. Aumenta maxPaginas para completarla.');
+        }
+        const pagina = await graph(siguiente);
+        for (const item of pagina.value || []) {
+          if (item['@removed']) eliminados.push({ id: item.id, razon: item['@removed'].reason || 'deleted' });
+          else mensajes.push(adaptarMensaje(item));
+        }
+        siguiente = pagina['@odata.nextLink'] || null;
+        deltaLink = pagina['@odata.deltaLink'] || deltaLink;
+      }
+    } catch (error) {
+      if (!reintento && (error.status === 410 || error.codigo === 'SyncStateNotFound')) {
+        limpiarDelta();
+        return descargarCambiosDelta(opciones, true);
+      }
+      throw error;
+    }
+
+    if (!deltaLink) throw new Error('Microsoft Graph no devolvió un deltaLink válido.');
+    guardarDelta({ deltaLink, cuentaId: perfil.id });
+    return { mensajes, eliminados, paginas, esInicial, deltaLinkGuardado: true };
+  }
+
+  async function sincronizarIncremental(opciones = {}) {
+    if (!window.HFPipelineOutlook) throw new Error('HFPipelineOutlook no está cargado.');
+    const cambios = await descargarCambiosDelta(opciones);
+    const resumen = cambios.mensajes.length
+      ? await HFPipelineOutlook.procesarLote(cambios.mensajes, opciones.pipeline || {})
+      : {};
+
+    const resultado = {
+      ...resumen,
+      mensajesLeidos: cambios.mensajes.length,
+      eliminados: cambios.eliminados.length,
+      paginas: cambios.paginas,
+      sincronizacionInicial: cambios.esInicial,
+      modo: 'incremental',
+      sincronizadoEn: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE.ultimaSync, JSON.stringify(resultado));
+    return resultado;
+  }
+
+  async function sincronizarCompleta(opciones = {}) {
     if (!window.HFPipelineOutlook) throw new Error('HFPipelineOutlook no está cargado.');
     const mensajes = await listarMensajes(opciones);
     const resumen = await HFPipelineOutlook.procesarLote(mensajes, opciones.pipeline || {});
-    return { ...resumen, mensajesLeidos: mensajes.length };
+    const resultado = {
+      ...resumen,
+      mensajesLeidos: mensajes.length,
+      eliminados: 0,
+      modo: 'completa',
+      sincronizadoEn: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE.ultimaSync, JSON.stringify(resultado));
+    return resultado;
+  }
+
+  async function sincronizar(opciones = {}) {
+    return opciones.incremental === false
+      ? sincronizarCompleta(opciones)
+      : sincronizarIncremental(opciones);
   }
 
   function estaConectado() {
@@ -264,6 +387,7 @@
 
   function cerrarSesion() {
     localStorage.removeItem(STORAGE.token);
+    limpiarDelta();
   }
 
   window.HFOutlookGraph = Object.freeze({
@@ -273,7 +397,13 @@
     procesarCallback,
     obtenerPerfil,
     listarMensajes,
+    descargarCambiosDelta,
+    sincronizarIncremental,
+    sincronizarCompleta,
     sincronizar,
+    leerDelta,
+    limpiarDelta,
+    obtenerEstadoSincronizacion,
     estaConectado,
     cerrarSesion,
     graph
