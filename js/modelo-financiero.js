@@ -1,4 +1,4 @@
-/* Hogar Finanzas — Etapa 11.2.2: modelo financiero unificado */
+/* Hogar Finanzas — Etapa 11.4.2: modelo financiero unificado y recálculo persistente */
 (() => {
   'use strict';
 
@@ -65,6 +65,10 @@
     return !!digitosMovimiento && !!digitosTarjeta && digitosMovimiento === digitosTarjeta;
   }
 
+  function fechaMovimiento(movimiento = {}) {
+    return String(movimiento.fecha || movimiento.fechaOperacion || movimiento.creadoEn || '').slice(0, 10);
+  }
+
   function calcularResumenTarjeta(tarjeta = {}, movimientos = []) {
     const estado = normalizarEstadoCuenta({
       ...(tarjeta.estadoCuenta || {}),
@@ -75,11 +79,15 @@
     });
 
     const vinculados = movimientos.filter(m => perteneceATarjeta(m, tarjeta));
-    const posteriores = vinculados.filter(m => !estado.fechaCierre || String(m.fecha || m.fechaOperacion || '') > estado.fechaCierre);
-    const comprasPosteriores = posteriores.filter(esCompraCredito).reduce((s, m) => s + numero(m.monto), 0);
-    const pagosPosteriores = posteriores.filter(esPagoTarjeta).reduce((s, m) => s + numero(m.monto), 0);
+    const posteriores = vinculados.filter(m => !estado.fechaCierre || fechaMovimiento(m) > estado.fechaCierre);
+    const compras = posteriores.filter(esCompraCredito);
+    const pagos = posteriores.filter(esPagoTarjeta);
+    const comprasPosteriores = compras.reduce((s, m) => s + numero(m.monto), 0);
+    const pagosPosteriores = pagos.reduce((s, m) => s + numero(m.monto), 0);
     const deudaEstimada = Math.max(0, estado.deudaFacturada + comprasPosteriores - pagosPosteriores);
-    const lineaDisponibleEstimada = estado.lineaDisponible || Math.max(0, estado.lineaTotal - deudaEstimada);
+    const lineaDisponibleEstimada = estado.lineaTotal > 0
+      ? Math.max(0, estado.lineaTotal - deudaEstimada)
+      : estado.lineaDisponible;
     const utilizacion = estado.lineaTotal > 0 ? Math.min(999, (deudaEstimada / estado.lineaTotal) * 100) : 0;
 
     return {
@@ -93,9 +101,10 @@
       deudaEstimada,
       lineaTotal: estado.lineaTotal,
       lineaDisponible: lineaDisponibleEstimada,
+      lineaDisponibleInformada: estado.lineaDisponible,
       utilizacion,
-      cantidadComprasPosteriores: posteriores.filter(esCompraCredito).length,
-      cantidadPagosPosteriores: posteriores.filter(esPagoTarjeta).length,
+      cantidadComprasPosteriores: compras.length,
+      cantidadPagosPosteriores: pagos.length,
       calculadoEn: ahoraISO()
     };
   }
@@ -107,10 +116,7 @@
     const estado = normalizarEstadoCuenta(datos);
     const batch = db.batch();
 
-    batch.set(historialRef, {
-      ...estado,
-      creadoEn: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    batch.set(historialRef, { ...estado, creadoEn: firebase.firestore.FieldValue.serverTimestamp() });
     batch.set(tarjetaRef, {
       estadoCuenta: estado,
       deudaFacturada: estado.deudaFacturada,
@@ -141,11 +147,32 @@
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
+  async function recalcularTarjeta(tarjetaId, opciones = {}) {
+    if (!tarjetaId) throw new Error('Falta la tarjeta a recalcular.');
+    const tarjetaRef = hogarRef().collection('tarjetas').doc(tarjetaId);
+    const [tarjetaDoc, movimientos] = await Promise.all([tarjetaRef.get(), obtenerMovimientos()]);
+    if (!tarjetaDoc.exists) throw new Error('La tarjeta no existe.');
+
+    const resumen = calcularResumenTarjeta({ id: tarjetaDoc.id, ...tarjetaDoc.data() }, movimientos);
+    if (opciones.persistir !== false) {
+      await tarjetaRef.set({
+        deudaEstimada: resumen.deudaEstimada,
+        comprasPosteriores: resumen.comprasPosteriores,
+        pagosPosteriores: resumen.pagosPosteriores,
+        lineaDisponibleEstimada: resumen.lineaDisponible,
+        utilizacionLinea: resumen.utilizacion,
+        resumenDeuda: resumen,
+        recalculadoEn: resumen.calculadoEn,
+        versionCalculo: '11.4.2'
+      }, { merge: true });
+    }
+
+    window.dispatchEvent(new CustomEvent('hf:deuda-actualizada', { detail: { tarjetaId, resumen } }));
+    return resumen;
+  }
+
   async function obtenerResumenGlobal() {
-    const [tarjetas, movimientos] = await Promise.all([
-      DB.getTarjetas(),
-      obtenerMovimientos()
-    ]);
+    const [tarjetas, movimientos] = await Promise.all([DB.getTarjetas(), obtenerMovimientos()]);
     const tarjetasResumen = tarjetas.map(t => calcularResumenTarjeta(t, movimientos));
     const totales = tarjetasResumen.reduce((acc, item) => {
       acc.deudaFacturada += item.deudaFacturada;
@@ -159,6 +186,45 @@
     }, { deudaFacturada: 0, pagoMinimo: 0, comprasPosteriores: 0, pagosPosteriores: 0, deudaEstimada: 0, lineaTotal: 0, lineaDisponible: 0 });
 
     return { tarjetas: tarjetasResumen, totales, movimientos, calculadoEn: ahoraISO() };
+  }
+
+  async function recalcularTodo(opciones = {}) {
+    const tarjetas = await DB.getTarjetas();
+    const movimientos = await obtenerMovimientos();
+    const batch = db.batch();
+    const resumenes = tarjetas.map(t => calcularResumenTarjeta(t, movimientos));
+
+    if (opciones.persistir !== false) {
+      resumenes.forEach(resumen => {
+        const ref = hogarRef().collection('tarjetas').doc(resumen.tarjetaId);
+        batch.set(ref, {
+          deudaEstimada: resumen.deudaEstimada,
+          comprasPosteriores: resumen.comprasPosteriores,
+          pagosPosteriores: resumen.pagosPosteriores,
+          lineaDisponibleEstimada: resumen.lineaDisponible,
+          utilizacionLinea: resumen.utilizacion,
+          resumenDeuda: resumen,
+          recalculadoEn: resumen.calculadoEn,
+          versionCalculo: '11.4.2'
+        }, { merge: true });
+      });
+      if (resumenes.length) await batch.commit();
+    }
+
+    const totales = resumenes.reduce((acc, r) => {
+      acc.deudaFacturada += r.deudaFacturada;
+      acc.pagoMinimo += r.pagoMinimo;
+      acc.comprasPosteriores += r.comprasPosteriores;
+      acc.pagosPosteriores += r.pagosPosteriores;
+      acc.deudaEstimada += r.deudaEstimada;
+      acc.lineaTotal += r.lineaTotal;
+      acc.lineaDisponible += r.lineaDisponible;
+      return acc;
+    }, { deudaFacturada: 0, pagoMinimo: 0, comprasPosteriores: 0, pagosPosteriores: 0, deudaEstimada: 0, lineaTotal: 0, lineaDisponible: 0 });
+
+    const resultado = { tarjetas: resumenes, totales, calculadoEn: ahoraISO() };
+    window.dispatchEvent(new CustomEvent('hf:deudas-recalculadas', { detail: resultado }));
+    return resultado;
   }
 
   async function registrarImportacionEstadoCuenta(importacion = {}) {
@@ -177,7 +243,8 @@
       origen: importacion.origen || 'outlook',
       origenId: importacion.id || importacion.messageId
     });
-    return { tipoRegistro: 'estado-cuenta', estadoCuentaId: estado.id, tarjetaId: importacion.tarjetaId };
+    const resumen = await recalcularTarjeta(importacion.tarjetaId);
+    return { tipoRegistro: 'estado-cuenta', estadoCuentaId: estado.id, tarjetaId: importacion.tarjetaId, resumen };
   }
 
   window.HFModeloFinanciero = Object.freeze({
@@ -186,6 +253,8 @@
     guardarEstadoCuenta,
     listarEstadosCuenta,
     obtenerResumenGlobal,
+    recalcularTarjeta,
+    recalcularTodo,
     registrarImportacionEstadoCuenta,
     esPagoTarjeta,
     esCompraCredito
