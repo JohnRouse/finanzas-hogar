@@ -1,4 +1,4 @@
-name: Aplicar Etapa 11.2.1
+name: Integrar Etapas 11.2 y 11.3
 
 on:
   push:
@@ -7,6 +7,12 @@ on:
     paths:
       - 'js/deudas-inteligentes.js'
       - 'css/deudas-inteligentes.css'
+      - 'js/modelo-financiero.js'
+      - 'js/motor-conciliacion.js'
+      - 'js/reglas-bancarias.js'
+      - 'js/pipeline-outlook.js'
+      - 'js/outlook-graph.js'
+      - 'js/outlook-ui.js'
       - '.github/workflows/aplicar-etapa11-2.yml'
 
 permissions:
@@ -14,7 +20,7 @@ permissions:
 
 jobs:
   integrar:
-    if: ${{ !contains(github.event.head_commit.message, '[auto-etapa11-2]') }}
+    if: ${{ !contains(github.event.head_commit.message, '[auto-etapa11]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,31 +34,93 @@ jobs:
           from pathlib import Path
           import re
 
+          VERSION = '11.3.3'
+          CACHE_NAME = 'hogar-finanzas-v3-etapa11-3-3'
+
+          css_assets = [
+              'css/deudas-inteligentes.css?v=11.2.1',
+          ]
+
+          # El orden es importante: primero motores y reglas, después pipeline,
+          # cliente Graph y finalmente la interfaz.
+          js_assets = [
+              'js/modelo-financiero.js?v=11.3.3',
+              'js/motor-conciliacion.js?v=11.3.3',
+              'js/reglas-bancarias.js?v=11.3.3',
+              'js/pipeline-outlook.js?v=11.3.3',
+              'js/outlook-graph.js?v=11.3.3',
+              'js/outlook-ui.js?v=11.3.3',
+              'js/deudas-inteligentes.js?v=11.2.1',
+          ]
+
           index = Path('index.html')
           text = index.read_text(encoding='utf-8')
 
-          css_ref = '  <link rel="stylesheet" href="css/deudas-inteligentes.css?v=11.2.1">'
-          if 'css/deudas-inteligentes.css' not in text:
-              text = text.replace('</head>', f'{css_ref}\n</head>')
+          for asset in css_assets:
+              path = asset.split('?')[0]
+              if path not in text:
+                  text = text.replace('</head>', f'  <link rel="stylesheet" href="{asset}">\n</head>')
 
-          js_ref = '  <script src="js/deudas-inteligentes.js?v=11.2.1"></script>'
-          if 'js/deudas-inteligentes.js' not in text:
-              text = text.replace('</body>', f'{js_ref}\n</body>')
+          missing_scripts = []
+          for asset in js_assets:
+              path = asset.split('?')[0]
+              if path not in text:
+                  missing_scripts.append(f'  <script src="{asset}"></script>')
+
+          if missing_scripts:
+              text = text.replace('</body>', '\n'.join(missing_scripts) + '\n</body>')
 
           index.write_text(text, encoding='utf-8')
 
           sw = Path('firebase-messaging-sw.js')
           if sw.exists():
               st = sw.read_text(encoding='utf-8')
-              st = re.sub(r"const CACHE_NAME = ['\"][^'\"]+['\"]", "const CACHE_NAME = 'hogar-finanzas-v3-etapa11-2-1'", st, count=1)
-              marker = "'./css/deudas-inteligentes.css?v=11.2.1'"
-              if marker not in st:
-                  st = st.replace("'./js/importaciones.js?v=11.1', './css/importaciones.css?v=11.1',", "'./js/importaciones.js?v=11.1', './css/importaciones.css?v=11.1', './js/deudas-inteligentes.js?v=11.2.1', './css/deudas-inteligentes.css?v=11.2.1',")
+              st = re.sub(
+                  r"const CACHE_NAME = ['\"][^'\"]+['\"]",
+                  f"const CACHE_NAME = '{CACHE_NAME}'",
+                  st,
+                  count=1,
+              )
+
+              assets = css_assets + js_assets
+              match = re.search(r'const APP_SHELL = \[(.*?)\];', st, flags=re.S)
+              if match:
+                  body = match.group(1)
+                  existing = set(re.findall(r"['\"](\./[^'\"]+)['\"]", body))
+                  additions = []
+                  for asset in assets:
+                      cache_path = './' + asset
+                      if cache_path not in existing:
+                          additions.append(f"  '{cache_path}'")
+                  if additions:
+                      cleaned = body.rstrip()
+                      if cleaned and not cleaned.rstrip().endswith(','):
+                          cleaned += ','
+                      replacement = 'const APP_SHELL = [' + cleaned + '\n' + ',\n'.join(additions) + '\n]'
+                      st = st[:match.start()] + replacement + ';' + st[match.end():]
+
               sw.write_text(st, encoding='utf-8')
           PY
 
       - name: Validar JavaScript
-        run: node --check js/deudas-inteligentes.js
+        run: |
+          node --check js/modelo-financiero.js
+          node --check js/motor-conciliacion.js
+          node --check js/reglas-bancarias.js
+          node --check js/pipeline-outlook.js
+          node --check js/outlook-graph.js
+          node --check js/outlook-ui.js
+          node --check js/deudas-inteligentes.js
+
+      - name: Verificar integración
+        run: |
+          grep -q 'js/modelo-financiero.js' index.html
+          grep -q 'js/motor-conciliacion.js' index.html
+          grep -q 'js/reglas-bancarias.js' index.html
+          grep -q 'js/pipeline-outlook.js' index.html
+          grep -q 'js/outlook-graph.js' index.html
+          grep -q 'js/outlook-ui.js' index.html
+          grep -q 'js/outlook-ui.js' firebase-messaging-sw.js
 
       - name: Guardar integración
         run: |
@@ -61,7 +129,7 @@ jobs:
             exit 0
           fi
           git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.email '4189828+github-actions[bot]@users.noreply.github.com'
           git add index.html firebase-messaging-sw.js
-          git commit -m 'Etapa 11.2.1: activa centro integral de tarjetas [auto-etapa11-2]'
+          git commit -m 'Etapa 11.3.3: activa integración Outlook [auto-etapa11]'
           git push origin etapa-11-2-motor-importacion
