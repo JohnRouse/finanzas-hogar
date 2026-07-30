@@ -88,6 +88,38 @@ function construirResumenDiario({ ingresos, gastos, tarjetas, prestamos, hoy }) 
   return { titulo, texto: partes.join(' · '), disponible, porcentaje, creditoMes, proximos };
 }
 
+
+function esPagoDeudaBackend(gasto = {}) {
+  const cat = String(gasto.cat || gasto.categoria || '').toLowerCase();
+  const tipo = String(gasto.tipo || gasto.clase || '').toLowerCase();
+  const desc = String(gasto.desc || gasto.descripcion || '').toLowerCase();
+  return cat === 'deudas' || tipo.includes('pago-deuda') || tipo.includes('pago_deuda') || desc.startsWith('pago de tarjeta') || desc.startsWith('pago de préstamo') || desc.startsWith('pago de prestamo');
+}
+
+function mesLima(date = new Date()) {
+  return fechaLima(date).slice(0, 7);
+}
+
+function numero(valor) {
+  const n = Number(valor);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function presupuestoCategoria(categoria, config, ingresoTotal, gastoActual) {
+  if (categoria === 'Hogar' || categoria === 'Servicios') {
+    return numero(config.presupHogar) || Math.max(gastoActual, ingresoTotal * 0.40);
+  }
+  if (categoria === 'Entret.') {
+    return numero(config.presupEntret) || Math.max(gastoActual, ingresoTotal * 0.10);
+  }
+  return 0;
+}
+
+function textoCategoria(categoria) {
+  if (categoria === 'Entret.') return 'entretenimiento y salidas';
+  if (categoria === 'Hogar' || categoria === 'Servicios') return 'gastos fijos del hogar';
+  return String(categoria || 'esta categoría').toLowerCase();
+}
 function textoDias(dias) {
   if (dias < 0) return `está vencido hace ${Math.abs(dias)} día${Math.abs(dias) === 1 ? '' : 's'}`;
   if (dias === 0) return 'vence hoy';
@@ -199,6 +231,93 @@ exports.enviarNotificacionPago = onDocumentCreated(
       procesadaEn: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     await batch.commit();
+  }
+);
+
+
+
+exports.generarAlertasInteligentes = onDocumentCreated(
+  {
+    document: 'hogares/{hogarId}/gastos/{gastoId}',
+    region: REGION,
+    retry: false
+  },
+  async (event) => {
+    const gasto = event.data?.data() || {};
+    const hogarId = event.params.hogarId;
+    if (!hogarId || esPagoDeudaBackend(gasto)) return;
+
+    const hogarRef = db.collection('hogares').doc(hogarId);
+    const mes = gasto.mes || String(gasto.fecha || '').slice(0, 7) || mesLima();
+    const [configDoc, ingresosSnap, gastosSnap] = await Promise.all([
+      hogarRef.collection('data').doc('config').get(),
+      hogarRef.collection('ingresos').where('mes', '==', mes).get(),
+      hogarRef.collection('gastos').where('mes', '==', mes).get()
+    ]);
+
+    const config = configDoc.exists ? configDoc.data() : {};
+    const ingresos = ingresosSnap.docs.map(doc => doc.data());
+    const gastos = gastosSnap.docs.map(doc => doc.data()).filter(g => !esPagoDeudaBackend(g));
+    const ingresoTotal = ingresos.reduce((s, i) => s + numero(i.monto), 0);
+    const gastoTotal = gastos.reduce((s, g) => s + numero(g.monto), 0);
+    const disponible = ingresoTotal - gastoTotal;
+    const destinos = idsMiembrosActivos(config);
+    const categoria = gasto.cat || gasto.categoria || 'Otros';
+
+    // Alertas por categoría: solo para los límites que ya utiliza la pantalla Presupuesto.
+    const esGrupoHogar = categoria === 'Hogar' || categoria === 'Servicios';
+    const categoriasGrupo = esGrupoHogar ? new Set(['Hogar', 'Servicios']) : new Set([categoria]);
+    const gastoCategoria = gastos.filter(g => categoriasGrupo.has(g.cat || g.categoria)).reduce((s, g) => s + numero(g.monto), 0);
+    const limiteCategoria = presupuestoCategoria(categoria, config, ingresoTotal, gastoCategoria);
+    if (limiteCategoria > 0) {
+      const porcentaje = Math.round((gastoCategoria / limiteCategoria) * 100);
+      const umbral = porcentaje >= 100 ? 100 : porcentaje >= 80 ? 80 : 0;
+      if (umbral) {
+        const claveCategoria = esGrupoHogar ? 'hogar-servicios' : String(categoria).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        for (const miembroDestino of destinos) {
+          await crearNotificacionUnica(hogarRef, `presupuesto-${mes}-${claveCategoria}-${umbral}-${miembroDestino}`, {
+            titulo: umbral === 100 ? 'Presupuesto excedido' : 'Presupuesto cerca del límite',
+            texto: umbral === 100
+              ? `Ya usaron el ${porcentaje}% del presupuesto de ${textoCategoria(categoria)}. Exceso: S/ ${Math.max(0, gastoCategoria - limiteCategoria).toFixed(2)}.`
+              : `Ya usaron el ${porcentaje}% del presupuesto de ${textoCategoria(categoria)}. Quedan S/ ${Math.max(0, limiteCategoria - gastoCategoria).toFixed(2)}.`,
+            categoria: 'presupuesto',
+            miembroDestino,
+            url: './index.html#presupuesto',
+            tag: `presupuesto-${claveCategoria}-${umbral}`,
+            recursoTipo: 'presupuesto',
+            mes,
+            porcentaje,
+            limite: limiteCategoria,
+            actual: gastoCategoria
+          });
+        }
+      }
+    }
+
+    // Alertas generales sobre el dinero disponible: 20% restante y saldo negativo.
+    if (ingresoTotal > 0) {
+      const porcentajeDisponible = Math.round((disponible / ingresoTotal) * 100);
+      const estado = disponible < 0 ? 'negativo' : porcentajeDisponible <= 20 ? 'bajo' : null;
+      if (estado) {
+        for (const miembroDestino of destinos) {
+          await crearNotificacionUnica(hogarRef, `disponible-${mes}-${estado}-${miembroDestino}`, {
+            titulo: estado === 'negativo' ? 'Disponible en negativo' : 'Disponible bajo',
+            texto: estado === 'negativo'
+              ? `Los gastos del mes superan los ingresos por S/ ${Math.abs(disponible).toFixed(2)}.`
+              : `Queda S/ ${Math.max(0, disponible).toFixed(2)}, aproximadamente el ${Math.max(0, porcentajeDisponible)}% de los ingresos del mes.`,
+            categoria: 'presupuesto',
+            miembroDestino,
+            url: './index.html#resumen',
+            tag: `disponible-${estado}-${mes}`,
+            recursoTipo: 'disponible',
+            mes,
+            disponible,
+            ingresoTotal,
+            gastoTotal
+          });
+        }
+      }
+    }
   }
 );
 
