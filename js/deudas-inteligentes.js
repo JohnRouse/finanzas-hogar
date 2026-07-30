@@ -6,7 +6,7 @@
   let actualizando = false;
   let temporizador = null;
   let observer = null;
-  let pagoDecorado = false;
+  let accionesDecoradas = false;
 
   const numero = valor => Number.isFinite(Number(valor)) ? Number(valor) : 0;
   const moneda = valor => `S/ ${numero(valor).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -48,7 +48,6 @@
       ? Math.max(0, facturada + comprasPosteriores - pagosPosteriores)
       : Math.max(0, numero(tarjeta.deuda || tarjeta.saldo));
     const lineaTotal = numero(tarjeta.limite || tarjeta.lineaTotal || ec.lineaTotal);
-    const disponible = lineaTotal ? lineaTotal - deudaEstimada : 0;
 
     return {
       tarjetaId: tarjeta.id,
@@ -64,22 +63,21 @@
       pagoMinimo: numero(ec.pagoMinimo || tarjeta.pagoMinimo),
       fechaVencimiento: fechaISO(ec.fechaVencimiento),
       lineaTotal,
-      disponible
+      disponible: lineaTotal ? lineaTotal - deudaEstimada : 0
     };
   }
 
   async function cargarDatos() {
     if (!window.DB) return { tarjetas: [], prestamos: [], gastos: [] };
     const hogarId = DB.hogarId || localStorage.getItem('hogarId');
-    const [tarjetas, prestamos, gastos] = await Promise.all([
-      DB.getTarjetas?.().catch(() => []) || [],
-      DB.getPrestamos?.().catch(() => []) || [],
-      hogarId && window.db
-        ? db.collection('hogares').doc(hogarId).collection('gastos').get()
-            .then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
-            .catch(() => DB.getGastos?.().catch(() => []) || [])
-        : (DB.getGastos?.().catch(() => []) || [])
-    ]);
+    const promesaTarjetas = typeof DB.getTarjetas === 'function' ? DB.getTarjetas().catch(() => []) : Promise.resolve([]);
+    const promesaPrestamos = typeof DB.getPrestamos === 'function' ? DB.getPrestamos().catch(() => []) : Promise.resolve([]);
+    const promesaGastos = hogarId && window.db
+      ? db.collection('hogares').doc(hogarId).collection('gastos').get()
+          .then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
+          .catch(() => typeof DB.getGastos === 'function' ? DB.getGastos().catch(() => []) : [])
+      : (typeof DB.getGastos === 'function' ? DB.getGastos().catch(() => []) : Promise.resolve([]));
+    const [tarjetas, prestamos, gastos] = await Promise.all([promesaTarjetas, promesaPrestamos, promesaGastos]);
     return { tarjetas: tarjetas || [], prestamos: prestamos || [], gastos: gastos || [] };
   }
 
@@ -158,20 +156,19 @@
       detalle.className = 'hf-live-debt-breakdown';
       total?.insertAdjacentElement('afterend', detalle);
     }
-
-    detalle.innerHTML = resumen.tieneEstado ? `
+    const contenido = resumen.tieneEstado ? `
       <div><span>Estado facturado</span><strong>${moneda(resumen.facturada)}</strong></div>
       <div><span>Compras posteriores</span><strong>+ ${moneda(resumen.comprasPosteriores)}</strong></div>
       <div><span>Pagos posteriores</span><strong>− ${moneda(resumen.pagosPosteriores)}</strong></div>
-      <small>Saldo registrado en la app: ${moneda(resumen.deudaRegistrada)}${resumen.fechaBase ? ` · base ${new Date(`${resumen.fechaBase}T12:00:00`).toLocaleDateString('es-PE')}` : ''}</small>` : `
-      <small>Registra el estado de cuenta para separar saldo facturado, compras posteriores y pagos.</small>`;
+      <small>Saldo registrado en la app: ${moneda(resumen.deudaRegistrada)}${resumen.fechaBase ? ` · base ${new Date(`${resumen.fechaBase}T12:00:00`).toLocaleDateString('es-PE')}` : ''}</small>` : '<small>Registra el estado de cuenta para separar saldo facturado, compras posteriores y pagos.</small>';
+    if (detalle.innerHTML !== contenido) detalle.innerHTML = contenido;
 
     card.dataset.deudaEstimada = String(resumen.deudaEstimada);
     actualizarLinea(card, resumen);
   }
 
   function decorarAcciones() {
-    if (pagoDecorado) return;
+    if (accionesDecoradas) return;
     const originalPago = window.abrirPagoTarjeta;
     const originalAjuste = window.abrirAjusteTarjeta;
     if (typeof originalPago === 'function') {
@@ -184,13 +181,23 @@
         return originalAjuste.call(this, id, nombre, cache.get(id)?.deudaEstimada ?? deuda, limite);
       };
     }
-    pagoDecorado = true;
+    accionesDecoradas = true;
+  }
+
+  function conectarObserver() {
+    if (!observer) observer = new MutationObserver(() => programar('render', 90));
+    observer.disconnect();
+    const tarjetas = document.getElementById('tarjetas-grid');
+    const prestamos = document.getElementById('prestamos-grid');
+    if (tarjetas) observer.observe(tarjetas, { childList: true });
+    if (prestamos) observer.observe(prestamos, { childList: true });
   }
 
   async function actualizar(forzar = false) {
     if (actualizando) return false;
     if (!forzar && !document.getElementById('page-deudas')) return false;
     actualizando = true;
+    observer?.disconnect();
     try {
       document.getElementById('hf-centro-tarjetas')?.remove();
       const { tarjetas, prestamos, gastos } = await cargarDatos();
@@ -208,6 +215,7 @@
       return false;
     } finally {
       actualizando = false;
+      conectarObserver();
     }
   }
 
@@ -227,12 +235,8 @@
 
   function iniciar() {
     decorarAcciones();
+    conectarObserver();
     programar('inicio', 500);
-    const pagina = document.getElementById('page-deudas');
-    if (pagina) {
-      observer = new MutationObserver(() => programar('render', 90));
-      observer.observe(pagina, { childList: true, subtree: true });
-    }
   }
 
   ['hf:deuda-actualizada', 'hf:deudas-recalculadas', 'hf:estado-cuenta-confirmado', 'hf:gastos-actualizados'].forEach(nombre => {
