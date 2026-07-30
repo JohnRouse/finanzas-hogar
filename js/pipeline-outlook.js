@@ -1,4 +1,4 @@
-/* Hogar Finanzas — Etapa 11.2.5: pipeline de importación Outlook */
+/* Hogar Finanzas — Etapa 11.3.6: pipeline Outlook con autoasignación de tarjetas */
 (() => {
   'use strict';
 
@@ -54,9 +54,52 @@
     if (!window.HFMotorConciliacion) throw new Error('HFMotorConciliacion no está cargado.');
   }
 
+  async function autoasignarTarjeta(datos = {}, opciones = {}) {
+    if (datos.tarjetaId || opciones.autoasignarTarjeta === false) return datos;
+    if (!window.HFVinculacionTarjetasOutlook?.resolverTarjeta) {
+      return {
+        ...datos,
+        vinculacionTarjeta: {
+          tarjetaId: null,
+          confianza: 0,
+          origen: 'modulo-no-disponible'
+        }
+      };
+    }
+
+    try {
+      const resolucion = await HFVinculacionTarjetasOutlook.resolverTarjeta(datos);
+      return {
+        ...datos,
+        tarjetaId: resolucion.tarjetaId || null,
+        vinculacionTarjeta: {
+          tarjetaId: resolucion.tarjetaId || null,
+          confianza: Number(resolucion.confianza || 0),
+          origen: resolucion.origen || 'sin-coincidencia',
+          detalles: resolucion.detalles || [],
+          candidatos: resolucion.candidatos || [],
+          resueltaEn: ahoraISO()
+        }
+      };
+    } catch (error) {
+      console.warn('No se pudo resolver la tarjeta automáticamente:', error);
+      return {
+        ...datos,
+        vinculacionTarjeta: {
+          tarjetaId: null,
+          confianza: 0,
+          origen: 'error',
+          error: error.message,
+          resueltaEn: ahoraISO()
+        }
+      };
+    }
+  }
+
   function resolverEstado(preparado = {}) {
     if (preparado.tipo === 'otro') return 'requiere-revision';
     if (preparado.requiereRevision) return 'requiere-revision';
+    if (preparado.vinculacionTarjeta?.origen === 'ambiguo') return 'requiere-revision';
     if (preparado.conciliacion?.estado === 'duplicado-probable') return 'duplicado';
     if (preparado.conciliacion?.estado === 'requiere-revision') return 'requiere-revision';
     if (preparado.tipo === 'estado-cuenta' && !preparado.tarjetaId) return 'requiere-revision';
@@ -85,7 +128,7 @@
         lineaDisponible: preparado.lineaDisponible ?? null,
         periodo: preparado.periodo || ''
       } : null,
-      versionPipeline: '11.2.5'
+      versionPipeline: '11.3.6'
     };
   }
 
@@ -93,7 +136,8 @@
     validarDependencias();
 
     const interpretado = HFReglasBancarias.interpretarCorreo(correo);
-    const conciliado = await HFMotorConciliacion.prepararImportacion(interpretado);
+    const vinculado = await autoasignarTarjeta(interpretado, opciones);
+    const conciliado = await HFMotorConciliacion.prepararImportacion(vinculado);
     const preparado = adaptarParaBandeja(conciliado, correo);
     const huella = await construirHuella(preparado);
     const existente = await buscarImportacionExistente(huella);
@@ -140,6 +184,9 @@
       duplicados: 0,
       revision: 0,
       pendientes: 0,
+      autoasignados: 0,
+      ambiguos: 0,
+      sinTarjeta: 0,
       errores: 0,
       resultados: []
     };
@@ -153,6 +200,11 @@
         if (resultado.estado === 'requiere-revision') resumen.revision += 1;
         if (resultado.estado === 'pendiente') resumen.pendientes += 1;
         if (resultado.estado === 'duplicado') resumen.duplicados += 1;
+
+        const vinculacion = resultado.resultado?.vinculacionTarjeta;
+        if (vinculacion?.origen === 'vinculacion-outlook' && resultado.resultado?.tarjetaId) resumen.autoasignados += 1;
+        if (vinculacion?.origen === 'ambiguo') resumen.ambiguos += 1;
+        if (!resultado.resultado?.tarjetaId && ['estado-cuenta', 'consumo-credito', 'pago-tarjeta'].includes(resultado.resultado?.tipo)) resumen.sinTarjeta += 1;
       } catch (error) {
         resumen.errores += 1;
         resumen.resultados.push({
@@ -168,7 +220,7 @@
     return resumen;
   }
 
-  async function reprocesarImportacion(id) {
+  async function reprocesarImportacion(id, opciones = {}) {
     validarDependencias();
     const doc = await refImportaciones().doc(id).get();
     if (!doc.exists) throw new Error('La importación no existe.');
@@ -184,7 +236,9 @@
       webLink: anterior.enlaceCorreo
     };
     const interpretado = HFReglasBancarias.interpretarCorreo(correo);
-    const conciliado = await HFMotorConciliacion.prepararImportacion({ ...interpretado, tarjetaId: anterior.tarjetaId || null });
+    const base = { ...interpretado, tarjetaId: anterior.tarjetaId || null };
+    const vinculado = await autoasignarTarjeta(base, opciones);
+    const conciliado = await HFMotorConciliacion.prepararImportacion(vinculado);
     const preparado = adaptarParaBandeja(conciliado, correo);
     const estado = resolverEstado(preparado);
     await refImportaciones().doc(id).set({
@@ -235,6 +289,7 @@
     procesarLote,
     reprocesarImportacion,
     confirmarEstadoCuenta,
-    construirHuella
+    construirHuella,
+    autoasignarTarjeta
   });
 })();
