@@ -44,6 +44,7 @@
       resultados.push(await cargar('HFActualizadorSaldosTarjetas', `js/actualizador-saldos-tarjetas.js?v=${VERSION}`));
       resultados.push(await cargar('HFCierreFinancieroMensual', `js/cierre-financiero-mensual.js?v=${VERSION}`));
       resultados.push(await cargar('HFDiagnosticoVisual', `js/diagnostico-visual.js?v=${VERSION}`));
+      resultados.push(await cargar('HFDiagnosticoEtapa12', `js/diagnostico-etapa-12.js?v=${VERSION}`));
 
       try {
         window.HFModalStack?.iniciar?.();
