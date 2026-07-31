@@ -21,11 +21,11 @@
         ? true : 'HFCierreFinancieroMensual no está listo';
     }));
 
-    pruebas.push(prueba('Entrada y modal de cierre disponibles', () => {
+    pruebas.push(prueba('Cierre mensual disponible desde administración', () => {
       const estado = window.HFCierreFinancieroMensual?.obtenerEstado?.();
       if (!estado) return 'No se obtuvo el estado del módulo';
-      if (!estado.lanzadorDisponible) return 'Falta la tarjeta de cierre en Deudas';
       if (!estado.modalDisponible) return 'Falta el modal del cierre';
+      if (!document.querySelector('#hfDebtAdminModal [data-admin-action="cierre"]')) return 'Falta el acceso al historial mensual en Administración';
       return true;
     }));
 
@@ -56,6 +56,27 @@
       const anterior = `${anteriorFecha.getFullYear()}-${String(anteriorFecha.getMonth() + 1).padStart(2, '0')}`;
       if (!window.HFCierreFinancieroMensual.puedeEditarMes(actual)) return 'El mes actual quedó bloqueado';
       if (window.HFCierreFinancieroMensual.puedeEditarMes(anterior)) return 'Un mes histórico se puede modificar';
+      return true;
+    }));
+
+    pruebas.push(prueba('Vista familiar de deudas disponible', () => {
+      const modulo = window.HFDeudasFamiliares;
+      const vista = document.getElementById('hf-family-debt-view');
+      const pagina = document.getElementById('page-deudas');
+      if (!modulo || typeof modulo.renderizar !== 'function') return 'HFDeudasFamiliares no está listo';
+      if (!vista) return 'Falta la vista familiar';
+      if (!pagina?.classList.contains('hf-family-debt-page')) return 'La página Deudas no está en modo familiar';
+      if (!document.querySelector('.hf-family-card-list')) return 'Falta el listado sencillo de deudas';
+      return true;
+    }));
+
+    pruebas.push(prueba('Herramientas técnicas separadas', () => {
+      const estado = window.HFDeudasFamiliares?.obtenerEstado?.();
+      if (!estado?.modalAdminDisponible) return 'Falta el modal Administrar deudas';
+      const originales = ['tarjetas-grid','prestamos-grid','debtChart'].map(id => document.getElementById(id)?.closest('.section')).filter(Boolean);
+      if (originales.some(seccion => seccion.getAttribute('data-hf-family-hidden') !== 'true')) return 'Una sección técnica sigue en la vista familiar';
+      const pruebaEstado = window.HFDeudasFamiliares?.resumenTarjeta?.({ id:'prueba', nombre:'Prueba', limite:1000, deuda:1200 });
+      if (pruebaEstado?.etiqueta !== 'Excedida') return 'La ayuda visual no identifica una tarjeta excedida';
       return true;
     }));
 
