@@ -1,0 +1,158 @@
+name: Integrar Etapas 11.2 a 11.5
+
+on:
+  push:
+    branches:
+      - etapa-11-2-motor-importacion
+    paths:
+      - 'js/deudas-inteligentes.js'
+      - 'css/deudas-inteligentes.css'
+      - 'js/modelo-financiero.js'
+      - 'js/motor-conciliacion.js'
+      - 'js/reglas-bancarias.js'
+      - 'js/importaciones.js'
+      - 'js/vinculacion-tarjetas-outlook.js'
+      - 'js/pipeline-outlook.js'
+      - 'js/outlook-graph.js'
+      - 'js/outlook-ui.js'
+      - 'js/actualizador-tarjetas-outlook.js'
+      - 'js/sincronizacion-financiera-ui.js'
+      - 'js/motor-predictivo-financiero.js'
+      - 'js/panel-predicciones-financieras.js'
+      - 'js/optimizador-pagos.js'
+      - '.github/workflows/aplicar-etapa11-2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  integrar:
+    if: ${{ !contains(github.event.head_commit.message, '[auto-etapa11]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: etapa-11-2-motor-importacion
+          fetch-depth: 0
+
+      - name: Integrar archivos en index y caché
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          VERSION = '11.5.4'
+          CACHE_NAME = 'hogar-finanzas-v3-etapa11-5-4'
+
+          css_assets = [
+              'css/deudas-inteligentes.css?v=11.2.1',
+          ]
+
+          js_assets = [
+              f'js/modelo-financiero.js?v={VERSION}',
+              f'js/motor-conciliacion.js?v={VERSION}',
+              f'js/reglas-bancarias.js?v={VERSION}',
+              f'js/importaciones.js?v={VERSION}',
+              f'js/vinculacion-tarjetas-outlook.js?v={VERSION}',
+              f'js/pipeline-outlook.js?v={VERSION}',
+              f'js/outlook-graph.js?v={VERSION}',
+              f'js/actualizador-tarjetas-outlook.js?v={VERSION}',
+              f'js/outlook-ui.js?v={VERSION}',
+              'js/deudas-inteligentes.js?v=11.2.1',
+              f'js/sincronizacion-financiera-ui.js?v={VERSION}',
+              f'js/motor-predictivo-financiero.js?v={VERSION}',
+              f'js/panel-predicciones-financieras.js?v={VERSION}',
+              f'js/optimizador-pagos.js?v={VERSION}',
+          ]
+
+          index = Path('index.html')
+          text = index.read_text(encoding='utf-8')
+
+          for asset in css_assets:
+              path = asset.split('?')[0]
+              if path not in text:
+                  text = text.replace('</head>', f'  <link rel="stylesheet" href="{asset}">\n</head>')
+
+          for asset in js_assets:
+              path = asset.split('?')[0]
+              pattern = rf'<script\s+src=["\']{re.escape(path)}(?:\?[^"\']*)?["\']></script>'
+              replacement = f'<script src="{asset}"></script>'
+              if re.search(pattern, text):
+                  text = re.sub(pattern, replacement, text)
+              else:
+                  text = text.replace('</body>', f'  {replacement}\n</body>')
+
+          index.write_text(text, encoding='utf-8')
+
+          sw = Path('firebase-messaging-sw.js')
+          if sw.exists():
+              st = sw.read_text(encoding='utf-8')
+              st = re.sub(
+                  r"const CACHE_NAME = ['\"][^'\"]+['\"]",
+                  f"const CACHE_NAME = '{CACHE_NAME}'",
+                  st,
+                  count=1,
+              )
+
+              assets = css_assets + js_assets
+              match = re.search(r'const APP_SHELL = \[(.*?)\];', st, flags=re.S)
+              if match:
+                  existing_lines = re.findall(r"['\"](\./[^'\"]+)['\"]", match.group(1))
+                  managed_paths = {asset.split('?')[0] for asset in assets}
+                  preserved = [item for item in existing_lines if item[2:].split('?')[0] not in managed_paths]
+                  managed = ['./' + asset for asset in assets]
+                  all_assets = preserved + managed
+                  replacement = 'const APP_SHELL = [\n' + ',\n'.join(f"  '{item}'" for item in all_assets) + '\n]'
+                  st = st[:match.start()] + replacement + ';' + st[match.end():]
+
+              sw.write_text(st, encoding='utf-8')
+          PY
+
+      - name: Validar JavaScript
+        run: |
+          node --check js/modelo-financiero.js
+          node --check js/motor-conciliacion.js
+          node --check js/reglas-bancarias.js
+          node --check js/importaciones.js
+          node --check js/vinculacion-tarjetas-outlook.js
+          node --check js/pipeline-outlook.js
+          node --check js/outlook-graph.js
+          node --check js/actualizador-tarjetas-outlook.js
+          node --check js/outlook-ui.js
+          node --check js/deudas-inteligentes.js
+          node --check js/sincronizacion-financiera-ui.js
+          node --check js/motor-predictivo-financiero.js
+          node --check js/panel-predicciones-financieras.js
+          node --check js/optimizador-pagos.js
+
+      - name: Verificar integración
+        run: |
+          grep -q 'js/modelo-financiero.js' index.html
+          grep -q 'js/motor-conciliacion.js' index.html
+          grep -q 'js/reglas-bancarias.js' index.html
+          grep -q 'js/importaciones.js' index.html
+          grep -q 'js/vinculacion-tarjetas-outlook.js' index.html
+          grep -q 'js/pipeline-outlook.js' index.html
+          grep -q 'js/outlook-graph.js' index.html
+          grep -q 'js/actualizador-tarjetas-outlook.js' index.html
+          grep -q 'js/outlook-ui.js' index.html
+          grep -q 'js/deudas-inteligentes.js' index.html
+          grep -q 'js/sincronizacion-financiera-ui.js' index.html
+          grep -q 'js/motor-predictivo-financiero.js' index.html
+          grep -q 'js/panel-predicciones-financieras.js' index.html
+          grep -q 'js/optimizador-pagos.js' index.html
+          grep -q 'js/motor-predictivo-financiero.js' firebase-messaging-sw.js
+          grep -q 'js/panel-predicciones-financieras.js' firebase-messaging-sw.js
+          grep -q 'js/optimizador-pagos.js' firebase-messaging-sw.js
+
+      - name: Guardar integración
+        run: |
+          if git diff --quiet; then
+            echo 'No hay cambios adicionales.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189828+github-actions[bot]@users.noreply.github.com'
+          git add index.html firebase-messaging-sw.js
+          git commit -m 'Etapa 11.5.4: integra inteligencia financiera [auto-etapa11]'
+          git push origin etapa-11-2-motor-importacion

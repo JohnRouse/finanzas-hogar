@@ -1,0 +1,162 @@
+/* Hogar Finanzas — ajustes visuales de recuperación */
+.hf-hidden-by-fab,.hf-feature-paused{display:none!important}
+
+/* Menú global de movimientos: vive fuera de tarjetas y modales para no quedar recortado. */
+.hf-expense-menu-portal{
+  display:none;
+  position:fixed;
+  z-index:30000;
+  min-width:148px;
+  padding:6px;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 18px 48px rgba(15,23,42,.24),0 3px 10px rgba(15,23,42,.10);
+  font-family:'DM Sans',system-ui,sans-serif;
+}
+.hf-expense-menu-portal.open{display:block}
+.hf-expense-menu-portal button{
+  display:flex;
+  align-items:center;
+  width:100%;
+  min-height:42px;
+  padding:10px 12px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:#172033;
+  font-size:13px;
+  font-weight:600;
+  text-align:left;
+  cursor:pointer;
+}
+.hf-expense-menu-portal button:hover,.hf-expense-menu-portal button:focus-visible{background:#f3f6fb;outline:none}
+.hf-expense-menu-portal button.danger{color:#c52d2d}
+.hf-expense-menu-portal button.danger:hover{background:#fff0f0}
+.hf-expense-menu-portal .expense-menu-note{display:block;padding:8px 11px;color:#7b8495;font-size:10px;line-height:1.35}
+
+/* Los menús originales son solo plantillas; nunca se posicionan dentro de las tarjetas. */
+.expense-more-menu.open,.expense-more-menu.hf-menu-fixed{display:none!important}
+
+/* Sistema visual común para los flujos que nacen desde el FAB. */
+#hfIngresoChoiceModal,#gastoChoiceModal,#deudaChoiceModal{padding:0 8px 8px;align-items:flex-end;background:rgba(15,23,42,.46);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.hf-app-sheet{
+  position:relative!important;
+  width:100%!important;
+  max-width:520px!important;
+  margin:0 auto!important;
+  border:1px solid rgba(15,23,42,.07)!important;
+  border-radius:28px!important;
+  background:linear-gradient(180deg,#ffffff 0%,#f7f9fd 100%)!important;
+  box-shadow:0 24px 70px rgba(15,23,42,.24)!important;
+  padding:20px 18px calc(18px + env(safe-area-inset-bottom))!important;
+  max-height:calc(100dvh - 24px)!important;
+  overflow:auto!important;
+}
+.hf-app-sheet .modal-handle{width:42px;height:5px;border-radius:999px;background:#d8dde7;margin:0 auto 15px}
+.hf-app-sheet .hf-sheet-close{
+  position:absolute!important;
+  top:15px!important;
+  right:15px!important;
+  bottom:auto!important;
+  left:auto!important;
+  transform:none!important;
+  width:38px;
+  height:38px;
+  background:#eef1f6;
+  color:#4d5667;
+  z-index:3;
+}
+.hf-sheet-heading{display:flex;align-items:flex-start;gap:13px;padding-right:42px;margin-bottom:17px}
+.hf-sheet-heading-copy{min-width:0;padding-top:2px}
+.hf-action-sheet-icon,.hf-form-sheet-icon{width:48px;height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex:none;font-size:18px;font-weight:800}
+.hf-action-sheet-icon.income,.hf-form-sheet-icon.income{background:#e9f2ff;color:#1f63c7}
+.hf-action-sheet-icon.expense,.hf-form-sheet-icon.expense{background:#eaf2ff;color:#2563eb}
+.hf-action-sheet-icon.debt,.hf-form-sheet-icon.debt{background:#ffeded;color:#c43232}
+.hf-action-sheet-icon.saving,.hf-form-sheet-icon.saving{background:#e9f8ef;color:#17834c}
+.hf-app-sheet .modal-title{font-size:23px;line-height:1.15;letter-spacing:-.4px;margin:0;color:#171b24}
+.hf-action-sheet-help{font-size:11px;line-height:1.5;color:#697386;margin:6px 0 0}
+.hf-action-list{display:grid;gap:10px}
+.hf-action-row{
+  width:100%;
+  min-height:72px;
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr) 24px;
+  align-items:center;
+  gap:12px;
+  padding:12px;
+  border:1px solid #e4e8ef;
+  border-radius:17px;
+  background:#fff;
+  box-shadow:0 5px 18px rgba(15,23,42,.045);
+  color:#171b24;
+  text-align:left;
+}
+.hf-action-row:active{transform:scale(.992);background:#f8faff}
+.hf-action-row.featured{border-color:#b8cffb;background:#f1f6ff}
+.hf-action-row-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#f3f5f8;font-size:20px;font-weight:700}
+.hf-action-row-icon.income{background:#e9f2ff;color:#2563eb}
+.hf-action-row-icon.expense{background:#fff2df;color:#b56b00}
+.hf-action-row-icon.debt{background:#ffeded;color:#c43232}
+.hf-action-row-icon.plan{background:#e9f0ff;color:#315fc5}
+.hf-action-row-copy{display:block;min-width:0}
+.hf-action-row-copy strong,.hf-action-row-copy small{display:block}
+.hf-action-row-copy strong{font-size:14px;line-height:1.3;color:#1c2230}
+.hf-action-row-copy small{font-size:10px;line-height:1.45;color:#8790a1;margin-top:3px}
+.hf-action-row-chevron{font-size:25px;line-height:1;color:#a4abba;text-align:right}
+.hf-sheet-cancel{width:100%;min-height:44px;margin-top:12px;border:0;border-radius:14px;background:transparent;color:#5f6878;font-size:13px;font-weight:700}
+.hf-sheet-cancel:active{background:#edf0f5}
+
+/* Formularios abiertos después de elegir una acción. */
+.hf-form-sheet{background:#fbfcff!important;padding-top:20px!important}
+.hf-form-sheet .modal-title{padding-right:44px;margin-bottom:7px}
+.hf-form-intro{padding-right:35px;margin:0 0 18px;color:#717b8d;font-size:11px;line-height:1.5}
+.hf-form-sheet .input-row{margin-bottom:15px}
+.hf-form-sheet .input-label{font-size:11px;font-weight:700;color:#606a7a;margin-bottom:6px}
+.hf-form-sheet .input-field,.hf-form-sheet .select-field{
+  min-height:48px;
+  border:1px solid #dfe4ec;
+  border-radius:14px;
+  background:#fff;
+  padding:12px 13px;
+  font-size:14px;
+  box-shadow:0 1px 0 rgba(15,23,42,.02);
+}
+.hf-form-sheet .input-field:focus,.hf-form-sheet .select-field:focus{border-color:#5d8ff3;box-shadow:0 0 0 3px rgba(37,99,235,.12);outline:none}
+.hf-form-sheet .modal-btn{min-height:50px;border-radius:15px;font-size:14px;font-weight:800;box-shadow:0 8px 20px rgba(37,99,235,.20)}
+#metaModal .chip-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#metaModal .chip{min-width:0;min-height:44px;border-radius:13px;font-size:17px}
+#metaModal .chip.selected{box-shadow:0 5px 14px rgba(37,99,235,.22)}
+
+/* Deudas: una sola entrada para actualizar todos los saldos. */
+#page-deudas .section-head [data-hf-core-action],
+#page-deudas .section-head [data-hf-update-all],
+#page-deudas .debt-action-statement{display:none!important}
+#page-deudas .hf-finance-launcher{display:none!important}
+#page-deudas .debt-card-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+#page-deudas .debt-card-actions .debt-action-history:last-child{grid-column:1/-1}
+
+#fab-global[data-label="Registrar ingreso"]::after,#fab-global[data-label="Nueva deuda"]::after{content:attr(data-label);position:absolute;right:68px;white-space:nowrap;background:#172033;color:#fff;border-radius:10px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;line-height:1;box-shadow:0 5px 16px rgba(0,0,0,.18);pointer-events:none}
+
+@media(min-width:600px){
+  #hfIngresoChoiceModal,#gastoChoiceModal,#deudaChoiceModal{align-items:center;padding:20px}
+  .hf-app-sheet{max-height:90vh!important}
+}
+
+@media(max-width:420px){
+  #fab-global::after{font-size:10px!important;right:66px!important}
+  .hf-app-sheet{padding-left:16px!important;padding-right:16px!important}
+  .hf-action-row{grid-template-columns:44px minmax(0,1fr) 20px;padding:11px;gap:10px}
+  .hf-action-row-icon{width:44px;height:44px}
+}
+
+@media(prefers-color-scheme:dark){
+  .hf-expense-menu-portal{background:#202327;border-color:rgba(255,255,255,.08)}
+  .hf-expense-menu-portal button{color:#f1f3f4}
+  .hf-expense-menu-portal button:hover,.hf-expense-menu-portal button:focus-visible{background:#2b2f35}
+  .hf-app-sheet{background:linear-gradient(180deg,#1a1d21 0%,#15171a 100%)!important;border-color:rgba(255,255,255,.07)!important}
+  .hf-app-sheet .modal-title,.hf-action-row-copy strong{color:#f2f4f7}
+  .hf-action-row{background:#202328;border-color:rgba(255,255,255,.07);color:#f2f4f7}
+  .hf-action-row.featured{background:#1b2942;border-color:#38588f}
+  .hf-form-sheet .input-field,.hf-form-sheet .select-field{background:#202328;border-color:rgba(255,255,255,.10);color:#f2f4f7}
+}
