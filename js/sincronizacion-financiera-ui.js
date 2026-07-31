@@ -1,7 +1,8 @@
-/* Hogar Finanzas — Recuperación: sincronización ligera sin recargas innecesarias */
+/* Hogar Finanzas — sincronización ligera sin recargas innecesarias */
 (() => {
   'use strict';
 
+  const VERSION = '18.0';
   let temporizador = null;
   let bootstrapSolicitado = false;
 
@@ -12,6 +13,7 @@
         if (forzar && typeof window.renderTodo === 'function') await window.renderTodo();
         if (typeof window.actualizarCentroTarjetas === 'function') await window.actualizarCentroTarjetas(forzar);
         window.HFRecuperacionProducto?.aplicar?.();
+        window.HFCierreFinancieroMensual?.iniciar?.();
       } catch (error) {
         console.warn('No se pudo refrescar la interfaz financiera:', error);
       }
@@ -24,6 +26,7 @@
       try {
         if (typeof window.actualizarCentroTarjetas === 'function') await window.actualizarCentroTarjetas(false);
         window.HFRecuperacionProducto?.aplicar?.();
+        window.HFCierreFinancieroMensual?.iniciar?.();
       } catch (error) {
         console.warn('No se pudo actualizar el resumen de deudas:', error);
       }
@@ -35,22 +38,25 @@
     bootstrapSolicitado = true;
     if (window.HFBootstrapAvanzado) return window.HFBootstrapAvanzado.iniciar?.();
     const script = document.createElement('script');
-    script.src = new URL('js/bootstrap-avanzado.js?v=17.3', document.baseURI).href;
+    script.src = new URL(`js/bootstrap-avanzado.js?v=${VERSION}`, document.baseURI).href;
     script.async = false;
     script.dataset.hfBootstrapPrincipal = 'true';
     script.onload = () => window.HFBootstrapAvanzado?.iniciar?.();
-    script.onerror = () => { bootstrapSolicitado=false; console.warn('No se pudo cargar el arranque de recuperación.'); };
+    script.onerror = () => { bootstrapSolicitado=false; console.warn('No se pudo cargar el arranque avanzado.'); };
     document.body.appendChild(script);
   }
 
-  ['hf:deuda-actualizada','hf:deudas-recalculadas','hf:estado-cuenta-confirmado','hf:gastos-actualizados'].forEach(nombre => {
+  ['hf:deuda-actualizada','hf:deudas-recalculadas','hf:estado-cuenta-confirmado','hf:gastos-actualizados','hf:cierre-mensual-guardado'].forEach(nombre => {
     window.addEventListener(nombre, () => refrescarVistas(true));
   });
 
-  window.addEventListener('hf:deudas-core-actualizadas', () => window.HFRecuperacionProducto?.aplicar?.());
+  window.addEventListener('hf:deudas-core-actualizadas', () => {
+    window.HFRecuperacionProducto?.aplicar?.();
+    window.HFCierreFinancieroMensual?.iniciar?.();
+  });
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(cargarBootstrapAvanzado,160),{once:true});
-  else setTimeout(cargarBootstrapAvanzado,160);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(cargarBootstrapAvanzado, 160), { once:true });
+  else setTimeout(cargarBootstrapAvanzado, 160);
 
-  window.HFSincronizacionFinancieraUI=Object.freeze({refrescarVistas,refrescarSoloDeudas,cargarBootstrapAvanzado});
+  window.HFSincronizacionFinancieraUI = Object.freeze({ refrescarVistas, refrescarSoloDeudas, cargarBootstrapAvanzado, version:VERSION });
 })();
