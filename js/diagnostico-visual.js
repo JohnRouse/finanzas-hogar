@@ -33,6 +33,7 @@
     pruebas.push(prueba('Actualización conjunta disponible', () => typeof window.abrirActualizacionTarjetas === 'function' && Boolean(document.getElementById('hfActualizarSaldosModal'))));
     pruebas.push(prueba('Sin actualización duplicada', () => !document.querySelector('#page-deudas [data-hf-update-all]') && !document.querySelector('#page-deudas .debt-action-statement')));
     pruebas.push(prueba('Menú global de movimientos', () => typeof window.toggleExpenseMenu === 'function' && Boolean(document.getElementById('hfExpenseMenuPortal'))));
+    pruebas.push(prueba('Pila de modales anidados', () => Boolean(window.HFModalStack?.aplicarPila) && Boolean(document.getElementById('hf-modal-stack-styles'))));
     pruebas.push(prueba('Modales FAB unificados', () => Boolean(document.querySelector('#gastoChoiceModal .hf-app-sheet')) && Boolean(document.querySelector('#deudaChoiceModal .hf-app-sheet')) && Boolean(document.querySelector('#hfIngresoChoiceModal .hf-app-sheet'))));
     pruebas.push(prueba('Microsoft Entra no visible', () => !document.getElementById('btn-outlook') && !document.getElementById('outlookModal')));
     pruebas.push(prueba('Planificador separado', () => Boolean(document.getElementById('hfCentroFinancieroModal'))));
