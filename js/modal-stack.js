@@ -1,9 +1,10 @@
-/* Hogar Finanzas — Gestor de modales anidados sin parpadeos */
+/* Hogar Finanzas — Gestor accesible de modales anidados sin parpadeos */
 (() => {
   'use strict';
   if (window.HFModalStack) return;
 
   const BASE_Z = 12000;
+  const focoPrevioPorModal = new WeakMap();
   let secuencia = 0;
   let instalado = false;
   let observer = null;
@@ -20,24 +21,92 @@
     if (elevar || !modal.dataset.hfModalOrder) modal.dataset.hfModalOrder = String(++secuencia);
   }
 
+  function esVisible(elemento) {
+    if (!elemento) return false;
+    const estilo = getComputedStyle(elemento);
+    return estilo.display !== 'none' && estilo.visibility !== 'hidden' && elemento.getClientRects().length > 0;
+  }
+
+  function primerEnfocable(modal) {
+    if (!modal) return null;
+    const selector = [
+      '[autofocus]',
+      '.modal-close:not([disabled])',
+      'button:not([disabled])',
+      'a[href]',
+      'input:not([disabled]):not([type="hidden"])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])'
+    ].join(',');
+    return [...modal.querySelectorAll(selector)].find(esVisible) || null;
+  }
+
+  function quitarFocoSiQuedaraInerte(modalSuperior, lista) {
+    const activo = document.activeElement;
+    if (!activo || activo === document.body || modalSuperior?.contains(activo)) return;
+    const contenedor = activo.closest?.('.modal-overlay');
+    if (!contenedor || !lista.includes(contenedor) || contenedor === modalSuperior) return;
+    try { activo.blur(); } catch (_) {}
+  }
+
+  function enfocarSuperior(modal, forzar = false) {
+    if (!modal || !estaAbierto(modal)) return false;
+    const activo = document.activeElement;
+    if (!forzar && activo && modal.contains(activo)) return true;
+    const destino = primerEnfocable(modal);
+    if (!destino) return false;
+    try {
+      destino.focus({ preventScroll: true });
+      return true;
+    } catch (_) {
+      try { destino.focus(); return true; } catch (_) { return false; }
+    }
+  }
+
+  function programarFoco(modal, forzar = false) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => enfocarSuperior(modal, forzar));
+    });
+  }
+
+  function limpiarEstadoModal(modal) {
+    if (!modal) return;
+    modal.inert = false;
+    modal.removeAttribute('inert');
+    modal.removeAttribute('aria-hidden');
+    modal.classList.remove('hf-modal-top', 'hf-modal-under');
+    modal.style.removeProperty('--hf-modal-z');
+  }
+
   function pintarPila(lista, preparado = null) {
     const unicos = [...new Set(lista.filter(Boolean))];
     unicos.forEach(modal => asegurarOrden(modal));
     unicos.sort((a, b) => Number(a.dataset.hfModalOrder || 0) - Number(b.dataset.hfModalOrder || 0));
+    const superior = unicos[unicos.length - 1] || null;
+
+    quitarFocoSiQuedaraInerte(superior, unicos);
 
     document.querySelectorAll('.modal-overlay.hf-modal-top,.modal-overlay.hf-modal-under').forEach(modal => {
       if (modal === preparado || unicos.includes(modal)) return;
-      modal.classList.remove('hf-modal-top', 'hf-modal-under');
-      modal.removeAttribute('aria-hidden');
-      modal.style.removeProperty('--hf-modal-z');
+      limpiarEstadoModal(modal);
     });
 
     unicos.forEach((modal, indice) => {
-      const esSuperior = indice === unicos.length - 1;
+      const esSuperior = modal === superior;
       modal.style.setProperty('--hf-modal-z', String(BASE_Z + indice * 20));
       modal.classList.toggle('hf-modal-top', esSuperior);
       modal.classList.toggle('hf-modal-under', !esSuperior);
-      modal.setAttribute('aria-hidden', esSuperior ? 'false' : 'true');
+
+      // `inert` impide interacción y navegación por teclado en los modales que
+      // quedan debajo. No usamos aria-hidden, porque ocultar un ancestro que aún
+      // conserva el foco genera advertencias y una experiencia incorrecta para
+      // lectores de pantalla.
+      modal.inert = !esSuperior;
+      if (esSuperior) modal.removeAttribute('inert');
+      else modal.setAttribute('inert', '');
+      modal.removeAttribute('aria-hidden');
+
       if (estaAbierto(modal)) modal.dataset.hfObservedOpen = '1';
     });
 
@@ -51,11 +120,7 @@
 
     document.querySelectorAll('.modal-overlay:not(.open):not(.active)').forEach(modal => {
       modal.dataset.hfObservedOpen = '0';
-      if (modal.dataset.hfPreparedOpen !== '1') {
-        modal.classList.remove('hf-modal-top', 'hf-modal-under');
-        modal.removeAttribute('aria-hidden');
-        modal.style.removeProperty('--hf-modal-z');
-      }
+      if (modal.dataset.hfPreparedOpen !== '1') limpiarEstadoModal(modal);
     });
 
     return pintarPila(abiertos);
@@ -65,12 +130,17 @@
     const modal = resolverModal(valor);
     if (!modal) return false;
 
+    const focoActual = document.activeElement;
+    if (focoActual && focoActual !== document.body && focoActual.isConnected) {
+      focoPrevioPorModal.set(modal, focoActual);
+    }
+
     const abiertos = modalesAbiertos().filter(actual => actual !== modal);
     asegurarOrden(modal, true);
     modal.dataset.hfPreparedOpen = '1';
 
-    // Se asignan clase y z-index antes de que el modal sea visible. Así no puede
-    // aparecer un fotograma detrás del historial o de otro modal abierto.
+    // Se asignan la posición y el estado inerte antes de que el nuevo modal sea
+    // visible, evitando que aparezca un fotograma detrás de otro modal.
     pintarPila([...abiertos, modal], modal);
     return true;
   }
@@ -79,6 +149,22 @@
     if (!modal) return;
     delete modal.dataset.hfPreparedOpen;
     aplicarPila();
+    programarFoco(modal);
+  }
+
+  function restaurarFoco(modalCerrado, abiertos) {
+    const superior = abiertos[abiertos.length - 1] || null;
+    const previo = focoPrevioPorModal.get(modalCerrado);
+    focoPrevioPorModal.delete(modalCerrado);
+
+    requestAnimationFrame(() => {
+      if (previo?.isConnected && !previo.closest?.('[inert]') && (!superior || superior.contains(previo))) {
+        try { previo.focus({ preventScroll: true }); return; } catch (_) {
+          try { previo.focus(); return; } catch (_) {}
+        }
+      }
+      if (superior) enfocarSuperior(superior, true);
+    });
   }
 
   function envolverFunciones() {
@@ -89,7 +175,6 @@
         prepararApertura(modal);
         const resultado = originalOpen.call(this, id, ...args);
         confirmarApertura(modal);
-        requestAnimationFrame(aplicarPila);
         return resultado;
       };
       envuelta.__hfModalStack = true;
@@ -100,16 +185,21 @@
     if (typeof window.closeModal === 'function' && !window.closeModal.__hfModalStack) {
       const originalClose = window.closeModal;
       const envuelta = function(id, ...args) {
-        const resultado = originalClose.call(this, id, ...args);
         const modal = document.getElementById(id);
+        const activo = document.activeElement;
+        if (modal?.contains(activo)) {
+          try { activo.blur(); } catch (_) {}
+        }
+
+        const resultado = originalClose.call(this, id, ...args);
         if (modal) {
           delete modal.dataset.hfModalOrder;
           delete modal.dataset.hfPreparedOpen;
           modal.dataset.hfObservedOpen = '0';
-          modal.classList.remove('hf-modal-top', 'hf-modal-under');
-          modal.style.removeProperty('--hf-modal-z');
+          limpiarEstadoModal(modal);
         }
-        aplicarPila();
+        const abiertos = aplicarPila();
+        restaurarFoco(modal, abiertos);
         requestAnimationFrame(aplicarPila);
         return resultado;
       };
@@ -151,6 +241,8 @@
 
     observer = new MutationObserver(cambios => {
       let requiereActualizar = false;
+      const recienAbiertos = [];
+
       cambios.forEach(cambio => {
         if (cambio.type !== 'attributes' || cambio.attributeName !== 'class') return;
         const modal = cambio.target;
@@ -164,15 +256,24 @@
         if (abierto) {
           if (modal.dataset.hfPreparedOpen !== '1') asegurarOrden(modal, true);
           delete modal.dataset.hfPreparedOpen;
+          recienAbiertos.push(modal);
         } else {
+          const activo = document.activeElement;
+          if (modal.contains(activo)) {
+            try { activo.blur(); } catch (_) {}
+          }
           delete modal.dataset.hfModalOrder;
           delete modal.dataset.hfPreparedOpen;
+          limpiarEstadoModal(modal);
         }
         requiereActualizar = true;
       });
-      // MutationObserver se ejecuta antes del siguiente pintado. Aplicar aquí de
-      // forma síncrona elimina también el salto en modales que no usan openModal.
-      if (requiereActualizar) aplicarPila();
+
+      if (requiereActualizar) {
+        const abiertos = aplicarPila();
+        const superior = abiertos[abiertos.length - 1];
+        if (recienAbiertos.includes(superior)) programarFoco(superior);
+      }
     });
     observer.observe(document.body, { subtree:true, attributes:true, attributeFilter:['class'] });
   }
@@ -195,6 +296,16 @@
     else superior.classList.remove('open', 'active');
   }
 
+  function obtenerEstadoAccesibilidad() {
+    const fondos = [...document.querySelectorAll('.modal-overlay.hf-modal-under')];
+    return {
+      usaInert: fondos.every(modal => modal.inert || modal.hasAttribute('inert')),
+      fondosConAriaHidden: fondos.filter(modal => modal.hasAttribute('aria-hidden')).map(modal => modal.id || '(sin id)'),
+      focoEnFondo: fondos.some(modal => modal.contains(document.activeElement)),
+      modalesAbiertos: modalesAbiertos().length
+    };
+  }
+
   function iniciar() {
     if (instalado) return;
     instalado = true;
@@ -210,7 +321,8 @@
     iniciar,
     aplicarPila,
     prepararApertura,
-    obtenerAbiertos:modalesAbiertos
+    obtenerAbiertos:modalesAbiertos,
+    obtenerEstadoAccesibilidad
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar, { once:true });
