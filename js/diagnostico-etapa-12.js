@@ -90,10 +90,14 @@
     }));
 
     pruebas.push(prueba('Administración centralizada en el FAB', () => {
-      const estado = window.HFDeudasFamiliares?.obtenerEstado?.();
-      if (!estado?.fabIntegrado) return 'El FAB no fue integrado con Administración';
-      if (estado.botonAdministrarVisible) return 'El botón Administrar sigue duplicado en la cabecera';
+      const modulo = window.HFDeudasFamiliares;
+      const estado = modulo?.obtenerEstado?.();
+      if (!modulo || typeof modulo.aplicarFabAdministracion !== 'function') {
+        return 'Falta la integración administrativa del FAB';
+      }
+      if (estado?.botonAdministrarVisible) return 'El botón Administrar sigue duplicado en la cabecera';
       if (typeof window.abrirAdministracionDeudas !== 'function') return 'Falta la acción administrativa del FAB';
+      if (!document.getElementById('fab-global')) return 'No existe el FAB global';
       return true;
     }));
 
