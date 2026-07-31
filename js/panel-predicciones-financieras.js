@@ -1,4 +1,4 @@
-/* Hogar Finanzas — Recuperación: Centro financiero separado del control de deudas */
+/* Hogar Finanzas — Planificador de deudas claro y separado */
 (() => {
   'use strict';
 
@@ -13,20 +13,16 @@
     else console.info(mensaje);
   }
 
-  function crearLanzador(pagina, texto) {
+  function crearLanzador() {
+    const pagina = $('page-deudas');
     if (!pagina || pagina.querySelector('[data-hf-finance-launcher]')) return;
     const boton = document.createElement('button');
     boton.type = 'button';
     boton.className = 'hf-finance-launcher';
     boton.dataset.hfFinanceLauncher = 'true';
-    boton.textContent = texto;
-    boton.addEventListener('click', abrirCentroFinanciero);
+    boton.innerHTML = '<strong>Planificar cómo pagar mis deudas</strong><small>Calcula una cuota o decide qué tarjeta priorizar</small>';
+    boton.addEventListener('click', abrirPlanificador);
     pagina.appendChild(boton);
-  }
-
-  function inyectarLanzadores() {
-    crearLanzador($('page-deudas'), 'Abrir Centro financiero');
-    crearLanzador($('page-resumen'), 'Analizar y planificar mis finanzas');
   }
 
   function inyectarModal() {
@@ -36,26 +32,25 @@
         <div class="modal-sheet hf-finance-center-sheet" style="position:relative">
           <button class="modal-close" type="button" onclick="closeModal('hfCentroFinancieroModal')">✕</button>
           <div class="modal-handle"></div>
-          <div class="modal-title">Centro financiero</div>
-          <p class="hf-finance-intro">Este espacio reúne simulaciones y planes. No modifica tus tarjetas ni préstamos; solo analiza los datos registrados.</p>
+          <div class="modal-title">Planificador de deudas</div>
+          <p class="hf-finance-intro">Responde dos preguntas: cuánto tardarías en pagar una tarjeta y cuál conviene priorizar. Los cálculos son orientativos y no modifican tus datos.</p>
 
           <div class="hf-finance-tabs" role="tablist">
-            <button class="hf-finance-tab active" type="button" data-hf-finance-tab="simulador">Simular tarjeta</button>
-            <button class="hf-finance-tab" type="button" data-hf-finance-tab="plan">Plan de pagos</button>
+            <button class="hf-finance-tab active" type="button" data-hf-finance-tab="simulador">Calcular una tarjeta</button>
+            <button class="hf-finance-tab" type="button" data-hf-finance-tab="plan">Ordenar mis tarjetas</button>
           </div>
 
           <section class="hf-finance-panel active" data-hf-finance-panel="simulador">
             <div class="hf-finance-card">
-              <h3>¿Cuánto tardaría en pagar?</h3>
-              <p>Calcula un escenario usando la deuda estimada de una tarjeta, un pago mensual y una TEA referencial.</p>
+              <h3>¿En cuánto tiempo terminaría de pagarla?</h3>
+              <p>Elige una tarjeta e indica cuánto podrías pagar cada mes. La TEA aparece en el estado de cuenta; si no la conoces, déjala en 0 para calcular sin intereses.</p>
               <div class="hf-finance-form">
                 <label class="wide">Tarjeta<select id="hf-finance-card"><option value="">Selecciona una tarjeta</option></select></label>
                 <label>Pago mensual<input id="hf-finance-payment" type="number" min="0" step="10" inputmode="decimal" placeholder="500"></label>
-                <label>TEA referencial (%)<input id="hf-finance-tea" type="number" min="0" step="0.1" inputmode="decimal" placeholder="65"></label>
-                <label class="wide">Fecha objetivo para el próximo cierre<input id="hf-finance-close" type="date"></label>
+                <label>TEA de la tarjeta (%)<input id="hf-finance-tea" type="number" min="0" step="0.1" inputmode="decimal" value="0"></label>
               </div>
               <div class="hf-finance-actions">
-                <button class="primary" id="hf-finance-run" type="button">Calcular escenario</button>
+                <button class="primary" id="hf-finance-run" type="button">Calcular tiempo y costo</button>
                 <button class="secondary" id="hf-finance-minimum" type="button">Usar pago mínimo</button>
               </div>
               <div id="hf-finance-output" class="hf-finance-empty">Selecciona una tarjeta para comenzar.</div>
@@ -65,22 +60,18 @@
 
           <section class="hf-finance-panel" data-hf-finance-panel="plan">
             <div class="hf-finance-card">
-              <h3>Orden recomendado de pagos</h3>
-              <p>Compara avalancha, bola de nieve y estrategia híbrida. El cálculo es orientativo y no realiza pagos.</p>
-              <div class="hf-finance-form">
-                <label>Presupuesto mensual para tarjetas<input id="hf-plan-budget" type="number" min="0" step="10" inputmode="decimal" placeholder="1000"></label>
-                <label>TEA referencial general (%)<input id="hf-plan-tea" type="number" min="0" step="0.1" inputmode="decimal" placeholder="65"></label>
-              </div>
-              <div class="hf-finance-actions"><button class="primary" id="hf-plan-run" type="button">Comparar estrategias</button></div>
-              <div id="hf-plan-output" class="hf-finance-empty">Indica cuánto puedes destinar cada mes.</div>
+              <h3>¿Cuál tarjeta debería pagar primero?</h3>
+              <p>Indica tu presupuesto total para tarjetas y, cuando la conozcas, la TEA de cada una. Si solo tienes una tarjeta o todas tienen la misma tasa, no habrá tres planes diferentes.</p>
+              <div class="hf-finance-form"><label class="wide">Presupuesto mensual total<input id="hf-plan-budget" type="number" min="0" step="10" inputmode="decimal" placeholder="1000"></label></div>
+              <div id="hf-plan-cards" class="hf-plan-cards"><div class="hf-finance-empty">Cargando tarjetas…</div></div>
+              <div class="hf-finance-actions"><button class="primary" id="hf-plan-run" type="button">Crear mi plan</button></div>
+              <div id="hf-plan-output" class="hf-finance-empty">Completa el presupuesto y revisa las tasas.</div>
             </div>
           </section>
         </div>
       </div>`);
 
-    document.querySelectorAll('[data-hf-finance-tab]').forEach(btn => {
-      btn.addEventListener('click', () => seleccionarTab(btn.dataset.hfFinanceTab));
-    });
+    document.querySelectorAll('[data-hf-finance-tab]').forEach(btn => btn.addEventListener('click', () => seleccionarTab(btn.dataset.hfFinanceTab)));
     $('hf-finance-run')?.addEventListener('click', calcularEscenario);
     $('hf-finance-minimum')?.addEventListener('click', usarMinimo);
     $('hf-finance-card')?.addEventListener('change', cargarValoresTarjeta);
@@ -98,18 +89,34 @@
     try {
       if (!window.HFModeloFinanciero?.obtenerResumenGlobal) throw new Error('El modelo financiero todavía no está disponible.');
       const global = await HFModeloFinanciero.obtenerResumenGlobal();
-      tarjetas = global.tarjetas || [];
-      select.innerHTML = '<option value="">Selecciona una tarjeta</option>' + tarjetas.map(t => `<option value="${String(t.tarjetaId)}">${String(t.tarjetaNombre || 'Tarjeta')} · ${moneda(t.deudaEstimada)}</option>`).join('');
+      tarjetas = (global.tarjetas || []).filter(t => numero(t.deudaEstimada) > 0);
+      select.innerHTML = '<option value="">Selecciona una tarjeta</option>' + tarjetas.map(t => `<option value="${String(t.tarjetaId)}">${String(t.tarjetaNombre || 'Tarjeta')} · debes ${moneda(t.deudaEstimada)}</option>`).join('');
+      renderTarjetasPlan();
       if (!tarjetas.length) {
         $('hf-finance-output').className = 'hf-finance-empty';
-        $('hf-finance-output').textContent = 'Registra una tarjeta y su saldo para utilizar las simulaciones.';
+        $('hf-finance-output').textContent = 'No hay tarjetas con deuda pendiente.';
       }
       return tarjetas;
     } catch (error) {
       console.warn(error);
       select.innerHTML = '<option value="">No se pudieron cargar las tarjetas</option>';
+      $('hf-plan-cards').innerHTML = '<div class="hf-finance-empty">No se pudieron cargar las tarjetas.</div>';
       return [];
     }
+  }
+
+  function renderTarjetasPlan() {
+    const contenedor = $('hf-plan-cards');
+    if (!contenedor) return;
+    if (!tarjetas.length) {
+      contenedor.innerHTML = '<div class="hf-finance-empty">No hay tarjetas con deuda pendiente.</div>';
+      return;
+    }
+    contenedor.innerHTML = tarjetas.map(t => `
+      <div class="hf-plan-card-row" data-tarjeta-id="${String(t.tarjetaId)}">
+        <div><strong>${String(t.tarjetaNombre || 'Tarjeta')}</strong><small>Deuda ${moneda(t.deudaEstimada)} · mínimo ${moneda(t.pagoMinimo)}</small></div>
+        <label>TEA (%)<input class="hf-plan-card-tea" type="number" min="0" step="0.1" inputmode="decimal" value="${numero(t.tea || t.tasaEfectivaAnual || 0)}"></label>
+      </div>`).join('');
   }
 
   function tarjetaActual() {
@@ -120,60 +127,65 @@
     const tarjeta = tarjetaActual();
     if (!tarjeta) return;
     $('hf-finance-payment').value = tarjeta.pagoMinimo || '';
+    $('hf-finance-tea').value = numero(tarjeta.tea || tarjeta.tasaEfectivaAnual || 0);
   }
 
   function usarMinimo() {
     const tarjeta = tarjetaActual();
     if (!tarjeta) return toast('Selecciona una tarjeta.');
-    $('hf-finance-payment').value = tarjeta.pagoMinimo || 0;
+    if (numero(tarjeta.pagoMinimo) <= 0) return toast('Esta tarjeta no tiene un pago mínimo registrado.');
+    $('hf-finance-payment').value = tarjeta.pagoMinimo;
     calcularEscenario();
   }
 
   function renderGrafico(cronograma = []) {
+    const contenedor = $('hf-finance-chart')?.closest('.hf-finance-chart');
     const canvas = $('hf-finance-chart');
     if (!canvas || !window.Chart) return;
     if (grafico) grafico.destroy();
+    if (!cronograma.length) {
+      if (contenedor) contenedor.style.display = 'none';
+      return;
+    }
+    if (contenedor) contenedor.style.display = '';
     const datos = cronograma.slice(0, 60);
     grafico = new Chart(canvas, {
       type: 'line',
-      data: {
-        labels: datos.map(x => `Mes ${x.mes}`),
-        datasets: [{ label: 'Saldo estimado', data: datos.map(x => x.saldo), tension: .25, fill: false }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
-      }
+      data: { labels: datos.map(x => `Mes ${x.mes}`), datasets: [{ label: 'Saldo pendiente', data: datos.map(x => x.saldo), tension: .25, fill: false }] },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true } } }
     });
   }
 
   async function calcularEscenario() {
-    const tarjetaId = $('hf-finance-card')?.value;
-    if (!tarjetaId) return toast('Selecciona una tarjeta.');
+    const tarjeta = tarjetaActual();
+    if (!tarjeta) return toast('Selecciona una tarjeta.');
     const pagoMensual = numero($('hf-finance-payment')?.value);
     const tea = numero($('hf-finance-tea')?.value);
-    const fechaObjetivo = $('hf-finance-close')?.value || '';
     const salida = $('hf-finance-output');
+    if (pagoMensual <= 0) return toast('Ingresa cuánto puedes pagar al mes.');
     salida.className = 'hf-finance-empty';
-    salida.textContent = 'Calculando escenario…';
+    salida.textContent = 'Calculando…';
 
     try {
-      if (!window.HFMotorPredictivoFinanciero?.proyectarTarjeta) throw new Error('El simulador todavía no está disponible.');
-      const resultado = await HFMotorPredictivoFinanciero.proyectarTarjeta(tarjetaId, { pagoMensual, tea, fechaObjetivo });
-      const amort = resultado.amortizacion;
-      const riesgo = resultado.riesgo;
-      const proy = resultado.proyeccionCierre;
+      if (!window.HFMotorPredictivoFinanciero?.simularPago) throw new Error('El simulador todavía no está disponible.');
+      const deuda = numero(tarjeta.deudaEstimada);
+      const amort = HFMotorPredictivoFinanciero.simularPago({ deuda, pagoMensual, tea });
+      if (!amort.viable) {
+        salida.className = 'hf-finance-output';
+        salida.innerHTML = `<div class="hf-finance-warning"><strong>Ese pago no alcanza para reducir la deuda.</strong><span>${amort.motivo === 'pago-no-cubre-interes' ? 'El pago mensual es menor que los intereses estimados. Aumenta la cuota o revisa la TEA.' : 'Ingresa un pago mensual mayor.'}</span></div>`;
+        renderGrafico([]);
+        return;
+      }
+      const utilizacion = numero(tarjeta.lineaTotal) > 0 ? deuda / numero(tarjeta.lineaTotal) * 100 : 0;
       salida.className = 'hf-finance-output';
       salida.innerHTML = `
-        <div class="hf-finance-results">
-          <div class="hf-finance-result"><span>Deuda actual</span><strong>${moneda(resultado.resumenActual.deudaEstimada)}</strong><small>Estimación registrada</small></div>
-          <div class="hf-finance-result"><span>Tiempo para pagar</span><strong>${amort.viable ? `${amort.meses} meses` : 'Pago insuficiente'}</strong><small>Con ${moneda(pagoMensual)} al mes</small></div>
-          <div class="hf-finance-result"><span>Intereses estimados</span><strong>${amort.viable ? moneda(amort.interesesTotales) : '—'}</strong><small>TEA referencial ${tea || 0}%</small></div>
-          <div class="hf-finance-result"><span>Próximo cierre</span><strong>${moneda(proy.deudaProyectada)}</strong><small>Uso proyectado ${numero(proy.utilizacionProyectada).toFixed(1)}%</small></div>
+        <div class="hf-finance-answer"><strong>Con ${moneda(pagoMensual)} al mes terminarías en aproximadamente ${amort.meses} mes${amort.meses === 1 ? '' : 'es'}.</strong><span>Este cálculo supone que no haces nuevas compras con la tarjeta.</span></div>
+        <div class="hf-finance-results three">
+          <div class="hf-finance-result"><span>Deuda pendiente</span><strong>${moneda(deuda)}</strong><small>La que registra la app</small></div>
+          <div class="hf-finance-result"><span>Total pagado</span><strong>${moneda(amort.totalPagado)}</strong><small>Capital más intereses</small></div>
+          <div class="hf-finance-result"><span>Intereses aproximados</span><strong>${moneda(amort.interesesTotales)}</strong><small>Usando TEA ${tea}%</small></div>
         </div>
-        <div class="hf-finance-risk ${riesgo.nivel}"><strong>Riesgo: ${String(riesgo.nivel).toUpperCase()}</strong><div>${riesgo.alertas.length ? riesgo.alertas.map(a => a.mensaje).join('<br>') : 'No se detectaron alertas relevantes.'}</div></div>`;
+        ${utilizacion >= 80 ? `<div class="hf-finance-risk alto"><strong>La línea está muy utilizada</strong><div>La tarjeta usa aproximadamente ${utilizacion.toFixed(1)}% de su línea. Evita nuevas compras mientras sigues este plan.</div></div>` : ''}`;
       renderGrafico(amort.cronograma || []);
     } catch (error) {
       console.error(error);
@@ -182,30 +194,84 @@
     }
   }
 
-  const etiquetaEstrategia = valor => ({ avalancha: 'Avalancha', 'bola-nieve': 'Bola de nieve', hibrida: 'Híbrida' }[valor] || valor);
+  const estrategiaInfo = {
+    avalancha: { titulo:'Ahorrar más intereses', subtitulo:'Prioriza primero la tarjeta con la TEA más alta.' },
+    'bola-nieve': { titulo:'Cerrar una tarjeta más rápido', subtitulo:'Prioriza primero la deuda más pequeña.' },
+    hibrida: { titulo:'Plan equilibrado', subtitulo:'Combina tasa de interés y tamaño de la deuda.' }
+  };
+
+  function tarjetasParaPlan() {
+    const tasas = new Map([...document.querySelectorAll('.hf-plan-card-row')].map(fila => [String(fila.dataset.tarjetaId), numero(fila.querySelector('.hf-plan-card-tea')?.value)]));
+    return tarjetas.map(t => ({
+      id: String(t.tarjetaId),
+      nombre: String(t.tarjetaNombre || 'Tarjeta'),
+      deuda: numero(t.deudaEstimada),
+      minimo: numero(t.pagoMinimo),
+      tea: tasas.get(String(t.tarjetaId)) || 0
+    })).filter(t => t.deuda > 0);
+  }
+
+  function firmaResultado(r = {}) {
+    return `${r.viable}|${r.meses ?? 'x'}|${numero(r.interesesTotales).toFixed(2)}|${numero(r.totalPagado).toFixed(2)}`;
+  }
+
+  function nombresOrden(orden = [], mapa = new Map()) {
+    return orden.map(id => mapa.get(String(id)) || String(id));
+  }
 
   async function calcularPlan() {
     const presupuestoMensual = numero($('hf-plan-budget')?.value);
-    const tea = numero($('hf-plan-tea')?.value);
     const salida = $('hf-plan-output');
-    if (presupuestoMensual <= 0) return toast('Ingresa un presupuesto mensual.');
+    if (presupuestoMensual <= 0) return toast('Ingresa el presupuesto mensual total.');
+    const base = tarjetasParaPlan();
+    if (!base.length) return toast('No hay tarjetas con deuda pendiente.');
     salida.className = 'hf-finance-empty';
-    salida.textContent = 'Comparando estrategias…';
+    salida.textContent = 'Preparando tu plan…';
 
     try {
-      if (!window.HFOptimizadorPagos?.optimizarDesdeModelo) throw new Error('El optimizador todavía no está disponible.');
-      const global = await HFModeloFinanciero.obtenerResumenGlobal();
-      const tasas = Object.fromEntries((global.tarjetas || []).map(t => [t.tarjetaId, tea]));
-      const resultado = await HFOptimizadorPagos.optimizarDesdeModelo({ presupuestoMensual, tasas });
+      if (!window.HFOptimizadorPagos?.compararEstrategias) throw new Error('El planificador todavía no está disponible.');
+      const sumaMinimos = base.reduce((s, t) => s + t.minimo, 0);
+      if (presupuestoMensual < sumaMinimos) {
+        salida.className = 'hf-finance-output';
+        salida.innerHTML = `<div class="hf-finance-warning"><strong>El presupuesto no cubre los pagos mínimos.</strong><span>Los mínimos registrados suman ${moneda(sumaMinimos)}. Faltan ${moneda(sumaMinimos - presupuestoMensual)}.</span></div>`;
+        return;
+      }
+
+      if (base.length === 1) {
+        const t = base[0];
+        const amort = HFMotorPredictivoFinanciero.simularPago({ deuda:t.deuda, pagoMensual:presupuestoMensual, tea:t.tea });
+        salida.className = 'hf-finance-output';
+        salida.innerHTML = amort.viable ? `
+          <div class="hf-finance-answer"><strong>Tienes una sola tarjeta; no hay un orden que comparar.</strong><span>Destina el presupuesto a ${t.nombre}. La terminarías en aproximadamente ${amort.meses} mes${amort.meses === 1 ? '' : 'es'} y pagarías ${moneda(amort.interesesTotales)} en intereses.</span></div>` : `
+          <div class="hf-finance-warning"><strong>El pago no reduce la deuda.</strong><span>Aumenta el presupuesto o revisa la TEA ingresada.</span></div>`;
+        return;
+      }
+
+      const comparacion = HFOptimizadorPagos.compararEstrategias({ tarjetas:base, presupuestoMensual });
+      const mapaNombres = new Map(base.map(t => [String(t.id), t.nombre]));
+      const firmas = new Set(comparacion.resultados.map(firmaResultado));
+      const todosIguales = firmas.size === 1;
+      const mejor = comparacion.resultados.find(r => r.estrategia === comparacion.mejorEstrategia) || comparacion.resultados[0];
+
+      if (todosIguales) {
+        const info = estrategiaInfo[mejor.estrategia] || estrategiaInfo.avalancha;
+        const orden = nombresOrden(mejor.orden, mapaNombres);
+        salida.className = 'hf-finance-output';
+        salida.innerHTML = `
+          <div class="hf-finance-answer"><strong>Con los datos ingresados, las tres estrategias dan el mismo resultado.</strong><span>Esto ocurre cuando las tasas son iguales o las diferencias entre tarjetas no cambian el costo total.</span></div>
+          <div class="hf-strategy-item best"><strong>${info.titulo}</strong><span>${mejor.viable ? `${mejor.meses} meses · intereses ${moneda(mejor.interesesTotales)}` : 'El plan no es viable con este presupuesto.'}</span>${orden.length ? `<small>Orden sugerido: ${orden.join(' → ')}</small>` : ''}</div>
+          <div class="hf-finance-note">Para comparar realmente “ahorrar intereses” contra “cerrar una tarjeta rápido”, escribe la TEA específica de cada tarjeta.</div>`;
+        return;
+      }
+
       salida.className = 'hf-finance-output';
       salida.innerHTML = `
-        <strong>${resultado.mejorEstrategia ? `Mejor opción: ${etiquetaEstrategia(resultado.mejorEstrategia)}` : 'El presupuesto no cubre todos los mínimos'}</strong>
-        <div class="hf-strategy-list">${resultado.resultados.map(r => `
-          <div class="hf-strategy-item ${r.estrategia === resultado.mejorEstrategia ? 'best' : ''}">
-            <strong>${etiquetaEstrategia(r.estrategia)}</strong>
-            <span>${r.viable ? `${r.meses} meses · intereses ${moneda(r.interesesTotales)}` : `No viable: los mínimos suman ${moneda(r.sumaMinimos)}`}</span>
-          </div>`).join('')}</div>
-        ${resultado.recomendaciones?.length ? `<div class="hf-finance-risk"><strong>Recomendación</strong><div>${resultado.recomendaciones.join('<br>')}</div></div>` : ''}`;
+        <div class="hf-finance-answer"><strong>La opción que menos intereses genera es: ${estrategiaInfo[comparacion.mejorEstrategia]?.titulo || 'Plan recomendado'}.</strong><span>Puedes elegir otra si prefieres cerrar una tarjeta pequeña antes.</span></div>
+        <div class="hf-strategy-list">${comparacion.resultados.map(r => {
+          const info = estrategiaInfo[r.estrategia] || { titulo:r.estrategia, subtitulo:'' };
+          const orden = nombresOrden(r.orden, mapaNombres);
+          return `<div class="hf-strategy-item ${r.estrategia === comparacion.mejorEstrategia ? 'best' : ''}"><strong>${info.titulo}</strong><span>${info.subtitulo}</span><span>${r.viable ? `${r.meses} meses · intereses ${moneda(r.interesesTotales)}` : 'No viable con este presupuesto'}</span>${orden.length ? `<small>Orden: ${orden.join(' → ')}</small>` : ''}</div>`;
+        }).join('')}</div>`;
     } catch (error) {
       console.error(error);
       salida.className = 'hf-finance-empty';
@@ -213,7 +279,7 @@
     }
   }
 
-  async function abrirCentroFinanciero() {
+  async function abrirPlanificador() {
     inyectarModal();
     await cargarTarjetas();
     if (typeof window.openModal === 'function') openModal('hfCentroFinancieroModal');
@@ -222,15 +288,16 @@
 
   function iniciar() {
     inyectarModal();
-    inyectarLanzadores();
+    crearLanzador();
   }
 
-  window.abrirCentroFinanciero = abrirCentroFinanciero;
+  window.abrirCentroFinanciero = abrirPlanificador;
+  window.abrirPlanificadorDeudas = abrirPlanificador;
   window.addEventListener('hf:deudas-core-actualizadas', cargarTarjetas);
   window.addEventListener('hf:deuda-actualizada', cargarTarjetas);
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(iniciar, 350), { once: true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(iniciar, 350), { once:true });
   else setTimeout(iniciar, 100);
 
-  window.HFPanelPrediccionesFinancieras = Object.freeze({ iniciar, abrir: abrirCentroFinanciero, cargarTarjetas, calcularEscenario, calcularPlan });
+  window.HFPanelPrediccionesFinancieras = Object.freeze({ iniciar, abrir:abrirPlanificador, cargarTarjetas, calcularEscenario, calcularPlan });
 })();
