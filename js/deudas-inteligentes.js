@@ -158,10 +158,10 @@
   }
 
   function textoFuente(resumen) {
-    if (resumen.fuente === 'estado-cuenta') return 'Calculada desde el último estado de cuenta y los movimientos posteriores.';
-    if (resumen.fuente === 'saldo-confirmado') return `Confirmada manualmente${resumen.saldoConfirmadoEn ? ` el ${new Date(resumen.saldoConfirmadoEn).toLocaleDateString('es-PE')}` : ''}.`;
-    if (resumen.fuente === 'saldo-confirmado-con-movimientos') return 'Parte del último saldo confirmado y ya incluye movimientos registrados después.';
-    return 'Calculada con el saldo inicial, las compras y los pagos registrados en la app.';
+    if (resumen.fuente === 'estado-cuenta') return 'Último estado de cuenta más compras y pagos posteriores.';
+    if (resumen.fuente === 'saldo-confirmado') return `Saldo confirmado${resumen.saldoConfirmadoEn ? ` el ${new Date(resumen.saldoConfirmadoEn).toLocaleDateString('es-PE')}` : ''}.`;
+    if (resumen.fuente === 'saldo-confirmado-con-movimientos') return 'Último saldo confirmado más movimientos nuevos.';
+    return 'Saldo calculado con los movimientos registrados en la app.';
   }
 
   function actualizarDatosPago(card, resumen) {
@@ -174,10 +174,10 @@
       bloque.innerHTML = `
         <div><small>Pago mínimo</small><strong>${minimo > 0 ? moneda(minimo) : 'No informado'}</strong></div>
         <div><small>Próximo vencimiento</small><strong>${vence ? new Date(`${vence}T12:00:00`).toLocaleDateString('es-PE', { day:'2-digit', month:'short' }) : 'No informado'}</strong></div>
-        <span>Puedes cambiar estos datos junto con el saldo en “Actualizar saldo”.</span>`;
+        <span>Puedes cambiar estos datos desde “Actualizar saldos”, en la parte superior.</span>`;
     } else {
       bloque.classList.add('empty');
-      bloque.innerHTML = '<span>Pago mínimo y vencimiento no informados. Agrégalos desde “Actualizar saldo”.</span>';
+      bloque.innerHTML = '<span>Pago mínimo y vencimiento no informados. Puedes agregarlos desde “Actualizar saldos”, en la parte superior.</span>';
     }
   }
 
@@ -186,7 +186,7 @@
     if (!estado) return;
     if (resumen.fuente === 'estado-cuenta') {
       estado.className = 'reconcile-status reconciled';
-      estado.innerHTML = '<span>Saldo basado en información bancaria</span><small>La app añadió compras y pagos registrados posteriormente.</small>';
+      estado.innerHTML = '<span>Saldo basado en información bancaria</span><small>Incluye las compras y pagos registrados posteriormente.</small>';
       return;
     }
     if (resumen.fuente === 'saldo-confirmado') {
@@ -196,8 +196,8 @@
     }
     estado.className = resumen.fuente === 'saldo-confirmado-con-movimientos' ? 'reconcile-status pending' : 'reconcile-status neutral';
     estado.innerHTML = resumen.fuente === 'saldo-confirmado-con-movimientos'
-      ? '<span>Saldo estimado por movimientos nuevos</span><small>Actualízalo cuando quieras volver a compararlo con el banco.</small>'
-      : '<span>Saldo calculado por la app</span><small>Confírmalo desde “Actualizar saldo” cuando revises tu banco.</small>';
+      ? '<span>Saldo estimado por movimientos nuevos</span><small>Confírmalo nuevamente desde el recuadro superior cuando revises el banco.</small>'
+      : '<span>Saldo calculado por la app</span><small>Confírmalo desde el recuadro superior cuando revises el banco.</small>';
   }
 
   function enriquecerTarjeta(resumen) {
@@ -209,19 +209,21 @@
     if (total) total.textContent = moneda(resumen.deudaEstimada);
 
     let detalle = card.querySelector('.hf-live-debt-breakdown');
-    if (!detalle) {
-      detalle = document.createElement('div');
-      detalle.className = 'hf-live-debt-breakdown';
-      total?.insertAdjacentElement('afterend', detalle);
+    if (resumen.tieneEstado) {
+      if (!detalle) {
+        detalle = document.createElement('div');
+        detalle.className = 'hf-live-debt-breakdown';
+        total?.insertAdjacentElement('afterend', detalle);
+      }
+      const contenido = `
+        <div><span>Facturado</span><strong>${moneda(resumen.facturada)}</strong></div>
+        <div><span>Compras nuevas</span><strong>+ ${moneda(resumen.comprasPosteriores)}</strong></div>
+        <div><span>Pagos registrados</span><strong>− ${moneda(resumen.pagosPosteriores)}</strong></div>
+        <small>${textoFuente(resumen)}</small>`;
+      if (detalle.innerHTML !== contenido) detalle.innerHTML = contenido;
+    } else {
+      detalle?.remove();
     }
-
-    const contenido = resumen.tieneEstado ? `
-      <div><span>Facturado</span><strong>${moneda(resumen.facturada)}</strong></div>
-      <div><span>Compras nuevas</span><strong>+ ${moneda(resumen.comprasPosteriores)}</strong></div>
-      <div><span>Pagos registrados</span><strong>− ${moneda(resumen.pagosPosteriores)}</strong></div>
-      <small><b>Qué significa:</b> este es el total que todavía debes. ${textoFuente(resumen)}</small>` : `
-      <small><b>Qué significa:</b> este es el total que todavía debes en la tarjeta; no es el gasto del mes ni el monto excedido. ${textoFuente(resumen)}</small>`;
-    if (detalle.innerHTML !== contenido) detalle.innerHTML = contenido;
 
     actualizarDatosPago(card, resumen);
     actualizarEstadoVisual(card, resumen);
@@ -311,7 +313,6 @@
   ['hf:deuda-actualizada', 'hf:deudas-recalculadas', 'hf:estado-cuenta-confirmado', 'hf:gastos-actualizados'].forEach(nombre => {
     window.addEventListener(nombre, () => programar(nombre, 100));
   });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) programar('visible', 100); });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar, { once: true });
   else iniciar();
