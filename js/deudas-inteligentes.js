@@ -1,269 +1,319 @@
-/* Hogar Finanzas — Etapa 11.2: Centro integral de tarjetas y medios de pago */
+/* Hogar Finanzas — Núcleo claro de deuda actual */
 (() => {
   'use strict';
 
-  let chartTarjetasMensual = null;
-  let ultimaFirma = '';
-  const $ = id => document.getElementById(id);
-  const numero = value => Number.isFinite(Number(value)) ? Number(value) : 0;
-  const moneda = value => `S/ ${numero(value).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const fechaValida = value => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) ? String(value) : '';
-  const mesActualISO = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit' }).slice(0, 7);
+  const cache = new Map();
+  let actualizando = false;
+  let temporizador = null;
+  let observer = null;
+  let accionesDecoradas = false;
 
-  function campoEstado(tarjeta, nombres, fallback = 0) {
-    const estado = tarjeta?.estadoCuenta || {};
-    for (const nombre of nombres) {
-      if (estado[nombre] !== undefined && estado[nombre] !== null && estado[nombre] !== '') return estado[nombre];
-      if (tarjeta?.[nombre] !== undefined && tarjeta[nombre] !== null && tarjeta[nombre] !== '') return tarjeta[nombre];
-    }
-    return fallback;
+  const numero = valor => Number.isFinite(Number(valor)) ? Number(valor) : 0;
+  const moneda = valor => `S/ ${numero(valor).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fechaISO = valor => /^\d{4}-\d{2}-\d{2}$/.test(String(valor || '')) ? String(valor) : '';
+  const tiempo = valor => {
+    const n = Date.parse(String(valor || ''));
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  function estadoCuenta(tarjeta = {}) {
+    return tarjeta.estadoCuenta && typeof tarjeta.estadoCuenta === 'object' ? tarjeta.estadoCuenta : {};
   }
 
-  function esPagoTarjeta(gasto) {
-    return gasto?.tipoMovimiento === 'pagoTarjeta' ||
-      String(gasto?.cat || gasto?.categoria || '').toLowerCase() === 'deudas' &&
-      /pago.*tarjeta|abono.*tarjeta/i.test(String(gasto?.desc || gasto?.descripcion || ''));
+  function esPagoTarjeta(gasto = {}) {
+    return gasto.tipoMovimiento === 'pagoTarjeta' || gasto.tipo === 'pago-tarjeta';
   }
 
-  function esCredito(gasto) {
-    return gasto?.medio === 'tarjeta' || gasto?.metodo === 'credito' || gasto?.tarjetaId || gasto?.tipo === 'consumo-credito';
+  function esCompraCredito(gasto = {}) {
+    return !esPagoTarjeta(gasto) && (gasto.medio === 'tarjeta' || gasto.metodo === 'credito' || gasto.tipo === 'consumo-credito');
   }
 
-  function medioPago(gasto) {
-    if (esPagoTarjeta(gasto)) return 'pago-tarjeta';
-    if (esCredito(gasto)) return 'credito';
-    const texto = `${gasto?.medio || ''} ${gasto?.metodo || ''} ${gasto?.tipo || ''} ${gasto?.origen || ''}`.toLowerCase();
-    if (texto.includes('yape')) return 'yape';
-    if (texto.includes('debito') || texto.includes('débito')) return 'debito';
-    if (texto.includes('transfer')) return 'transferencia';
-    return 'efectivo';
+  function fechaMovimiento(gasto = {}) {
+    return fechaISO(gasto.fechaOperacion) || fechaISO(gasto.fecha) || '';
   }
 
-  function inyectarPanel() {
-    const pagina = $('page-deudas');
-    if (!pagina || $('hf-centro-tarjetas')) return;
-    const primeraSeccion = pagina.querySelector('.section');
-    const panel = document.createElement('section');
-    panel.id = 'hf-centro-tarjetas';
-    panel.className = 'section hf-debt-center';
-    panel.innerHTML = `
-      <div class="section-head hf-debt-head">
-        <div>
-          <div class="section-title">Situación real de tarjetas</div>
-          <div class="hf-debt-subtitle">Facturado, compras posteriores, pagos y deuda estimada hasta hoy.</div>
-        </div>
-        <button class="btn-recurrentes" type="button" onclick="actualizarCentroTarjetas(true)">Actualizar</button>
-      </div>
+  function coincideTarjeta(gasto = {}, tarjeta = {}) {
+    if (gasto.tarjetaId && tarjeta.id) return gasto.tarjetaId === tarjeta.id;
+    const gd = String(gasto.ultimosDigitos || gasto.ultimos4 || '');
+    const td = String(tarjeta.ultimosDigitos || tarjeta.ultimos4 || '');
+    return Boolean(gd && td && gd === td);
+  }
 
-      <div class="hf-debt-kpis" id="hf-debt-kpis">
-        <div class="hf-debt-kpi"><span>Deuda facturada</span><strong>—</strong><small>Últimos estados de cuenta</small></div>
-        <div class="hf-debt-kpi"><span>Pago mínimo total</span><strong>—</strong><small>Próximos vencimientos</small></div>
-        <div class="hf-debt-kpi"><span>Compras después del cierre</span><strong>—</strong><small>Entrarán en la siguiente facturación</small></div>
-        <div class="hf-debt-kpi primary"><span>Deuda estimada actual</span><strong>—</strong><small>Facturado + compras − pagos</small></div>
-      </div>
+  function calcularTarjeta(tarjeta = {}, gastos = []) {
+    const ec = estadoCuenta(tarjeta);
+    const fechaBase = fechaISO(ec.fechaCierre) || fechaISO(ec.fechaEstado) || '';
+    const pagoTotalInformado = ec.pagoTotal !== null && ec.pagoTotal !== undefined && ec.pagoTotal !== '';
+    const estadoActualizadoEn = tiempo(ec.actualizadoEn || ec.fechaEstado || ec.fechaCierre);
+    const saldoConfirmadoEn = tiempo(tarjeta.saldoConfirmadoEn || tarjeta.ultimaConciliacion);
+    const usarEstado = pagoTotalInformado && estadoActualizadoEn >= saldoConfirmadoEn;
+    const deudaRegistrada = Math.max(0, numero(tarjeta.deuda || tarjeta.saldo));
+    const facturada = usarEstado ? numero(ec.pagoTotal) : deudaRegistrada;
+    const vinculados = gastos.filter(g => coincideTarjeta(g, tarjeta));
+    const posteriores = usarEstado && fechaBase
+      ? vinculados.filter(g => fechaMovimiento(g) && fechaMovimiento(g) > fechaBase)
+      : [];
+    const comprasPosteriores = posteriores.filter(esCompraCredito).reduce((s, g) => s + numero(g.monto), 0);
+    const pagosPosteriores = posteriores.filter(esPagoTarjeta).reduce((s, g) => s + numero(g.monto), 0);
+    const deudaEstimada = usarEstado
+      ? Math.max(0, facturada + comprasPosteriores - pagosPosteriores)
+      : deudaRegistrada;
+    const lineaTotal = numero(tarjeta.limite || tarjeta.lineaTotal || ec.lineaTotal);
+    const fuente = usarEstado
+      ? 'estado-cuenta'
+      : saldoConfirmadoEn
+        ? (tarjeta.pendienteConciliar ? 'saldo-confirmado-con-movimientos' : 'saldo-confirmado')
+        : 'saldo-app';
 
-      <div class="hf-payment-summary card">
-        <div class="hf-card-title">Gastos del mes por medio de pago</div>
-        <div id="hf-payment-grid" class="hf-payment-grid"><div class="empty-state">Cargando…</div></div>
-      </div>
-
-      <div class="hf-card-breakdown" id="hf-card-breakdown"></div>
-
-      <div class="card hf-chart-card">
-        <div class="hf-chart-title-row">
-          <div>
-            <div class="hf-card-title">Consumos y pagos de tarjetas por mes</div>
-            <small>Compara cuánto compraste con crédito y cuánto pagaste en los últimos 12 meses.</small>
-          </div>
-        </div>
-        <div class="chart-wrap hf-debt-chart-wrap"><canvas id="hf-card-spending-chart"></canvas></div>
-      </div>
-    `;
-    if (primeraSeccion) pagina.insertBefore(panel, primeraSeccion);
-    else pagina.appendChild(panel);
+    return {
+      tarjetaId: tarjeta.id,
+      tarjeta,
+      estadoCuenta: ec,
+      fechaBase,
+      tieneEstado: usarEstado,
+      fuente,
+      facturada,
+      comprasPosteriores,
+      pagosPosteriores,
+      deudaRegistrada,
+      deudaEstimada,
+      pagoMinimo: numero(ec.pagoMinimo || tarjeta.pagoMinimo),
+      fechaVencimiento: fechaISO(ec.fechaVencimiento),
+      lineaTotal,
+      disponible: lineaTotal ? lineaTotal - deudaEstimada : 0,
+      saldoConfirmadoEn: tarjeta.saldoConfirmadoEn || tarjeta.ultimaConciliacion || null
+    };
   }
 
   async function cargarDatos() {
-    const hogarId = window.DB?.hogarId || localStorage.getItem('hogarId');
-    if (!hogarId || !window.db || !window.DB) return { tarjetas: [], gastos: [] };
-    const [tarjetas, gastos] = await Promise.all([
-      DB.getTarjetas().catch(() => []),
-      db.collection('hogares').doc(hogarId).collection('gastos').get()
-        .then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
-        .catch(() => DB.getGastos().catch(() => []))
-    ]);
-    return { tarjetas, gastos };
+    if (!window.DB) return { tarjetas: [], prestamos: [], gastos: [] };
+    const hogarId = DB.hogarId || localStorage.getItem('hogarId');
+    const promesaTarjetas = typeof DB.getTarjetas === 'function' ? DB.getTarjetas().catch(() => []) : Promise.resolve([]);
+    const promesaPrestamos = typeof DB.getPrestamos === 'function' ? DB.getPrestamos().catch(() => []) : Promise.resolve([]);
+    const promesaGastos = hogarId && window.db
+      ? db.collection('hogares').doc(hogarId).collection('gastos').get()
+          .then(s => s.docs.map(d => ({ id: d.id, ...d.data() })))
+          .catch(() => typeof DB.getGastos === 'function' ? DB.getGastos().catch(() => []) : [])
+      : (typeof DB.getGastos === 'function' ? DB.getGastos().catch(() => []) : Promise.resolve([]));
+    const [tarjetas, prestamos, gastos] = await Promise.all([promesaTarjetas, promesaPrestamos, promesaGastos]);
+    return { tarjetas: tarjetas || [], prestamos: prestamos || [], gastos: gastos || [] };
   }
 
-  function calcularTarjeta(tarjeta, gastos) {
-    const cierre = fechaValida(campoEstado(tarjeta, ['fechaCierre', 'cierre', 'fechaFacturacion'], ''));
-    const vencimiento = fechaValida(campoEstado(tarjeta, ['fechaVencimiento', 'vencimiento'], ''));
-    const facturada = numero(campoEstado(tarjeta, ['pagoTotal', 'deudaFacturada', 'totalFacturado', 'montoFacturado', 'deuda'], tarjeta.deuda || tarjeta.saldo || 0));
-    const minimo = numero(campoEstado(tarjeta, ['pagoMinimo', 'minimo', 'montoMinimo'], tarjeta.pagoMinimo || 0));
-    const lineaTotal = numero(campoEstado(tarjeta, ['lineaTotal', 'limiteCredito', 'limite', 'linea'], tarjeta.limite || 0));
-    const lineaDisponibleInformada = numero(campoEstado(tarjeta, ['lineaDisponible', 'disponible'], 0));
-
-    const vinculados = gastos.filter(g => g.tarjetaId === tarjeta.id || (
-      !g.tarjetaId && g.ultimosDigitos && tarjeta.ultimosDigitos && String(g.ultimosDigitos) === String(tarjeta.ultimosDigitos)
-    ));
-    const posteriores = vinculados.filter(g => !esPagoTarjeta(g) && esCredito(g) && (!cierre || String(g.fecha || '') > cierre));
-    const pagos = vinculados.filter(g => esPagoTarjeta(g) && (!cierre || String(g.fecha || '') > cierre));
-    const comprasPosteriores = posteriores.reduce((s, g) => s + numero(g.monto), 0);
-    const pagosPosteriores = pagos.reduce((s, g) => s + numero(g.monto), 0);
-    const deudaEstimada = Math.max(0, facturada + comprasPosteriores - pagosPosteriores);
-    const disponible = lineaDisponibleInformada || Math.max(0, lineaTotal - deudaEstimada);
-
-    return { tarjeta, cierre, vencimiento, facturada, minimo, lineaTotal, disponible, comprasPosteriores, pagosPosteriores, deudaEstimada };
+  function asegurarResumen() {
+    const pagina = document.getElementById('page-deudas');
+    const kpis = pagina?.querySelector('.kpi-grid');
+    if (!pagina || !kpis) return null;
+    let resumen = document.getElementById('hf-resumen-deuda-actual');
+    if (resumen) return resumen;
+    resumen = document.createElement('section');
+    resumen.id = 'hf-resumen-deuda-actual';
+    resumen.className = 'hf-debt-current-summary';
+    resumen.innerHTML = `
+      <div class="hf-debt-current-copy">
+        <strong>Confirma tus saldos en un solo paso</strong>
+        <small>El monto de cada tarjeta es la deuda total pendiente. No representa lo gastado este mes ni solo el exceso de línea.</small>
+      </div>
+      <button type="button" data-hf-open-balance-update>Actualizar saldos</button>`;
+    resumen.querySelector('[data-hf-open-balance-update]')?.addEventListener('click', () => {
+      if (typeof window.abrirActualizacionTarjetas === 'function') window.abrirActualizacionTarjetas();
+      else window.actualizarCentroTarjetas?.(true);
+    });
+    kpis.insertAdjacentElement('afterend', resumen);
+    return resumen;
   }
 
-  function renderKPIs(resumenes) {
-    const totales = resumenes.reduce((a, r) => {
-      a.facturada += r.facturada;
-      a.minimo += r.minimo;
-      a.posteriores += r.comprasPosteriores;
-      a.pagos += r.pagosPosteriores;
-      a.estimada += r.deudaEstimada;
-      return a;
-    }, { facturada: 0, minimo: 0, posteriores: 0, pagos: 0, estimada: 0 });
+  function renderResumen(resumenes, prestamos) {
+    asegurarResumen();
+    const totales = resumenes.reduce((acc, r) => {
+      acc.estimada += r.deudaEstimada;
+      acc.minimos += r.pagoMinimo;
+      return acc;
+    }, { estimada: 0, minimos: 0 });
+    const deudaPrestamos = prestamos.reduce((s, p) => s + numero(p.saldo), 0);
+    const cuotasPrestamos = prestamos.reduce((s, p) => s + numero(p.cuota), 0);
 
-    const kpis = $('hf-debt-kpis');
-    if (!kpis) return totales;
-    kpis.innerHTML = `
-      <div class="hf-debt-kpi"><span>Deuda facturada</span><strong>${moneda(totales.facturada)}</strong><small>Últimos estados de cuenta</small></div>
-      <div class="hf-debt-kpi"><span>Pago mínimo total</span><strong>${moneda(totales.minimo)}</strong><small>Suma de mínimos informados</small></div>
-      <div class="hf-debt-kpi"><span>Compras después del cierre</span><strong>${moneda(totales.posteriores)}</strong><small>Pagos posteriores: ${moneda(totales.pagos)}</small></div>
-      <div class="hf-debt-kpi primary"><span>Deuda estimada actual</span><strong>${moneda(totales.estimada)}</strong><small>Lo que realmente debes hasta hoy</small></div>
-    `;
-    return totales;
+    const deudaTotal = document.getElementById('kpi-deuda-total');
+    const pagoMensual = document.getElementById('kpi-pago-mensual');
+    const pagoSub = document.getElementById('kpi-pago-sub');
+    if (deudaTotal) deudaTotal.textContent = moneda(totales.estimada + deudaPrestamos);
+    if (pagoMensual) pagoMensual.textContent = moneda(totales.minimos + cuotasPrestamos);
+    if (pagoSub) pagoSub.textContent = `${moneda(totales.minimos)} mínimos + ${moneda(cuotasPrestamos)} cuotas`;
+
+    return { ...totales, deudaPrestamos, cuotasPrestamos, deudaTotal: totales.estimada + deudaPrestamos };
   }
 
-  function renderTarjetas(resumenes) {
-    const contenedor = $('hf-card-breakdown');
-    if (!contenedor) return;
-    if (!resumenes.length) {
-      contenedor.innerHTML = '<div class="card empty-state">Registra tus tarjetas para ver el cálculo completo.</div>';
+  function actualizarLinea(card, resumen) {
+    const uso = resumen.lineaTotal > 0 ? Math.max(0, Math.round((resumen.deudaEstimada / resumen.lineaTotal) * 100)) : 0;
+    const barra = card.querySelector('.credit-line-fill');
+    if (barra) {
+      barra.style.width = `${Math.min(100, uso)}%`;
+      barra.style.background = uso >= 100 ? '#c43030' : uso > 80 ? '#c43030' : uso > 60 ? '#b06a10' : '#2a7de1';
+    }
+    const etiquetas = card.querySelectorAll('.credit-line-labels span');
+    if (etiquetas[0]) etiquetas[0].textContent = `${uso}% de la línea utilizada`;
+    const detalles = card.querySelectorAll('.debt-sub span');
+    if (detalles[1] && resumen.lineaTotal > 0) {
+      detalles[1].textContent = `Disponible: ${resumen.disponible < 0 ? '− ' : ''}${moneda(Math.abs(resumen.disponible))}`;
+      detalles[1].style.color = resumen.disponible < 0 ? '#c43030' : 'var(--text3)';
+    }
+  }
+
+  function textoFuente(resumen) {
+    if (resumen.fuente === 'estado-cuenta') return 'Último estado de cuenta más compras y pagos posteriores.';
+    if (resumen.fuente === 'saldo-confirmado') return `Saldo confirmado${resumen.saldoConfirmadoEn ? ` el ${new Date(resumen.saldoConfirmadoEn).toLocaleDateString('es-PE')}` : ''}.`;
+    if (resumen.fuente === 'saldo-confirmado-con-movimientos') return 'Último saldo confirmado más movimientos nuevos.';
+    return 'Saldo calculado con los movimientos registrados en la app.';
+  }
+
+  function actualizarDatosPago(card, resumen) {
+    const bloque = card.querySelector('.statement-summary');
+    if (!bloque) return;
+    const minimo = resumen.pagoMinimo;
+    const vence = resumen.fechaVencimiento;
+    if (minimo > 0 || vence) {
+      bloque.classList.remove('empty');
+      bloque.innerHTML = `
+        <div><small>Pago mínimo</small><strong>${minimo > 0 ? moneda(minimo) : 'No informado'}</strong></div>
+        <div><small>Próximo vencimiento</small><strong>${vence ? new Date(`${vence}T12:00:00`).toLocaleDateString('es-PE', { day:'2-digit', month:'short' }) : 'No informado'}</strong></div>
+        <span>Puedes cambiar estos datos desde “Actualizar saldos”, en la parte superior.</span>`;
+    } else {
+      bloque.classList.add('empty');
+      bloque.innerHTML = '<span>Pago mínimo y vencimiento no informados. Puedes agregarlos desde “Actualizar saldos”, en la parte superior.</span>';
+    }
+  }
+
+  function actualizarEstadoVisual(card, resumen) {
+    const estado = card.querySelector('.reconcile-status');
+    if (!estado) return;
+    if (resumen.fuente === 'estado-cuenta') {
+      estado.className = 'reconcile-status reconciled';
+      estado.innerHTML = '<span>Saldo basado en información bancaria</span><small>Incluye las compras y pagos registrados posteriormente.</small>';
       return;
     }
-    contenedor.innerHTML = resumenes.map(r => {
-      const t = r.tarjeta;
-      const uso = r.lineaTotal > 0 ? Math.min(100, Math.round((r.deudaEstimada / r.lineaTotal) * 100)) : 0;
-      const actualizada = campoEstado(t, ['actualizadoEn', 'fechaEstadoCuenta', 'periodo'], 'Sin actualización automática');
-      return `
-        <article class="card hf-card-status">
-          <div class="hf-card-status-head">
-            <div>
-              <strong>${String(t.nombre || t.banco || 'Tarjeta')}</strong>
-              <small>${t.ultimosDigitos ? `•••• ${t.ultimosDigitos}` : 'Sin últimos dígitos'} · ${String(t.titular || t.quien || '')}</small>
-            </div>
-            <span class="hf-card-debt">${moneda(r.deudaEstimada)}</span>
-          </div>
-          <div class="hf-card-metrics">
-            <div><span>Facturado</span><strong>${moneda(r.facturada)}</strong></div>
-            <div><span>Pago mínimo</span><strong>${moneda(r.minimo)}</strong></div>
-            <div><span>Después del cierre</span><strong>${moneda(r.comprasPosteriores)}</strong></div>
-            <div><span>Pagos posteriores</span><strong>− ${moneda(r.pagosPosteriores)}</strong></div>
-          </div>
-          <div class="hf-card-dates">
-            <span>Cierre: <b>${r.cierre || 'No informado'}</b></span>
-            <span>Vence: <b>${r.vencimiento || 'No informado'}</b></span>
-          </div>
-          ${r.lineaTotal ? `<div class="hf-credit-line"><div><span>Uso de línea ${uso}%</span><span>${moneda(r.disponible)} disponible</span></div><progress max="100" value="${uso}"></progress></div>` : ''}
-          <small class="hf-card-updated">Último dato: ${String(actualizada)}</small>
-        </article>`;
-    }).join('');
-  }
-
-  function renderMedios(gastos) {
-    const mes = mesActualISO();
-    const delMes = gastos.filter(g => String(g.mes || g.fecha || '').startsWith(mes) && !esPagoTarjeta(g));
-    const grupos = delMes.reduce((acc, g) => {
-      const medio = medioPago(g);
-      acc[medio] = (acc[medio] || 0) + numero(g.monto);
-      return acc;
-    }, {});
-    const etiquetas = {
-      credito: ['Tarjetas de crédito', '💳'], debito: ['Débito', '🏧'], yape: ['Yape', '📲'],
-      transferencia: ['Transferencias', '↗'], efectivo: ['Efectivo / otros', '💵']
-    };
-    const total = Object.values(grupos).reduce((s, n) => s + n, 0);
-    const grid = $('hf-payment-grid');
-    if (!grid) return;
-    grid.innerHTML = Object.entries(etiquetas).map(([key, [label, icon]]) => `
-      <div class="hf-payment-item">
-        <span class="hf-payment-icon">${icon}</span>
-        <div><small>${label}</small><strong>${moneda(grupos[key] || 0)}</strong></div>
-      </div>`).join('') + `<div class="hf-payment-total"><span>Total del mes</span><strong>${moneda(total)}</strong></div>`;
-  }
-
-  function meses12() {
-    const base = new Date();
-    const items = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
-      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      items.push({ iso, label: d.toLocaleDateString('es-PE', { month: 'short', year: '2-digit' }).replace('.', '') });
+    if (resumen.fuente === 'saldo-confirmado') {
+      estado.className = 'reconcile-status reconciled';
+      estado.innerHTML = '<span>Saldo confirmado</span><small>Coincide con la última actualización manual.</small>';
+      return;
     }
-    return items;
+    estado.className = resumen.fuente === 'saldo-confirmado-con-movimientos' ? 'reconcile-status pending' : 'reconcile-status neutral';
+    estado.innerHTML = resumen.fuente === 'saldo-confirmado-con-movimientos'
+      ? '<span>Saldo estimado por movimientos nuevos</span><small>Confírmalo nuevamente desde el recuadro superior cuando revises el banco.</small>'
+      : '<span>Saldo calculado por la app</span><small>Confírmalo desde el recuadro superior cuando revises el banco.</small>';
   }
 
-  function renderGrafico(gastos) {
-    const canvas = $('hf-card-spending-chart');
-    if (!canvas || !window.Chart) return;
-    const meses = meses12();
-    const compras = meses.map(m => gastos.filter(g => String(g.mes || g.fecha || '').startsWith(m.iso) && esCredito(g) && !esPagoTarjeta(g)).reduce((s, g) => s + numero(g.monto), 0));
-    const pagos = meses.map(m => gastos.filter(g => String(g.mes || g.fecha || '').startsWith(m.iso) && esPagoTarjeta(g)).reduce((s, g) => s + numero(g.monto), 0));
-    if (chartTarjetasMensual) chartTarjetasMensual.destroy();
-    chartTarjetasMensual = new Chart(canvas, {
-      type: 'bar',
-      data: {
-        labels: meses.map(m => m.label),
-        datasets: [
-          { label: 'Compras con tarjeta', data: compras, borderRadius: 6, maxBarThickness: 26 },
-          { label: 'Pagos de tarjeta', data: pagos, borderRadius: 6, maxBarThickness: 26 }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } },
-          tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${moneda(ctx.raw)}` } }
-        },
-        scales: {
-          x: { grid: { display: false } },
-          y: { beginAtZero: true, ticks: { callback: value => `S/ ${Number(value).toLocaleString('es-PE')}` } }
-        }
+  function enriquecerTarjeta(resumen) {
+    const card = document.getElementById(`tarjeta-card-${resumen.tarjetaId}`);
+    if (!card) return;
+    const label = card.querySelector('.debt-label-main');
+    const total = card.querySelector('.debt-total');
+    if (label) label.textContent = 'Deuda total pendiente';
+    if (total) total.textContent = moneda(resumen.deudaEstimada);
+
+    let detalle = card.querySelector('.hf-live-debt-breakdown');
+    if (resumen.tieneEstado) {
+      if (!detalle) {
+        detalle = document.createElement('div');
+        detalle.className = 'hf-live-debt-breakdown';
+        total?.insertAdjacentElement('afterend', detalle);
       }
-    });
+      const contenido = `
+        <div><span>Facturado</span><strong>${moneda(resumen.facturada)}</strong></div>
+        <div><span>Compras nuevas</span><strong>+ ${moneda(resumen.comprasPosteriores)}</strong></div>
+        <div><span>Pagos registrados</span><strong>− ${moneda(resumen.pagosPosteriores)}</strong></div>
+        <small>${textoFuente(resumen)}</small>`;
+      if (detalle.innerHTML !== contenido) detalle.innerHTML = contenido;
+    } else {
+      detalle?.remove();
+    }
+
+    actualizarDatosPago(card, resumen);
+    actualizarEstadoVisual(card, resumen);
+
+    const exceso = resumen.lineaTotal > 0 ? Math.max(0, resumen.deudaEstimada - resumen.lineaTotal) : 0;
+    const bloqueExceso = card.querySelector('.credit-overflow');
+    if (bloqueExceso && exceso > 0) {
+      bloqueExceso.innerHTML = `<span>Exceso sobre la línea: ${moneda(exceso)}</span><small>La deuda total es ${moneda(resumen.deudaEstimada)} y supera la línea por este monto.</small>`;
+    }
+
+    card.dataset.deudaEstimada = String(resumen.deudaEstimada);
+    actualizarLinea(card, resumen);
   }
 
-  window.actualizarCentroTarjetas = async function(forzar = false) {
-    try {
-      inyectarPanel();
-      const { tarjetas, gastos } = await cargarDatos();
-      const firma = JSON.stringify([tarjetas.map(t => [t.id, t.estadoCuenta, t.deuda, t.saldo]), gastos.map(g => [g.id, g.monto, g.fecha, g.tarjetaId, g.tipoMovimiento])]);
-      if (!forzar && firma === ultimaFirma) return;
-      ultimaFirma = firma;
-      const resumenes = tarjetas.map(t => calcularTarjeta(t, gastos));
-      renderKPIs(resumenes);
-      renderTarjetas(resumenes);
-      renderMedios(gastos);
-      renderGrafico(gastos);
-    } catch (error) {
-      console.error('No se pudo actualizar el centro de tarjetas:', error);
-      if (forzar && typeof showToast === 'function') showToast('No se pudo actualizar el resumen de tarjetas');
+  function decorarAcciones() {
+    if (accionesDecoradas) return;
+    const originalPago = window.abrirPagoTarjeta;
+    const originalAjuste = window.abrirAjusteTarjeta;
+    if (typeof originalPago === 'function') {
+      window.abrirPagoTarjeta = function(id, nombre, deuda) {
+        return originalPago.call(this, id, nombre, cache.get(id)?.deudaEstimada ?? deuda);
+      };
     }
-  };
+    if (typeof originalAjuste === 'function') {
+      window.abrirAjusteTarjeta = function(id, nombre, deuda, limite) {
+        return originalAjuste.call(this, id, nombre, cache.get(id)?.deudaEstimada ?? deuda, limite);
+      };
+    }
+    accionesDecoradas = true;
+  }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => actualizarCentroTarjetas(true), 1600);
-    document.addEventListener('click', event => {
-      const boton = event.target.closest?.('[onclick*="showPage(\'deudas\'"]');
-      if (boton) setTimeout(() => actualizarCentroTarjetas(), 250);
-    });
-    setInterval(() => {
-      if ($('page-deudas')?.classList.contains('active')) actualizarCentroTarjetas();
-    }, 15000);
+  function conectarObserver() {
+    if (!observer) observer = new MutationObserver(() => programar('render', 90));
+    observer.disconnect();
+    const tarjetas = document.getElementById('tarjetas-grid');
+    const prestamos = document.getElementById('prestamos-grid');
+    if (tarjetas) observer.observe(tarjetas, { childList: true });
+    if (prestamos) observer.observe(prestamos, { childList: true });
+  }
+
+  async function actualizar(forzar = false) {
+    if (actualizando) return false;
+    if (!forzar && !document.getElementById('page-deudas')) return false;
+    actualizando = true;
+    observer?.disconnect();
+    try {
+      document.getElementById('hf-centro-tarjetas')?.remove();
+      const { tarjetas, prestamos, gastos } = await cargarDatos();
+      const resumenes = tarjetas.map(t => calcularTarjeta(t, gastos));
+      cache.clear();
+      resumenes.forEach(r => cache.set(r.tarjetaId, r));
+      const totales = renderResumen(resumenes, prestamos);
+      resumenes.forEach(enriquecerTarjeta);
+      decorarAcciones();
+      const detalle = { tarjetas: resumenes, totales, actualizadoEn: new Date().toISOString() };
+      window.dispatchEvent(new CustomEvent('hf:deudas-core-actualizadas', { detail: detalle }));
+      return detalle;
+    } catch (error) {
+      console.warn('No se pudo actualizar el resumen de deudas:', error);
+      return false;
+    } finally {
+      actualizando = false;
+      conectarObserver();
+    }
+  }
+
+  function programar(motivo = 'evento', demora = 120) {
+    clearTimeout(temporizador);
+    temporizador = setTimeout(() => actualizar(motivo === 'manual'), demora);
+  }
+
+  window.actualizarCentroTarjetas = forzar => actualizar(Boolean(forzar));
+  window.HFDeudasActuales = Object.freeze({
+    calcularTarjeta,
+    actualizar,
+    programar,
+    obtenerTarjeta: id => cache.get(id) || null,
+    obtenerResumenes: () => [...cache.values()]
   });
+
+  function iniciar() {
+    decorarAcciones();
+    conectarObserver();
+    programar('inicio', 500);
+  }
+
+  ['hf:deuda-actualizada', 'hf:deudas-recalculadas', 'hf:estado-cuenta-confirmado', 'hf:gastos-actualizados'].forEach(nombre => {
+    window.addEventListener(nombre, () => programar(nombre, 100));
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar, { once: true });
+  else iniciar();
 })();

@@ -37,7 +37,10 @@
   }
 
   function simularEstrategia({ tarjetas = [], presupuestoMensual = 0, estrategia = 'avalancha', maxMeses = 600 } = {}) {
-    const normalizadas = ordenarTarjetas(tarjetas.map(t => ({ ...t })), estrategia);
+    const preparadas = tarjetas.map(t => Number.isFinite(Number(t.tasaMensual))
+      ? { ...t, tasaMensual: numero(t.tasaMensual), tea: numero(t.tea), deuda: numero(t.deuda), minimo: numero(t.minimo) }
+      : normalizarTarjeta(t));
+    const normalizadas = ordenarTarjetas(preparadas, estrategia);
     const presupuesto = Math.max(0, numero(presupuestoMensual));
     const sumaMinimos = normalizadas.reduce((s, t) => s + t.minimo, 0);
 
