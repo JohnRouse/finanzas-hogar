@@ -1,0 +1,38 @@
+/* Hogar Finanzas — pendientes de Telegram */
+.hf-telegram-pending-section{margin-top:8px}
+.hf-telegram-pending-head{align-items:flex-end}
+.hf-telegram-pending-head>div small{display:block;margin-top:3px;color:var(--text3);font-size:11px}
+.hf-telegram-pending-count{display:grid;place-items:center;min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:#e8f0ff;color:#245dca;font-size:12px;font-weight:800}
+.hf-telegram-pending-list{display:grid;gap:8px}
+.hf-telegram-pending-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;padding:12px 13px;border:1px solid var(--border);border-radius:15px;background:var(--surface);box-shadow:0 5px 16px rgba(32,48,76,.04)}
+.hf-telegram-pending-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#eef4ff;font-size:18px}
+.hf-telegram-pending-body{min-width:0}
+.hf-telegram-pending-body>div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.hf-telegram-pending-body strong{min-width:0;color:var(--text);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hf-telegram-pending-body b{flex:none;color:#235fd7;font-size:12px}
+.hf-telegram-pending-body p{margin:4px 0 0;color:var(--text2);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hf-telegram-pending-body small{display:block;margin-top:3px;color:var(--text3);font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hf-telegram-pending-card>button{min-height:34px;padding:0 11px;border:0;border-radius:10px;background:#eaf1ff;color:#235fd7;font:inherit;font-size:10.5px;font-weight:800}
+.hf-telegram-review-sheet{position:relative!important;max-height:min(92vh,820px);overflow:auto;padding-bottom:max(20px,env(safe-area-inset-bottom))!important}
+.hf-telegram-review-heading{display:flex;align-items:center;gap:12px;padding-right:42px;margin-bottom:12px}
+.hf-telegram-review-heading>span{display:grid;place-items:center;width:43px;height:43px;border-radius:14px;background:#eaf1ff;font-size:20px}
+.hf-telegram-review-heading p{margin:3px 0 0;color:var(--text2);font-size:11px;line-height:1.4}
+.hf-telegram-original{display:grid;gap:8px;margin-bottom:14px;padding:12px 13px;border-radius:14px;background:var(--surface2);border:1px solid var(--border)}
+.hf-telegram-original>div:first-child span{display:block;color:var(--text3);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em}
+.hf-telegram-original>div:first-child strong{display:block;margin-top:4px;color:var(--text);font-size:12px;line-height:1.45}
+.hf-telegram-original p{margin:0;color:#9a5f00;font-size:10.5px;line-height:1.4}
+.hf-telegram-detected-row{display:flex;flex-wrap:wrap;gap:6px}
+.hf-telegram-detected-row span{padding:5px 7px;border-radius:8px;background:var(--surface);color:var(--text2);font-size:9.5px}
+.hf-telegram-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.hf-telegram-field{display:grid;gap:5px}
+.hf-telegram-field.hf-telegram-wide{grid-column:1/-1}
+.hf-telegram-field>span{color:var(--text2);font-size:10.5px;font-weight:700}
+.hf-telegram-field input,.hf-telegram-field select{width:100%;min-height:43px;padding:9px 11px;border:1px solid var(--border);border-radius:11px;background:var(--surface);color:var(--text);font:inherit;font-size:12px}
+.hf-telegram-field[hidden]{display:none!important}
+.hf-telegram-review-error{min-height:18px;margin-top:9px;color:#c43030;font-size:10.5px;line-height:1.4}
+.hf-telegram-review-actions{display:grid;grid-template-columns:1fr 1.3fr;gap:9px;margin-top:4px}
+.hf-telegram-review-actions button{min-height:46px;border:0;border-radius:13px;font:inherit;font-size:12px;font-weight:800}
+.hf-telegram-discard{background:#f1f3f6;color:#5f6876}
+.hf-telegram-approve{background:#2563eb;color:#fff;box-shadow:0 8px 20px rgba(37,99,235,.2)}
+.hf-telegram-review-actions button:disabled{opacity:.65}
+@media(max-width:560px){.hf-telegram-pending-card{grid-template-columns:auto 1fr}.hf-telegram-pending-card>button{grid-column:2;justify-self:start}.hf-telegram-form-grid{grid-template-columns:1fr}.hf-telegram-field.hf-telegram-wide{grid-column:auto}}

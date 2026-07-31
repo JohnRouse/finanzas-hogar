@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '18.3';
+  const VERSION = '19.0';
   let temporizador = null;
   let bootstrapSolicitado = false;
 
@@ -17,6 +17,7 @@
         await window.HFDeudasFamiliares?.renderizar?.();
         await window.HFCoherenciaFinanciera?.actualizar?.();
         window.HFSimuladorPagoExtra?.iniciar?.();
+        window.HFTelegramPendientes?.conectar?.();
       } catch (error) {
         console.warn('No se pudo refrescar la interfaz financiera:', error);
       }
