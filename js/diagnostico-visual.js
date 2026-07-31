@@ -6,7 +6,7 @@
   const rechazos = [];
 
   window.addEventListener('error', event => {
-    errores.push({ mensaje: event.message, archivo: event.filename, linea: event.lineno, fecha: new Date().toISOString() });
+    errores.push({ mensaje: event.message || 'Error de recurso o script', archivo: event.filename || '', linea: event.lineno || null, fecha: new Date().toISOString() });
   });
   window.addEventListener('unhandledrejection', event => {
     rechazos.push({ mensaje: event.reason?.message || String(event.reason || 'Promesa rechazada'), fecha: new Date().toISOString() });
@@ -15,7 +15,8 @@
   function prueba(nombre, fn) {
     try {
       const resultado = fn();
-      return { nombre, ok: resultado !== false, detalle: resultado === true || resultado === undefined ? null : resultado };
+      const ok = resultado === true || resultado === undefined;
+      return { nombre, ok, detalle: ok ? null : (resultado || 'La comprobación devolvió falso') };
     } catch (error) {
       return { nombre, ok: false, detalle: error.message };
     }
@@ -39,19 +40,19 @@
         { tarjetaId: 't1', medio: 'tarjeta', monto: 200, fecha: '2026-07-12' },
         { tarjetaId: 't1', tipoMovimiento: 'pagoTarjeta', monto: 100, fecha: '2026-07-14' }
       ]);
-      return resultado.deudaEstimada === 1300 || `Resultado ${resultado.deudaEstimada}, esperado 1300`;
+      return resultado.deudaEstimada === 1300 ? true : `Resultado ${resultado.deudaEstimada}, esperado 1300`;
     }));
 
     pruebas.push(prueba('Simulador financiero', () => {
       if (!window.HFMotorPredictivoFinanciero?.simularPago) return 'Motor predictivo no cargado';
       const resultado = HFMotorPredictivoFinanciero.simularPago({ deuda: 1000, pagoMensual: 200, tea: 30 });
-      return resultado.viable === true || resultado.motivo;
+      return resultado.viable === true ? true : `Simulación no viable: ${resultado.motivo || 'sin motivo'}`;
     }));
 
     pruebas.push(prueba('Optimizador de pagos', () => {
       if (!window.HFOptimizadorPagos?.compararEstrategias) return 'Optimizador no cargado';
       const resultado = HFOptimizadorPagos.compararEstrategias({ tarjetas: [{ id: 'a', deuda: 1000, minimo: 100, tea: 40 }], presupuestoMensual: 250 });
-      return Boolean(resultado.mejorEstrategia) || 'No devolvió estrategia';
+      return resultado.mejorEstrategia ? true : 'No devolvió estrategia';
     }));
 
     const resultado = {
@@ -73,6 +74,12 @@
     return resultado;
   }
 
+  function limpiarCapturas() {
+    errores.length = 0;
+    rechazos.length = 0;
+    return true;
+  }
+
   async function mostrar() {
     const resultado = await ejecutar();
     const fallos = resultado.pruebas.filter(p => !p.ok);
@@ -84,6 +91,6 @@
     return resultado;
   }
 
-  window.HFDiagnosticoVisual = Object.freeze({ ejecutar, mostrar, obtenerErrores: () => ({ errores: [...errores], rechazos: [...rechazos] }) });
+  window.HFDiagnosticoVisual = Object.freeze({ ejecutar, mostrar, limpiarCapturas, obtenerErrores: () => ({ errores: [...errores], rechazos: [...rechazos] }) });
   window.mostrarDiagnosticoVisual = mostrar;
 })();
