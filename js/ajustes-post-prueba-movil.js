@@ -14,6 +14,7 @@
     'Deudas':'🏦',
     'Otros':'📦'
   });
+  const CATEGORIAS_APP = new Set(Object.keys(ICONOS));
   const MEDIOS_DINERO = new Set(['yape','plin','debito','transferencia']);
   let reparando = false;
   let observer = null;
@@ -22,14 +23,26 @@
     return MEDIOS_DINERO.has(String(medio || '').toLowerCase()) ? 'efectivo' : (medio || 'efectivo');
   }
 
+  function categoriaCompatible(categoria) {
+    return CATEGORIAS_APP.has(categoria) ? categoria : 'Otros';
+  }
+
   function iconoCategoria(categoria) {
-    return ICONOS[categoria] || ICONOS.Otros;
+    return ICONOS[categoriaCompatible(categoria)] || ICONOS.Otros;
   }
 
   function prepararModalRevision() {
     const modal = document.getElementById('hfTelegramReviewModal');
     if (!modal || modal.dataset.hfMovilAjustado === 'true') return;
     modal.dataset.hfMovilAjustado = 'true';
+
+    const categoria = document.getElementById('hf-tg-category');
+    if (categoria) {
+      [...categoria.options].forEach(opcion => {
+        if (!CATEGORIAS_APP.has(opcion.value)) opcion.remove();
+      });
+      if (!CATEGORIAS_APP.has(categoria.value)) categoria.value = 'Otros';
+    }
 
     const select = document.getElementById('hf-tg-method');
     if (select) {
@@ -49,6 +62,8 @@
     aprobar?.addEventListener('click', () => {
       const medio = document.getElementById('hf-tg-method');
       if (medio && MEDIOS_DINERO.has(medio.value)) medio.value = 'efectivo';
+      const cat = document.getElementById('hf-tg-category');
+      if (cat && !CATEGORIAS_APP.has(cat.value)) cat.value = 'Otros';
     }, true);
   }
 
@@ -61,7 +76,9 @@
     if (gasto.fuente !== 'telegram') return false;
 
     const cambios = {};
-    const icono = iconoCategoria(gasto.cat);
+    const categoria = categoriaCompatible(gasto.cat);
+    if (gasto.cat !== categoria) cambios.cat = categoria;
+    const icono = iconoCategoria(categoria);
     if (gasto.icono !== icono) cambios.icono = icono;
     const medio = medioCompatible(gasto.medio);
     if (gasto.medio !== medio) {
@@ -103,7 +120,7 @@
         const cambio = await repararGasto(id);
         if (cambio && typeof window.renderTodo === 'function') await window.renderTodo();
       } catch (error) {
-        console.warn('No se pudo completar el icono del movimiento de Telegram:', error);
+        console.warn('No se pudo completar el movimiento de Telegram:', error);
       }
     });
 
@@ -115,6 +132,7 @@
     instalar,
     repararMovimientosTelegram,
     medioCompatible,
+    categoriaCompatible,
     iconoCategoria,
     version:VERSION
   });
