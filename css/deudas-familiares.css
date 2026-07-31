@@ -1,0 +1,86 @@
+/* Hogar Finanzas — Vista familiar de deudas y administración separada */
+#page-deudas.hf-family-debt-page [data-hf-family-hidden="true"],
+#page-deudas.hf-family-debt-page #hf-resumen-deuda-actual,
+#page-deudas.hf-family-debt-page #hf-month-close-launcher,
+#page-deudas.hf-family-debt-page [data-hf-finance-launcher] {
+  display:none!important;
+}
+
+.hf-family-debt-view { margin:12px 0 92px; }
+.hf-family-debt-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin:14px 0 12px; }
+.hf-family-debt-head h2 { margin:0; font-size:20px; color:var(--text,#202124); }
+.hf-family-debt-head p { margin:4px 0 0; max-width:520px; color:var(--text2,#6b7280); font-size:13px; line-height:1.45; }
+.hf-family-admin-button { flex:0 0 auto; border:1px solid #d8e1f4; background:#fff; color:#235fd7; border-radius:12px; min-height:42px; padding:0 14px; font-weight:700; font-size:13px; }
+
+.hf-family-priority { border:1px solid #dfe6f2; border-radius:18px; background:linear-gradient(145deg,#f8fbff,#fff); padding:15px; margin-bottom:14px; box-shadow:0 8px 24px rgba(38,70,120,.06); }
+.hf-family-priority > strong { display:block; font-size:14px; margin-bottom:10px; color:#202b3c; }
+.hf-family-priority-list { display:grid; gap:8px; }
+.hf-family-priority-item { display:flex; align-items:center; gap:10px; padding:10px 11px; background:#fff; border:1px solid #e8edf5; border-radius:13px; }
+.hf-family-priority-item i { width:34px; height:34px; border-radius:11px; display:grid; place-items:center; background:#eef4ff; font-style:normal; }
+.hf-family-priority-item div { min-width:0; flex:1; }
+.hf-family-priority-item strong { display:block; font-size:13px; color:#202735; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hf-family-priority-item small { display:block; margin-top:2px; color:#6c7482; font-size:11px; }
+.hf-family-priority-item b { font-size:13px; color:#1f2937; white-space:nowrap; }
+.hf-family-priority-empty { color:#697386; font-size:12px; line-height:1.45; }
+
+.hf-family-section-title { display:flex; align-items:end; justify-content:space-between; gap:10px; margin:18px 1px 9px; }
+.hf-family-section-title strong { font-size:15px; color:#252b35; }
+.hf-family-section-title small { color:#7a8494; font-size:11px; }
+.hf-family-card-list { display:grid; gap:12px; }
+.hf-family-card { --status:#23875a; --soft:#e9f8f0; position:relative; border:1px solid #e2e7ef; border-radius:18px; background:#fff; padding:15px; box-shadow:0 7px 22px rgba(25,45,75,.05); overflow:hidden; }
+.hf-family-card.status-watch { --status:#b77500; --soft:#fff5df; }
+.hf-family-card.status-danger { --status:#d13a3a; --soft:#ffebeb; }
+.hf-family-card::before { content:""; position:absolute; top:0; left:0; right:0; height:4px; background:var(--status); }
+.hf-family-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.hf-family-card-head span:first-child { min-width:0; }
+.hf-family-card-head strong { display:block; font-size:16px; color:#1f2631; }
+.hf-family-card-head small { display:block; margin-top:3px; font-size:11px; color:#818a97; }
+.hf-family-status { flex:0 0 auto; padding:6px 9px; border-radius:999px; background:var(--soft); color:var(--status); font-size:11px; font-weight:800; }
+.hf-family-card-main { display:grid; grid-template-columns:1.15fr .85fr; gap:10px; margin-top:14px; }
+.hf-family-card-main > div { padding:10px 11px; border:1px solid #edf0f5; border-radius:13px; background:#fbfcfe; }
+.hf-family-card-main span { display:block; color:#7b8492; font-size:10px; text-transform:uppercase; letter-spacing:.04em; }
+.hf-family-card-main strong { display:block; margin-top:4px; color:#202733; font-size:17px; }
+.hf-family-card-main .debt strong { color:var(--status); }
+.hf-family-credit-bar { height:8px; background:#edf1f6; border-radius:999px; overflow:hidden; margin-top:13px; }
+.hf-family-credit-bar i { display:block; height:100%; width:0; background:var(--status); border-radius:inherit; }
+.hf-family-credit-labels { display:flex; justify-content:space-between; gap:10px; margin-top:6px; color:#747e8c; font-size:10px; }
+.hf-family-card-foot { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+.hf-family-card-foot div { border-radius:12px; background:#f6f8fb; padding:9px 10px; }
+.hf-family-card-foot span { display:block; font-size:10px; color:#7d8794; }
+.hf-family-card-foot strong { display:block; margin-top:2px; font-size:12px; color:#2a313d; }
+.hf-family-advice { display:flex; gap:8px; align-items:flex-start; margin-top:11px; padding:9px 10px; border-radius:12px; background:var(--soft); color:#384152; font-size:11px; line-height:1.4; }
+.hf-family-advice b { color:var(--status); }
+
+.hf-family-loan-card .hf-family-card-main { grid-template-columns:1fr 1fr; }
+.hf-family-route { margin-top:16px; padding:16px; border-radius:18px; background:#172a50; color:#fff; }
+.hf-family-route > span { font-size:11px; opacity:.72; text-transform:uppercase; letter-spacing:.05em; }
+.hf-family-route > strong { display:block; margin-top:5px; font-size:19px; line-height:1.25; }
+.hf-family-route p { margin:7px 0 0; font-size:12px; line-height:1.5; color:#d8e2f6; }
+.hf-family-route-bar { height:9px; margin-top:13px; background:rgba(255,255,255,.16); border-radius:999px; overflow:hidden; }
+.hf-family-route-bar i { display:block; height:100%; border-radius:inherit; background:#58d692; }
+.hf-family-route small { display:block; margin-top:7px; color:#bfcce3; font-size:10px; }
+
+.hf-debt-admin-sheet { max-height:min(92vh,820px); overflow:auto; }
+.hf-debt-admin-heading { display:flex; align-items:center; gap:12px; padding-right:42px; margin-bottom:14px; }
+.hf-debt-admin-icon { width:43px; height:43px; border-radius:14px; display:grid; place-items:center; background:#eaf1ff; color:#2762d5; font-size:20px; }
+.hf-debt-admin-heading p { margin:3px 0 0; font-size:12px; color:#737d8c; line-height:1.4; }
+.hf-debt-admin-note { padding:11px 12px; border-radius:13px; background:#f5f7fb; color:#667080; font-size:11px; line-height:1.5; margin-bottom:12px; }
+.hf-debt-admin-actions { display:grid; gap:9px; }
+.hf-debt-admin-action { width:100%; display:flex; align-items:center; gap:11px; text-align:left; border:1px solid #e2e7ef; border-radius:15px; background:#fff; padding:12px; }
+.hf-debt-admin-action > span { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; background:#eef4ff; font-size:18px; }
+.hf-debt-admin-action div { flex:1; min-width:0; }
+.hf-debt-admin-action strong { display:block; color:#242b36; font-size:13px; }
+.hf-debt-admin-action small { display:block; margin-top:3px; color:#76808e; font-size:10px; line-height:1.35; }
+.hf-debt-admin-action em { font-style:normal; color:#9aa3b0; font-size:20px; }
+.hf-debt-admin-separator { margin:17px 0 8px; color:#788291; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; }
+.hf-admin-card-actions { display:grid; gap:8px; }
+.hf-admin-card-row { display:flex; align-items:center; gap:10px; padding:10px 11px; border:1px solid #e7ebf1; border-radius:13px; }
+.hf-admin-card-row div { flex:1; min-width:0; }
+.hf-admin-card-row strong { display:block; font-size:12px; color:#252c37; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hf-admin-card-row small { display:block; margin-top:2px; font-size:10px; color:#7d8693; }
+.hf-admin-card-row button { border:0; border-radius:10px; background:#eaf8ef; color:#147948; min-height:34px; padding:0 10px; font-weight:700; font-size:10px; }
+
+@media (min-width:720px) {
+  .hf-family-card-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .hf-family-priority-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
