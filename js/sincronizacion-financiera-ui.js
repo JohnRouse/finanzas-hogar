@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '18.0';
+  const VERSION = '18.1';
   let temporizador = null;
   let bootstrapSolicitado = false;
 
@@ -14,6 +14,7 @@
         if (typeof window.actualizarCentroTarjetas === 'function') await window.actualizarCentroTarjetas(forzar);
         window.HFRecuperacionProducto?.aplicar?.();
         window.HFCierreFinancieroMensual?.iniciar?.();
+        await window.HFDeudasFamiliares?.renderizar?.();
       } catch (error) {
         console.warn('No se pudo refrescar la interfaz financiera:', error);
       }
@@ -27,6 +28,7 @@
         if (typeof window.actualizarCentroTarjetas === 'function') await window.actualizarCentroTarjetas(false);
         window.HFRecuperacionProducto?.aplicar?.();
         window.HFCierreFinancieroMensual?.iniciar?.();
+        await window.HFDeudasFamiliares?.renderizar?.();
       } catch (error) {
         console.warn('No se pudo actualizar el resumen de deudas:', error);
       }
@@ -53,6 +55,7 @@
   window.addEventListener('hf:deudas-core-actualizadas', () => {
     window.HFRecuperacionProducto?.aplicar?.();
     window.HFCierreFinancieroMensual?.iniciar?.();
+    window.HFDeudasFamiliares?.renderizar?.();
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(cargarBootstrapAvanzado, 160), { once:true });
