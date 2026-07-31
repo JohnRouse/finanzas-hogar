@@ -24,10 +24,12 @@
     if (promesaInicio) return promesaInicio;
     promesaInicio = (async () => {
       const resultados = [];
-      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=16.3'));
-      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=16.3'));
+      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=16.4'));
+      resultados.push(await cargar('HFActualizadorSaldosTarjetas', 'js/actualizador-saldos-tarjetas.js?v=16.4'));
+      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=16.4'));
       try {
         window.HFRecuperacionProducto?.iniciar?.();
+        window.HFActualizadorSaldosTarjetas?.iniciar?.();
         await window.HFDeudasActuales?.actualizar?.(true);
       } catch (error) {
         console.warn('La recuperación inició con una incidencia:', error);
