@@ -41,6 +41,7 @@
 /* Sistema visual común para los flujos que nacen desde el FAB. */
 #hfIngresoChoiceModal,#gastoChoiceModal,#deudaChoiceModal{padding:0 8px 8px;align-items:flex-end;background:rgba(15,23,42,.46);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
 .hf-app-sheet{
+  position:relative!important;
   width:100%!important;
   max-width:520px!important;
   margin:0 auto!important;
@@ -53,7 +54,19 @@
   overflow:auto!important;
 }
 .hf-app-sheet .modal-handle{width:42px;height:5px;border-radius:999px;background:#d8dde7;margin:0 auto 15px}
-.hf-app-sheet .hf-sheet-close{top:15px;right:15px;width:38px;height:38px;background:#eef1f6;color:#4d5667;z-index:3}
+.hf-app-sheet .hf-sheet-close{
+  position:absolute!important;
+  top:15px!important;
+  right:15px!important;
+  bottom:auto!important;
+  left:auto!important;
+  transform:none!important;
+  width:38px;
+  height:38px;
+  background:#eef1f6;
+  color:#4d5667;
+  z-index:3;
+}
 .hf-sheet-heading{display:flex;align-items:flex-start;gap:13px;padding-right:42px;margin-bottom:17px}
 .hf-sheet-heading-copy{min-width:0;padding-top:2px}
 .hf-action-sheet-icon,.hf-form-sheet-icon{width:48px;height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex:none;font-size:18px;font-weight:800}
