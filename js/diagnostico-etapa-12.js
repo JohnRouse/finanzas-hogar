@@ -80,6 +80,56 @@
       return true;
     }));
 
+    pruebas.push(prueba('Ahorro real separado del disponible', () => {
+      const modulo = window.HFCoherenciaFinanciera;
+      if (!modulo?.calcularResumen) return 'HFCoherenciaFinanciera no está listo';
+      const r = modulo.calcularResumen({
+        ingresos:[{monto:2000}],
+        gastos:[
+          {monto:500,medio:'efectivo',cat:'Hogar'},
+          {monto:300,medio:'tarjeta',cat:'Otros'},
+          {monto:400,tipoMovimiento:'pagoTarjeta',cat:'Deudas'}
+        ],
+        metas:[{actual:100,objetivo:1000}],
+        tarjetas:[{deuda:1000,estadoCuenta:{pagoMinimo:100}}],
+        prestamos:[{saldo:500,cuota:50}]
+      });
+      if (r.ahorroReservado !== 100) return `Ahorro reservado ${r.ahorroReservado}, esperado 100`;
+      if (r.pagosDeudaMes !== 400) return `Pagado a deudas ${r.pagosDeudaMes}, esperado 400`;
+      if (r.disponibleSinAsignar !== 1100) return `Disponible ${r.disponibleSinAsignar}, esperado 1100`;
+      if (r.comprasCredito !== 300) return `Crédito ${r.comprasCredito}, esperado 300`;
+      return true;
+    }));
+
+    pruebas.push(prueba('Tendencia requiere historial real', () => {
+      const modulo = window.HFCoherenciaFinanciera;
+      if (!modulo?.puedeMostrarTendencia) return 'Falta la regla de tendencia';
+      const dos = [{totales:{ahorroReservado:10}},{totales:{ahorroReservado:20}}];
+      const tres = [...dos,{totales:{ahorroReservado:30}}];
+      if (modulo.puedeMostrarTendencia(dos)) return 'El gráfico aparece con menos de 3 cierres';
+      if (!modulo.puedeMostrarTendencia(tres)) return 'El gráfico no aparece con 3 cierres reales';
+      return true;
+    }));
+
+    pruebas.push(prueba('Proyección global usa mínimos y cuotas', () => {
+      const p = window.HFCoherenciaFinanciera?.proyeccionGlobal?.(8263.53, 1068.89);
+      if (!p) return 'No se obtuvo la proyección global';
+      if (p.meses !== 8) return `Resultado ${p.meses} meses, esperado 8`;
+      const texto = document.querySelector('#hf-family-debt-view .hf-family-route')?.textContent || '';
+      if (document.querySelector('#hf-family-debt-view .hf-family-route') && !/mínimos y cuotas|Referencia para todas/i.test(texto)) return 'La vista no explica que la referencia incluye todas las deudas';
+      return true;
+    }));
+
+    pruebas.push(prueba('Comparador de pago adicional', () => {
+      const modulo = window.HFSimuladorPagoExtra;
+      if (!modulo?.compararEscenarios) return 'HFSimuladorPagoExtra no está listo';
+      const r = modulo.compararEscenarios({ deuda:1000, pagoBase:250, pagoExtra:250, tea:0 });
+      if (!r.base?.viable || !r.mejorado?.viable) return 'Un escenario de prueba no fue viable';
+      if (r.mejorado.meses >= r.base.meses) return 'El pago adicional no reduce el plazo';
+      if (!document.getElementById('hf-extra-payment-box')) return 'Falta el comparador dentro del simulador';
+      return true;
+    }));
+
     const resultado = {
       fecha:new Date().toISOString(),
       aprobadas:pruebas.filter(p => p.ok).length,
