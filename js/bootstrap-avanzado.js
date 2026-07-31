@@ -5,7 +5,7 @@
   if (window.__HF_BOOTSTRAP_AVANZADO__) return;
   window.__HF_BOOTSTRAP_AVANZADO__ = true;
 
-  const VERSION = '18.3';
+  const VERSION = '19.0';
   let promesaInicio = null;
 
   function cargarCSS(ruta, clave) {
@@ -38,6 +38,7 @@
       cargarCSS(`css/cierre-financiero-mensual.css?v=${VERSION}`, 'cierre-financiero-mensual');
       cargarCSS(`css/deudas-familiares.css?v=${VERSION}`, 'deudas-familiares');
       cargarCSS(`css/coherencia-financiera.css?v=${VERSION}`, 'coherencia-financiera');
+      cargarCSS(`css/telegram-pendientes.css?v=${VERSION}`, 'telegram-pendientes');
 
       const resultados = [];
       resultados.push(await cargar('HFModalStack', `js/modal-stack.js?v=${VERSION}`));
@@ -49,8 +50,10 @@
       resultados.push(await cargar('HFDeudasFamiliares', `js/deudas-familiares.js?v=${VERSION}`));
       resultados.push(await cargar('HFCoherenciaFinanciera', `js/coherencia-financiera.js?v=${VERSION}`));
       resultados.push(await cargar('HFSimuladorPagoExtra', `js/simulador-pago-extra.js?v=${VERSION}`));
+      resultados.push(await cargar('HFTelegramPendientes', `js/telegram-pendientes.js?v=${VERSION}`));
       resultados.push(await cargar('HFDiagnosticoVisual', `js/diagnostico-visual.js?v=${VERSION}`));
       resultados.push(await cargar('HFDiagnosticoEtapa12', `js/diagnostico-etapa-12.js?v=${VERSION}`));
+      resultados.push(await cargar('HFDiagnosticoEtapa13', `js/diagnostico-etapa-13.js?v=${VERSION}`));
 
       try {
         window.HFModalStack?.iniciar?.();
@@ -62,9 +65,11 @@
         window.HFDeudasFamiliares?.iniciar?.();
         window.HFCoherenciaFinanciera?.iniciar?.();
         window.HFSimuladorPagoExtra?.iniciar?.();
+        window.HFTelegramPendientes?.iniciar?.();
         await window.HFDeudasActuales?.actualizar?.(true);
         await window.HFDeudasFamiliares?.renderizar?.();
         await window.HFCoherenciaFinanciera?.actualizar?.();
+        window.HFTelegramPendientes?.conectar?.();
       } catch (error) {
         console.warn('El arranque avanzado inició con una incidencia:', error);
       }
