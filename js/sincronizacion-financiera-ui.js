@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '18.2';
+  const VERSION = '18.3';
   let temporizador = null;
   let bootstrapSolicitado = false;
 
@@ -41,17 +41,29 @@
   function cargarBootstrapAvanzado() {
     if (bootstrapSolicitado) return;
     bootstrapSolicitado = true;
+
     if (window.HFBootstrapAvanzado) return window.HFBootstrapAvanzado.iniciar?.();
+
     const script = document.createElement('script');
     script.src = new URL(`js/bootstrap-avanzado.js?v=${VERSION}`, document.baseURI).href;
     script.async = false;
     script.dataset.hfBootstrapPrincipal = 'true';
     script.onload = () => window.HFBootstrapAvanzado?.iniciar?.();
-    script.onerror = () => { bootstrapSolicitado=false; console.warn('No se pudo cargar el arranque avanzado.'); };
+    script.onerror = () => {
+      bootstrapSolicitado = false;
+      console.warn('No se pudo cargar el arranque avanzado.');
+    };
     document.body.appendChild(script);
   }
 
-  ['hf:deuda-actualizada','hf:deudas-recalculadas','hf:estado-cuenta-confirmado','hf:gastos-actualizados','hf:cierre-mensual-guardado','hf:objetivo-financiero-guardado'].forEach(nombre => {
+  [
+    'hf:deuda-actualizada',
+    'hf:deudas-recalculadas',
+    'hf:estado-cuenta-confirmado',
+    'hf:gastos-actualizados',
+    'hf:cierre-mensual-guardado',
+    'hf:objetivo-financiero-guardado'
+  ].forEach(nombre => {
     window.addEventListener(nombre, () => refrescarVistas(true));
   });
 
@@ -62,8 +74,16 @@
     window.HFCoherenciaFinanciera?.actualizar?.();
   });
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(cargarBootstrapAvanzado, 160), { once:true });
-  else setTimeout(cargarBootstrapAvanzado, 160);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(cargarBootstrapAvanzado, 160), { once:true });
+  } else {
+    setTimeout(cargarBootstrapAvanzado, 160);
+  }
 
-  window.HFSincronizacionFinancieraUI = Object.freeze({ refrescarVistas, refrescarSoloDeudas, cargarBootstrapAvanzado, version:VERSION });
+  window.HFSincronizacionFinancieraUI = Object.freeze({
+    refrescarVistas,
+    refrescarSoloDeudas,
+    cargarBootstrapAvanzado,
+    version:VERSION
+  });
 })();
