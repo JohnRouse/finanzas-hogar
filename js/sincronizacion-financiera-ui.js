@@ -35,7 +35,7 @@
     bootstrapSolicitado = true;
     if (window.HFBootstrapAvanzado) return window.HFBootstrapAvanzado.iniciar?.();
     const script = document.createElement('script');
-    script.src = new URL('js/bootstrap-avanzado.js?v=17.2', document.baseURI).href;
+    script.src = new URL('js/bootstrap-avanzado.js?v=17.3', document.baseURI).href;
     script.async = false;
     script.dataset.hfBootstrapPrincipal = 'true';
     script.onload = () => window.HFBootstrapAvanzado?.iniciar?.();
