@@ -63,8 +63,8 @@
       document.body.appendChild(modal);
     }
     const sheet = modal.querySelector('.modal-sheet');
-    if (!sheet || sheet.dataset.hfPreparado === '16.6') return;
-    sheet.dataset.hfPreparado = '16.6';
+    if (!sheet || sheet.dataset.hfPreparado === '16.8') return;
+    sheet.dataset.hfPreparado = '16.8';
     sheet.className = 'modal-sheet hf-app-sheet hf-action-sheet';
     sheet.innerHTML = contenidoAccion({
       modalId:'hfIngresoChoiceModal', icono:'S/', tono:'income', titulo:'Ingresos',
@@ -79,8 +79,8 @@
   function prepararModalGastos() {
     const modal = document.getElementById('gastoChoiceModal');
     const sheet = modal?.querySelector('.modal-sheet');
-    if (!modal || !sheet || sheet.dataset.hfPreparado === '16.6') return;
-    sheet.dataset.hfPreparado = '16.6';
+    if (!modal || !sheet || sheet.dataset.hfPreparado === '16.8') return;
+    sheet.dataset.hfPreparado = '16.8';
     sheet.className = 'modal-sheet hf-app-sheet hf-action-sheet';
     sheet.innerHTML = contenidoAccion({
       modalId:'gastoChoiceModal', icono:'S/', tono:'expense', titulo:'Agregar gasto',
@@ -95,8 +95,8 @@
   function prepararModalDeudas() {
     const modal = document.getElementById('deudaChoiceModal');
     const sheet = modal?.querySelector('.modal-sheet');
-    if (!modal || !sheet || sheet.dataset.hfPreparado === '16.6') return;
-    sheet.dataset.hfPreparado = '16.6';
+    if (!modal || !sheet || sheet.dataset.hfPreparado === '16.8') return;
+    sheet.dataset.hfPreparado = '16.8';
     sheet.className = 'modal-sheet hf-app-sheet hf-action-sheet';
     sheet.innerHTML = contenidoAccion({
       modalId:'deudaChoiceModal', icono:'S/', tono:'debt', titulo:'Deudas',
@@ -109,7 +109,23 @@
     });
   }
 
+  function retirarEscanerVoucher() {
+    const input = document.getElementById('voucher-input');
+    const toggle = document.getElementById('voucher-toggle');
+    const panel = document.getElementById('voucher-panel');
+    const contenedor = toggle?.parentElement;
+
+    if (contenedor && (!panel || contenedor.contains(panel))) contenedor.remove();
+    else {
+      toggle?.remove();
+      panel?.remove();
+    }
+    input?.remove();
+  }
+
   function prepararFormulariosFab() {
+    retirarEscanerVoucher();
+
     const ids = ['ingresoExtraModal','gestionIngresosModal','gastoRapidoModal','gastoModal','tarjetaModal','prestamoModal','metaModal'];
     ids.forEach(id => {
       const sheet = document.getElementById(id)?.querySelector('.modal-sheet');
@@ -189,9 +205,7 @@
     const alto = Math.max(92, portal.offsetHeight || 92);
     const izquierda = Math.min(viewportWidth - ancho - 12, Math.max(12, rect.right - ancho));
     const espacioAbajo = viewportHeight - rect.bottom;
-    const arriba = espacioAbajo >= alto + 12
-      ? rect.bottom + 6
-      : Math.max(12, rect.top - alto - 6);
+    const arriba = espacioAbajo >= alto + 12 ? rect.bottom + 6 : Math.max(12, rect.top - alto - 6);
 
     portal.style.left = `${izquierda}px`;
     portal.style.top = `${arriba}px`;
@@ -257,5 +271,5 @@
   }
 
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',iniciar,{once:true}); else iniciar();
-  window.HFRecuperacionProducto=Object.freeze({iniciar,aplicar,instalarHistorialSeguro,cerrarMenusGasto});
+  window.HFRecuperacionProducto=Object.freeze({iniciar,aplicar,instalarHistorialSeguro,cerrarMenusGasto,retirarEscanerVoucher});
 })();
