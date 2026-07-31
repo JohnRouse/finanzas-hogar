@@ -5,7 +5,7 @@
   if (window.__HF_BOOTSTRAP_AVANZADO__) return;
   window.__HF_BOOTSTRAP_AVANZADO__ = true;
 
-  const VERSION = '18.2';
+  const VERSION = '18.3';
   let promesaInicio = null;
 
   function cargarCSS(ruta, clave) {
@@ -32,6 +32,7 @@
 
   async function iniciar() {
     if (promesaInicio) return promesaInicio;
+
     promesaInicio = (async () => {
       cargarCSS(`css/ux-recuperacion.css?v=${VERSION}`, 'ux-recuperacion');
       cargarCSS(`css/cierre-financiero-mensual.css?v=${VERSION}`, 'cierre-financiero-mensual');
@@ -74,15 +75,20 @@
         resultados,
         listo:resultados.every(r => ['cargado','ya-cargado'].includes(r.estado))
       };
+
       try { localStorage.setItem('hf_bootstrap_diagnostico', JSON.stringify(diagnostico)); } catch (_) {}
       window.dispatchEvent(new CustomEvent('hf:bootstrap-avanzado-completado', { detail:diagnostico }));
       return diagnostico;
     })();
+
     return promesaInicio;
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(iniciar, 100), { once:true });
-  else setTimeout(iniciar, 100);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(iniciar, 100), { once:true });
+  } else {
+    setTimeout(iniciar, 100);
+  }
 
   window.HFBootstrapAvanzado = Object.freeze({ iniciar, version:VERSION });
 })();
