@@ -8,7 +8,7 @@
   let promesaInicio = null;
 
   function cargarCSS(ruta) {
-    if (document.querySelector('link[data-hf-ux-recuperacion]')) return;
+    if (document.querySelector('link[href*="ux-recuperacion.css"]')) return;
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = new URL(ruta, document.baseURI).href;
@@ -32,11 +32,11 @@
   async function iniciar() {
     if (promesaInicio) return promesaInicio;
     promesaInicio = (async () => {
-      cargarCSS('css/ux-recuperacion.css?v=16.5');
+      cargarCSS('css/ux-recuperacion.css?v=16.6');
       const resultados = [];
-      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=16.5'));
-      resultados.push(await cargar('HFActualizadorSaldosTarjetas', 'js/actualizador-saldos-tarjetas.js?v=16.5'));
-      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=16.5'));
+      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=16.6'));
+      resultados.push(await cargar('HFActualizadorSaldosTarjetas', 'js/actualizador-saldos-tarjetas.js?v=16.6'));
+      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=16.6'));
       try {
         window.HFRecuperacionProducto?.iniciar?.();
         window.HFActualizadorSaldosTarjetas?.iniciar?.();
