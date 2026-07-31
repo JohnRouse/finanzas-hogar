@@ -63,8 +63,8 @@
       document.body.appendChild(modal);
     }
     const sheet = modal.querySelector('.modal-sheet');
-    if (!sheet || sheet.dataset.hfPreparado === '16.8') return;
-    sheet.dataset.hfPreparado = '16.8';
+    if (!sheet || sheet.dataset.hfPreparado === '16.9') return;
+    sheet.dataset.hfPreparado = '16.9';
     sheet.className = 'modal-sheet hf-app-sheet hf-action-sheet';
     sheet.innerHTML = contenidoAccion({
       modalId:'hfIngresoChoiceModal', icono:'S/', tono:'income', titulo:'Ingresos',
@@ -79,8 +79,8 @@
   function prepararModalGastos() {
     const modal = document.getElementById('gastoChoiceModal');
     const sheet = modal?.querySelector('.modal-sheet');
-    if (!modal || !sheet || sheet.dataset.hfPreparado === '16.8') return;
-    sheet.dataset.hfPreparado = '16.8';
+    if (!modal || !sheet || sheet.dataset.hfPreparado === '16.9') return;
+    sheet.dataset.hfPreparado = '16.9';
     sheet.className = 'modal-sheet hf-app-sheet hf-action-sheet';
     sheet.innerHTML = contenidoAccion({
       modalId:'gastoChoiceModal', icono:'S/', tono:'expense', titulo:'Agregar gasto',
@@ -95,8 +95,8 @@
   function prepararModalDeudas() {
     const modal = document.getElementById('deudaChoiceModal');
     const sheet = modal?.querySelector('.modal-sheet');
-    if (!modal || !sheet || sheet.dataset.hfPreparado === '16.8') return;
-    sheet.dataset.hfPreparado = '16.8';
+    if (!modal || !sheet || sheet.dataset.hfPreparado === '16.9') return;
+    sheet.dataset.hfPreparado = '16.9';
     sheet.className = 'modal-sheet hf-app-sheet hf-action-sheet';
     sheet.innerHTML = contenidoAccion({
       modalId:'deudaChoiceModal', icono:'S/', tono:'debt', titulo:'Deudas',
@@ -113,14 +113,20 @@
     const input = document.getElementById('voucher-input');
     const toggle = document.getElementById('voucher-toggle');
     const panel = document.getElementById('voucher-panel');
-    const contenedor = toggle?.parentElement;
+    const posibleContenedor = toggle?.parentElement || panel?.parentElement || null;
 
-    if (contenedor && (!panel || contenedor.contains(panel))) contenedor.remove();
-    else {
-      toggle?.remove();
-      panel?.remove();
-    }
+    // No se elimina el contenedor antes de retirar sus hijos. En el HTML heredado,
+    // el bloque del escáner puede envolver accidentalmente el resto del formulario.
     input?.remove();
+    toggle?.remove();
+    panel?.remove();
+
+    // Solo retiramos el envoltorio cuando quedó realmente vacío.
+    if (posibleContenedor && posibleContenedor.children.length === 0 && !posibleContenedor.textContent.trim()) {
+      posibleContenedor.remove();
+    } else if (posibleContenedor && !posibleContenedor.querySelector('#voucher-toggle,#voucher-panel,#voucher-input')) {
+      posibleContenedor.style.removeProperty('margin-bottom');
+    }
   }
 
   function prepararFormulariosFab() {
