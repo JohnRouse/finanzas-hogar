@@ -1,0 +1,58 @@
+/* Hogar Finanzas — correcciones visuales posteriores a la prueba móvil */
+
+/* El contador debe ser una insignia junto al título, no una barra completa. */
+.hf-telegram-pending-head{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:12px!important;
+}
+.hf-telegram-pending-count{
+  width:auto!important;
+  min-width:34px!important;
+  max-width:max-content!important;
+  justify-self:end!important;
+}
+
+/* La cabecera de Movimientos del mes debe respirar en pantallas angostas. */
+@media(max-width:560px){
+  #page-gastos>.section:not(.hf-telegram-pending-section)>.section-head{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    align-items:start!important;
+    gap:10px!important;
+  }
+  #page-gastos>.section:not(.hf-telegram-pending-section)>.section-head>.section-title{
+    width:100%!important;
+    line-height:1.15!important;
+  }
+  #page-gastos>.section:not(.hf-telegram-pending-section)>.section-head>div{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    width:100%!important;
+    gap:8px!important;
+  }
+  #page-gastos .btn-recurrentes{
+    width:100%!important;
+    min-width:0!important;
+    justify-content:center!important;
+    white-space:normal!important;
+    line-height:1.2!important;
+  }
+
+  /* Los KPI de deudas se leen mejor apilados en móvil. */
+  #page-deudas.hf-family-debt-page>.kpi-grid{
+    grid-template-columns:1fr!important;
+    gap:12px!important;
+  }
+
+  .hf-telegram-pending-card{
+    grid-template-columns:auto minmax(0,1fr)!important;
+    align-items:start!important;
+    padding:14px!important;
+  }
+  .hf-telegram-pending-card>button{
+    grid-column:2!important;
+    margin-top:3px!important;
+  }
+}
