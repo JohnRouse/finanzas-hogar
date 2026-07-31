@@ -15,6 +15,7 @@
 
   async function ejecutar() {
     const pruebas = [];
+
     pruebas.push(prueba('Módulo de cierre mensual disponible', () => {
       const modulo = window.HFCierreFinancieroMensual;
       return modulo && typeof modulo.abrir === 'function' && typeof modulo.calcularResumen === 'function'
@@ -25,7 +26,9 @@
       const estado = window.HFCierreFinancieroMensual?.obtenerEstado?.();
       if (!estado) return 'No se obtuvo el estado del módulo';
       if (!estado.modalDisponible) return 'Falta el modal del cierre';
-      if (!document.querySelector('#hfDebtAdminModal [data-admin-action="cierre"]')) return 'Falta el acceso al historial mensual en Administración';
+      if (!document.querySelector('#hfDebtAdminModal [data-admin-action="cierre"]')) {
+        return 'Falta el acceso al historial mensual en Administración';
+      }
       return true;
     }));
 
@@ -73,10 +76,24 @@
     pruebas.push(prueba('Herramientas técnicas separadas', () => {
       const estado = window.HFDeudasFamiliares?.obtenerEstado?.();
       if (!estado?.modalAdminDisponible) return 'Falta el modal Administrar deudas';
-      const originales = ['tarjetas-grid','prestamos-grid','debtChart'].map(id => document.getElementById(id)?.closest('.section')).filter(Boolean);
-      if (originales.some(seccion => seccion.getAttribute('data-hf-family-hidden') !== 'true')) return 'Una sección técnica sigue en la vista familiar';
-      const pruebaEstado = window.HFDeudasFamiliares?.resumenTarjeta?.({ id:'prueba', nombre:'Prueba', limite:1000, deuda:1200 });
+      const originales = ['tarjetas-grid','prestamos-grid','debtChart']
+        .map(id => document.getElementById(id)?.closest('.section'))
+        .filter(Boolean);
+      if (originales.some(seccion => seccion.getAttribute('data-hf-family-hidden') !== 'true')) {
+        return 'Una sección técnica sigue en la vista familiar';
+      }
+      const pruebaEstado = window.HFDeudasFamiliares?.resumenTarjeta?.({
+        id:'prueba', nombre:'Prueba', limite:1000, deuda:1200
+      });
       if (pruebaEstado?.etiqueta !== 'Excedida') return 'La ayuda visual no identifica una tarjeta excedida';
+      return true;
+    }));
+
+    pruebas.push(prueba('Administración centralizada en el FAB', () => {
+      const estado = window.HFDeudasFamiliares?.obtenerEstado?.();
+      if (!estado?.fabIntegrado) return 'El FAB no fue integrado con Administración';
+      if (estado.botonAdministrarVisible) return 'El botón Administrar sigue duplicado en la cabecera';
+      if (typeof window.abrirAdministracionDeudas !== 'function') return 'Falta la acción administrativa del FAB';
       return true;
     }));
 
@@ -101,6 +118,43 @@
       return true;
     }));
 
+    pruebas.push(prueba('Distribución con barras uniformes', () => {
+      const estado = window.HFCoherenciaFinanciera?.obtenerEstado?.();
+      if (!estado?.distribucionUniforme) return 'Compras con crédito no usa el mismo formato de barra';
+      if (document.querySelector('#distribucion-content .hf-credit-separate')) {
+        return 'Permanece el componente separado de crédito';
+      }
+      return true;
+    }));
+
+    pruebas.push(prueba('Plan del mes con fuentes claras', () => {
+      const estado = window.HFCoherenciaFinanciera?.obtenerEstado?.();
+      if (!estado?.planIntuitivo) return 'Falta el nuevo Plan del mes';
+      const texto = document.getElementById('presupuesto-list')?.textContent || '';
+      if (!/50% de los ingresos/i.test(texto)) return 'No se explica el origen de la referencia de gastos esenciales';
+      if (!/mínimos y cuotas/i.test(texto)) return 'No se explica el origen de los compromisos de deuda';
+      return true;
+    }));
+
+    pruebas.push(prueba('Objetivos financieros sin mensajes editoriales', () => {
+      const estado = window.HFCoherenciaFinanciera?.obtenerEstado?.();
+      if (!estado?.objetivosSinMensajes) return 'Siguen visibles mensajes explicativos innecesarios';
+      if (document.querySelector('#regla-502030 .hf-objectives-intro, #regla-502030 .hf-objectives-note')) {
+        return 'El bloque aún contiene introducción o nota final';
+      }
+      return true;
+    }));
+
+    pruebas.push(prueba('Alertas de Resumen compactas e interactivas', () => {
+      const modulo = window.HFCoherenciaFinanciera;
+      const estado = modulo?.obtenerEstado?.();
+      if (!estado?.alertasCompactas) return 'Falta la lista compacta de alertas';
+      if (typeof modulo?.toggleAlertas !== 'function') return 'Falta la acción Ver todas / Ver menos';
+      const boton = document.querySelector('#necesita-atencion .hf-alert-toggle');
+      if (boton?.hasAttribute('onclick')) return 'El botón depende de un onclick inline';
+      return true;
+    }));
+
     pruebas.push(prueba('Tendencia requiere historial real', () => {
       const modulo = window.HFCoherenciaFinanciera;
       if (!modulo?.puedeMostrarTendencia) return 'Falta la regla de tendencia';
@@ -116,7 +170,10 @@
       if (!p) return 'No se obtuvo la proyección global';
       if (p.meses !== 8) return `Resultado ${p.meses} meses, esperado 8`;
       const texto = document.querySelector('#hf-family-debt-view .hf-family-route')?.textContent || '';
-      if (document.querySelector('#hf-family-debt-view .hf-family-route') && !/mínimos y cuotas|Referencia para todas/i.test(texto)) return 'La vista no explica que la referencia incluye todas las deudas';
+      if (document.querySelector('#hf-family-debt-view .hf-family-route')
+        && !/mínimos y cuotas|Referencia para todas/i.test(texto)) {
+        return 'La vista no explica que la referencia incluye todas las deudas';
+      }
       return true;
     }));
 
@@ -137,7 +194,9 @@
       listo:pruebas.every(p => p.ok),
       pruebas
     };
+
     try { localStorage.setItem('hf_diagnostico_etapa_12', JSON.stringify(resultado)); } catch (_) {}
+
     console.group(`Hogar Finanzas · etapa 12 ${resultado.listo ? 'APROBADA' : 'CON INCIDENCIAS'}`);
     console.table(pruebas);
     console.groupEnd();
