@@ -1,0 +1,128 @@
+/* Hogar Finanzas — cierre financiero mensual */
+.hf-month-close-launcher{
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin:14px 0 6px;
+  padding:14px;
+  border:1px solid #dbe5f6;
+  border-radius:20px;
+  background:linear-gradient(135deg,#f6f9ff 0%,#edf4ff 100%);
+  box-shadow:0 8px 24px rgba(37,99,235,.08);
+}
+.hf-month-close-launcher.is-closed{border-color:#bfe4ce;background:linear-gradient(135deg,#f5fcf8 0%,#eaf8f0 100%)}
+.hf-month-close-launcher-icon{
+  width:48px;height:48px;border-radius:15px;display:flex;align-items:center;justify-content:center;
+  background:#dce9ff;color:#235fc2;font-size:22px;font-weight:900;
+}
+.hf-month-close-launcher.is-closed .hf-month-close-launcher-icon{background:#d8f1e2;color:#17804b}
+.hf-month-close-launcher-copy{min-width:0;display:block}
+.hf-month-close-launcher-copy span,.hf-month-close-launcher-copy strong,.hf-month-close-launcher-copy small{display:block}
+.hf-month-close-launcher-copy span{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#71809a}
+.hf-month-close-launcher-copy strong{margin-top:2px;font-size:15px;line-height:1.25;color:#172033}
+.hf-month-close-launcher-copy small{margin-top:4px;font-size:10px;line-height:1.45;color:#758096}
+.hf-month-close-launcher button{
+  min-height:40px;padding:0 14px;border:0;border-radius:12px;background:#2563eb;color:#fff;
+  font:700 12px 'DM Sans',sans-serif;box-shadow:0 7px 16px rgba(37,99,235,.22);cursor:pointer;
+}
+.hf-month-close-launcher.is-closed button{background:#17804b;box-shadow:0 7px 16px rgba(23,128,75,.18)}
+
+.hf-month-close-sheet{position:relative!important;padding-bottom:calc(14px + env(safe-area-inset-bottom))!important}
+.hf-month-close-header{display:flex;align-items:flex-start;gap:13px;padding-right:44px;margin-bottom:14px}
+.hf-month-close-header p{margin:5px 0 0;color:#758096;font-size:11px;line-height:1.45}
+.hf-month-close-icon{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;flex:none;background:#e9f8ef;color:#17804b;font-size:21px;font-weight:900}
+.hf-month-close-progress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 15px}
+.hf-month-close-progress span{display:flex;align-items:center;justify-content:center;gap:5px;min-height:32px;border-radius:11px;background:#eef1f6;color:#8b94a5;font-size:10px;font-weight:700}
+.hf-month-close-progress span i{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#dfe4ec;color:#7c8799;font-style:normal;font-size:9px}
+.hf-month-close-progress span.active{background:#eef4ff;color:#2d61bd}
+.hf-month-close-progress span.active i{background:#2563eb;color:#fff}
+.hf-month-close-progress span.current{box-shadow:inset 0 0 0 1px #b9cef5}
+.hf-month-close-content{min-height:210px;overflow:visible}
+.hf-close-loading{min-height:210px;display:flex;align-items:center;justify-content:center;gap:10px;color:#738096;font-size:12px}
+.hf-close-loading span{width:20px;height:20px;border:2px solid #dce4f1;border-top-color:#2563eb;border-radius:50%;animation:hf-close-spin .8s linear infinite}
+@keyframes hf-close-spin{to{transform:rotate(360deg)}}
+.hf-close-step-intro{margin-bottom:13px;padding:0 2px}
+.hf-close-step-intro strong{display:block;font-size:15px;color:#1b2230}
+.hf-close-step-intro p{margin:5px 0 0;font-size:10px;line-height:1.5;color:#788396}
+.hf-close-card-list{display:grid;gap:10px}
+.hf-close-debt-card{padding:13px;border:1px solid #e1e6ee;border-radius:17px;background:#fff;box-shadow:0 5px 16px rgba(15,23,42,.04)}
+.hf-close-debt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.hf-close-debt-head strong,.hf-close-debt-head small{display:block}
+.hf-close-debt-head strong{font-size:14px;color:#1b2230}
+.hf-close-debt-head small{margin-top:3px;font-size:9px;color:#8a93a3}
+.hf-close-debt-head>span{padding:5px 8px;border-radius:9px;background:#f1f5fb;color:#526178;font-size:10px;font-weight:700;white-space:nowrap}
+.hf-close-debt-card label{display:block;color:#626d7e;font-size:10px;font-weight:700}
+.hf-close-debt-card input{width:100%;min-height:44px;margin-top:5px;padding:10px 11px;border:1px solid #dce2eb;border-radius:12px;background:#fbfcfe;color:#182033;font:600 13px 'DM Sans',sans-serif;box-sizing:border-box}
+.hf-close-debt-card input:focus{border-color:#5d8ff3;box-shadow:0 0 0 3px rgba(37,99,235,.11);outline:none;background:#fff}
+.hf-close-two-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.hf-close-readonly-title{margin:17px 2px 8px;color:#687488;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.hf-close-loan-list{display:grid;gap:7px}
+.hf-close-loan-list>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:11px 12px;border-radius:14px;background:#f2f5f9}
+.hf-close-loan-list span{grid-row:1/3}
+.hf-close-loan-list strong,.hf-close-loan-list small{display:block}
+.hf-close-loan-list strong{font-size:12px;color:#273043}
+.hf-close-loan-list small{margin-top:3px;font-size:9px;color:#8993a4}
+.hf-close-loan-list b{font-size:12px;color:#1e293b;text-align:right}
+.hf-close-loan-list em{font-size:9px;color:#7b8799;font-style:normal;text-align:right}
+.hf-close-footer{display:grid;grid-template-columns:1fr 1.45fr;gap:9px;padding-top:14px;border-top:1px solid #edf0f4;margin-top:15px}
+.hf-close-footer .modal-btn:only-child{grid-column:1/-1}
+.hf-close-footer .modal-btn{margin:0!important;min-height:48px!important}
+.hf-close-empty{padding:26px 18px;border:1px dashed #d5dce7;border-radius:17px;background:#f8fafc;text-align:center}
+.hf-close-empty strong{display:block;color:#273043;font-size:14px}
+.hf-close-empty p{margin:7px 0 0;color:#778398;font-size:10px;line-height:1.55}
+.hf-close-total-card{padding:17px;border-radius:19px;background:linear-gradient(135deg,#17213a 0%,#253a66 100%);color:#fff;box-shadow:0 12px 28px rgba(23,33,58,.20)}
+.hf-close-total-card>span{display:block;font-size:10px;color:#bec9dc}
+.hf-close-total-card>strong{display:block;margin:5px 0 7px;font-size:27px;letter-spacing:-.6px}
+.hf-close-total-card>span.good,.hf-close-total-card>span.bad,.hf-close-total-card>span.neutral{display:inline-flex;padding:5px 8px;border-radius:9px;font-size:9px;font-weight:700}
+.hf-close-total-card .good{background:rgba(74,222,128,.15);color:#a7f3c2}
+.hf-close-total-card .bad{background:rgba(248,113,113,.15);color:#fecaca}
+.hf-close-total-card .neutral{background:rgba(255,255,255,.10);color:#dce5f4}
+.hf-close-metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.hf-close-metric-grid>div{padding:11px;border:1px solid #e4e8ef;border-radius:14px;background:#fff}
+.hf-close-metric-grid span,.hf-close-metric-grid strong{display:block}
+.hf-close-metric-grid span{font-size:9px;color:#808a9c}
+.hf-close-metric-grid strong{margin-top:4px;font-size:13px;color:#202838}
+.hf-close-due-card{margin-top:10px;padding:13px;border-radius:16px;background:#fff7e8;border:1px solid #f2dfb6}
+.hf-close-due-card>strong{display:block;margin-bottom:9px;color:#77520e;font-size:11px}
+.hf-close-due-card>div{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.hf-close-due-card span{display:block;padding:8px 5px;border-radius:10px;background:rgba(255,255,255,.65);color:#8c6b2c;font-size:8px;text-align:center}
+.hf-close-due-card b{display:block;margin-top:4px;color:#5d4315;font-size:10px}
+.hf-close-source-note{margin-top:10px;padding:10px 11px;border-radius:12px;background:#f1f4f8;color:#7a8597;font-size:9px;line-height:1.5}
+.hf-close-confirm-card{padding:17px;border:1px solid #dfe5ed;border-radius:19px;background:#fff;text-align:center}
+.hf-close-confirm-icon{width:52px;height:52px;margin:0 auto 10px;border-radius:17px;display:flex;align-items:center;justify-content:center;background:#e7f7ed;color:#17804b;font-size:24px;font-weight:900}
+.hf-close-confirm-card>strong{display:block;color:#1d2535;font-size:16px}
+.hf-close-confirm-card>p{margin:7px 0 13px;color:#758094;font-size:10px;line-height:1.55}
+.hf-close-confirm-card>div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid #edf0f4;color:#697588;font-size:10px;text-align:left}
+.hf-close-confirm-card>div b{color:#1e293b;font-size:11px}
+.hf-close-check{display:flex!important;align-items:flex-start;gap:8px;margin-top:12px;padding:11px;border-radius:12px;background:#f4f7fb;color:#4f5d72!important;font-size:10px!important;line-height:1.45;text-align:left;font-weight:600!important}
+.hf-close-check input{width:18px!important;height:18px!important;min-height:0!important;margin:0!important;flex:none;accent-color:#2563eb}
+.hf-close-success{padding:27px 18px;text-align:center}
+.hf-close-success>span{width:62px;height:62px;margin:0 auto 12px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:#dff5e8;color:#17804b;font-size:29px;font-weight:900}
+.hf-close-success>strong{display:block;color:#1d2535;font-size:19px}
+.hf-close-success>p{margin:7px auto 14px;max-width:320px;color:#748094;font-size:10px;line-height:1.55}
+.hf-close-success>div{display:inline-flex;gap:12px;padding:10px 13px;border-radius:12px;background:#f0f4f8;color:#6b778b;font-size:10px}
+.hf-close-success b{color:#1e293b;font-size:12px}
+
+@media(max-width:520px){
+  .hf-month-close-launcher{grid-template-columns:44px minmax(0,1fr);gap:10px}
+  .hf-month-close-launcher-icon{width:44px;height:44px}
+  .hf-month-close-launcher button{grid-column:1/-1;width:100%;margin-top:2px}
+  .hf-month-close-sheet{max-height:calc(100dvh - 10px)!important;border-radius:25px 25px 18px 18px!important}
+}
+@media(max-width:370px){
+  .hf-close-two-fields,.hf-close-metric-grid{grid-template-columns:1fr}
+  .hf-close-due-card>div{grid-template-columns:1fr}
+}
+@media(prefers-color-scheme:dark){
+  .hf-month-close-launcher{background:linear-gradient(135deg,#1b2432,#1d2b42);border-color:#2e425f}
+  .hf-month-close-launcher.is-closed{background:linear-gradient(135deg,#172720,#1a3326);border-color:#2d5b40}
+  .hf-month-close-launcher-copy strong,.hf-close-step-intro strong,.hf-close-debt-head strong,.hf-close-metric-grid strong,.hf-close-confirm-card>strong,.hf-close-success>strong{color:#f1f4f8}
+  .hf-close-debt-card,.hf-close-metric-grid>div,.hf-close-confirm-card{background:#20242a;border-color:rgba(255,255,255,.08)}
+  .hf-close-debt-card input{background:#181b20;border-color:rgba(255,255,255,.11);color:#f1f4f8}
+  .hf-close-loan-list>div,.hf-close-source-note{background:#242930}
+  .hf-close-loan-list strong,.hf-close-loan-list b,.hf-close-confirm-card>div b,.hf-close-success b{color:#eef2f7}
+  .hf-close-check{background:#252b34;color:#d4dae4!important}
+  .hf-close-empty{background:#1e2228;border-color:#3a424e}
+  .hf-close-empty strong{color:#eef2f7}
+}
