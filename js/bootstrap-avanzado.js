@@ -32,14 +32,16 @@
   async function iniciar() {
     if (promesaInicio) return promesaInicio;
     promesaInicio = (async () => {
-      cargarCSS('css/ux-recuperacion.css?v=16.9');
+      cargarCSS('css/ux-recuperacion.css?v=17.0');
       const resultados = [];
-      resultados.push(await cargar('HFModalStack', 'js/modal-stack.js?v=16.9'));
-      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=16.9'));
-      resultados.push(await cargar('HFActualizadorSaldosTarjetas', 'js/actualizador-saldos-tarjetas.js?v=16.9'));
-      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=16.9'));
+      resultados.push(await cargar('HFModalStack', 'js/modal-stack.js?v=17.0'));
+      resultados.push(await cargar('HFGastosSinVoucher', 'js/gastos-sin-voucher.js?v=17.0'));
+      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=17.0'));
+      resultados.push(await cargar('HFActualizadorSaldosTarjetas', 'js/actualizador-saldos-tarjetas.js?v=17.0'));
+      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=17.0'));
       try {
         window.HFModalStack?.iniciar?.();
+        window.HFGastosSinVoucher?.instalar?.();
         window.HFRecuperacionProducto?.iniciar?.();
         window.HFActualizadorSaldosTarjetas?.iniciar?.();
         await window.HFDeudasActuales?.actualizar?.(true);
