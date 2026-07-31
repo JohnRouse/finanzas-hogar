@@ -1,4 +1,4 @@
-/* Hogar Finanzas — Recuperación: núcleo de deuda actual, sin paneles duplicados */
+/* Hogar Finanzas — Núcleo claro de deuda actual */
 (() => {
   'use strict';
 
@@ -11,6 +11,10 @@
   const numero = valor => Number.isFinite(Number(valor)) ? Number(valor) : 0;
   const moneda = valor => `S/ ${numero(valor).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const fechaISO = valor => /^\d{4}-\d{2}-\d{2}$/.test(String(valor || '')) ? String(valor) : '';
+  const tiempo = valor => {
+    const n = Date.parse(String(valor || ''));
+    return Number.isFinite(n) ? n : 0;
+  };
 
   function estadoCuenta(tarjeta = {}) {
     return tarjeta.estadoCuenta && typeof tarjeta.estadoCuenta === 'object' ? tarjeta.estadoCuenta : {};
@@ -38,32 +42,45 @@
   function calcularTarjeta(tarjeta = {}, gastos = []) {
     const ec = estadoCuenta(tarjeta);
     const fechaBase = fechaISO(ec.fechaCierre) || fechaISO(ec.fechaEstado) || '';
-    const facturadaInformada = ec.pagoTotal !== null && ec.pagoTotal !== undefined && ec.pagoTotal !== '';
-    const facturada = facturadaInformada ? numero(ec.pagoTotal) : numero(tarjeta.deuda || tarjeta.saldo);
+    const pagoTotalInformado = ec.pagoTotal !== null && ec.pagoTotal !== undefined && ec.pagoTotal !== '';
+    const estadoActualizadoEn = tiempo(ec.actualizadoEn || ec.fechaEstado || ec.fechaCierre);
+    const saldoConfirmadoEn = tiempo(tarjeta.saldoConfirmadoEn || tarjeta.ultimaConciliacion);
+    const usarEstado = pagoTotalInformado && estadoActualizadoEn >= saldoConfirmadoEn;
+    const deudaRegistrada = Math.max(0, numero(tarjeta.deuda || tarjeta.saldo));
+    const facturada = usarEstado ? numero(ec.pagoTotal) : deudaRegistrada;
     const vinculados = gastos.filter(g => coincideTarjeta(g, tarjeta));
-    const posteriores = fechaBase ? vinculados.filter(g => fechaMovimiento(g) && fechaMovimiento(g) > fechaBase) : [];
+    const posteriores = usarEstado && fechaBase
+      ? vinculados.filter(g => fechaMovimiento(g) && fechaMovimiento(g) > fechaBase)
+      : [];
     const comprasPosteriores = posteriores.filter(esCompraCredito).reduce((s, g) => s + numero(g.monto), 0);
     const pagosPosteriores = posteriores.filter(esPagoTarjeta).reduce((s, g) => s + numero(g.monto), 0);
-    const deudaEstimada = facturadaInformada
+    const deudaEstimada = usarEstado
       ? Math.max(0, facturada + comprasPosteriores - pagosPosteriores)
-      : Math.max(0, numero(tarjeta.deuda || tarjeta.saldo));
+      : deudaRegistrada;
     const lineaTotal = numero(tarjeta.limite || tarjeta.lineaTotal || ec.lineaTotal);
+    const fuente = usarEstado
+      ? 'estado-cuenta'
+      : saldoConfirmadoEn
+        ? (tarjeta.pendienteConciliar ? 'saldo-confirmado-con-movimientos' : 'saldo-confirmado')
+        : 'saldo-app';
 
     return {
       tarjetaId: tarjeta.id,
       tarjeta,
       estadoCuenta: ec,
       fechaBase,
-      tieneEstado: facturadaInformada,
+      tieneEstado: usarEstado,
+      fuente,
       facturada,
       comprasPosteriores,
       pagosPosteriores,
-      deudaRegistrada: numero(tarjeta.deuda || tarjeta.saldo),
+      deudaRegistrada,
       deudaEstimada,
       pagoMinimo: numero(ec.pagoMinimo || tarjeta.pagoMinimo),
       fechaVencimiento: fechaISO(ec.fechaVencimiento),
       lineaTotal,
-      disponible: lineaTotal ? lineaTotal - deudaEstimada : 0
+      disponible: lineaTotal ? lineaTotal - deudaEstimada : 0,
+      saldoConfirmadoEn: tarjeta.saldoConfirmadoEn || tarjeta.ultimaConciliacion || null
     };
   }
 
@@ -90,31 +107,29 @@
     resumen = document.createElement('section');
     resumen.id = 'hf-resumen-deuda-actual';
     resumen.className = 'hf-debt-current-summary';
-    resumen.innerHTML = '<div class="hf-debt-current-head"><div><strong>Estado actualizado de tarjetas</strong><small>Basado en estados de cuenta y movimientos registrados.</small></div><button type="button" onclick="actualizarCentroTarjetas(true)">Actualizar</button></div><div class="hf-debt-current-grid"><div><span>Facturado</span><strong>—</strong></div><div><span>Compras posteriores</span><strong>—</strong></div><div><span>Pagos posteriores</span><strong>—</strong></div><div class="primary"><span>Estimado hoy</span><strong>—</strong></div></div>';
+    resumen.innerHTML = `
+      <div class="hf-debt-current-copy">
+        <strong>Confirma tus saldos en un solo paso</strong>
+        <small>El monto de cada tarjeta es la deuda total pendiente. No representa lo gastado este mes ni solo el exceso de línea.</small>
+      </div>
+      <button type="button" data-hf-open-balance-update>Actualizar saldos</button>`;
+    resumen.querySelector('[data-hf-open-balance-update]')?.addEventListener('click', () => {
+      if (typeof window.abrirActualizacionTarjetas === 'function') window.abrirActualizacionTarjetas();
+      else window.actualizarCentroTarjetas?.(true);
+    });
     kpis.insertAdjacentElement('afterend', resumen);
     return resumen;
   }
 
   function renderResumen(resumenes, prestamos) {
+    asegurarResumen();
     const totales = resumenes.reduce((acc, r) => {
-      acc.facturada += r.facturada;
-      acc.compras += r.comprasPosteriores;
-      acc.pagos += r.pagosPosteriores;
       acc.estimada += r.deudaEstimada;
       acc.minimos += r.pagoMinimo;
       return acc;
-    }, { facturada: 0, compras: 0, pagos: 0, estimada: 0, minimos: 0 });
+    }, { estimada: 0, minimos: 0 });
     const deudaPrestamos = prestamos.reduce((s, p) => s + numero(p.saldo), 0);
     const cuotasPrestamos = prestamos.reduce((s, p) => s + numero(p.cuota), 0);
-
-    const resumen = asegurarResumen();
-    if (resumen) {
-      const valores = resumen.querySelectorAll('.hf-debt-current-grid strong');
-      [totales.facturada, totales.compras, totales.pagos, totales.estimada].forEach((v, i) => {
-        if (valores[i]) valores[i].textContent = i === 2 && v > 0 ? `− ${moneda(v)}` : moneda(v);
-      });
-      resumen.classList.toggle('sin-estados', !resumenes.some(r => r.tieneEstado));
-    }
 
     const deudaTotal = document.getElementById('kpi-deuda-total');
     const pagoMensual = document.getElementById('kpi-pago-mensual');
@@ -134,7 +149,7 @@
       barra.style.background = uso >= 100 ? '#c43030' : uso > 80 ? '#c43030' : uso > 60 ? '#b06a10' : '#2a7de1';
     }
     const etiquetas = card.querySelectorAll('.credit-line-labels span');
-    if (etiquetas[0]) etiquetas[0].textContent = `${uso}% utilizado`;
+    if (etiquetas[0]) etiquetas[0].textContent = `${uso}% de la línea utilizada`;
     const detalles = card.querySelectorAll('.debt-sub span');
     if (detalles[1] && resumen.lineaTotal > 0) {
       detalles[1].textContent = `Disponible: ${resumen.disponible < 0 ? '− ' : ''}${moneda(Math.abs(resumen.disponible))}`;
@@ -142,12 +157,19 @@
     }
   }
 
+  function textoFuente(resumen) {
+    if (resumen.fuente === 'estado-cuenta') return 'Calculada desde el último estado de cuenta y los movimientos posteriores.';
+    if (resumen.fuente === 'saldo-confirmado') return `Confirmada manualmente${resumen.saldoConfirmadoEn ? ` el ${new Date(resumen.saldoConfirmadoEn).toLocaleDateString('es-PE')}` : ''}.`;
+    if (resumen.fuente === 'saldo-confirmado-con-movimientos') return 'Parte del último saldo confirmado y ya incluye movimientos registrados después.';
+    return 'Calculada con el saldo inicial, las compras y los pagos registrados en la app.';
+  }
+
   function enriquecerTarjeta(resumen) {
     const card = document.getElementById(`tarjeta-card-${resumen.tarjetaId}`);
     if (!card) return;
     const label = card.querySelector('.debt-label-main');
     const total = card.querySelector('.debt-total');
-    if (label) label.textContent = resumen.tieneEstado ? 'Deuda estimada hoy' : 'Saldo registrado';
+    if (label) label.textContent = 'Deuda total pendiente';
     if (total) total.textContent = moneda(resumen.deudaEstimada);
 
     let detalle = card.querySelector('.hf-live-debt-breakdown');
@@ -156,12 +178,20 @@
       detalle.className = 'hf-live-debt-breakdown';
       total?.insertAdjacentElement('afterend', detalle);
     }
+
     const contenido = resumen.tieneEstado ? `
-      <div><span>Estado facturado</span><strong>${moneda(resumen.facturada)}</strong></div>
-      <div><span>Compras posteriores</span><strong>+ ${moneda(resumen.comprasPosteriores)}</strong></div>
-      <div><span>Pagos posteriores</span><strong>− ${moneda(resumen.pagosPosteriores)}</strong></div>
-      <small>Saldo registrado en la app: ${moneda(resumen.deudaRegistrada)}${resumen.fechaBase ? ` · base ${new Date(`${resumen.fechaBase}T12:00:00`).toLocaleDateString('es-PE')}` : ''}</small>` : '<small>Registra el estado de cuenta para separar saldo facturado, compras posteriores y pagos.</small>';
+      <div><span>Facturado</span><strong>${moneda(resumen.facturada)}</strong></div>
+      <div><span>Compras nuevas</span><strong>+ ${moneda(resumen.comprasPosteriores)}</strong></div>
+      <div><span>Pagos registrados</span><strong>− ${moneda(resumen.pagosPosteriores)}</strong></div>
+      <small><b>Qué significa:</b> este es el total que todavía debes. ${textoFuente(resumen)}</small>` : `
+      <small><b>Qué significa:</b> este es el total que todavía debes en la tarjeta; no es el gasto del mes ni el monto excedido. ${textoFuente(resumen)}</small>`;
     if (detalle.innerHTML !== contenido) detalle.innerHTML = contenido;
+
+    const exceso = resumen.lineaTotal > 0 ? Math.max(0, resumen.deudaEstimada - resumen.lineaTotal) : 0;
+    const bloqueExceso = card.querySelector('.credit-overflow');
+    if (bloqueExceso && exceso > 0) {
+      bloqueExceso.innerHTML = `<span>Exceso sobre la línea: ${moneda(exceso)}</span><small>La deuda total es ${moneda(resumen.deudaEstimada)} y supera la línea por este monto.</small>`;
+    }
 
     card.dataset.deudaEstimada = String(resumen.deudaEstimada);
     actualizarLinea(card, resumen);
