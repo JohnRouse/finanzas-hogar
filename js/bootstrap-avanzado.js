@@ -5,7 +5,7 @@
   if (window.__HF_BOOTSTRAP_AVANZADO__) return;
   window.__HF_BOOTSTRAP_AVANZADO__ = true;
 
-  const VERSION = '18.0';
+  const VERSION = '18.1';
   let promesaInicio = null;
 
   function cargarCSS(ruta, clave) {
@@ -35,6 +35,7 @@
     promesaInicio = (async () => {
       cargarCSS(`css/ux-recuperacion.css?v=${VERSION}`, 'ux-recuperacion');
       cargarCSS(`css/cierre-financiero-mensual.css?v=${VERSION}`, 'cierre-financiero-mensual');
+      cargarCSS(`css/deudas-familiares.css?v=${VERSION}`, 'deudas-familiares');
 
       const resultados = [];
       resultados.push(await cargar('HFModalStack', `js/modal-stack.js?v=${VERSION}`));
@@ -43,6 +44,7 @@
       resultados.push(await cargar('HFRecuperacionProducto', `js/recuperacion-producto.js?v=${VERSION}`));
       resultados.push(await cargar('HFActualizadorSaldosTarjetas', `js/actualizador-saldos-tarjetas.js?v=${VERSION}`));
       resultados.push(await cargar('HFCierreFinancieroMensual', `js/cierre-financiero-mensual.js?v=${VERSION}`));
+      resultados.push(await cargar('HFDeudasFamiliares', `js/deudas-familiares.js?v=${VERSION}`));
       resultados.push(await cargar('HFDiagnosticoVisual', `js/diagnostico-visual.js?v=${VERSION}`));
       resultados.push(await cargar('HFDiagnosticoEtapa12', `js/diagnostico-etapa-12.js?v=${VERSION}`));
 
@@ -53,7 +55,9 @@
         window.HFRecuperacionProducto?.iniciar?.();
         window.HFActualizadorSaldosTarjetas?.iniciar?.();
         window.HFCierreFinancieroMensual?.iniciar?.();
+        window.HFDeudasFamiliares?.iniciar?.();
         await window.HFDeudasActuales?.actualizar?.(true);
+        await window.HFDeudasFamiliares?.renderizar?.();
       } catch (error) {
         console.warn('El arranque avanzado inició con una incidencia:', error);
       }
