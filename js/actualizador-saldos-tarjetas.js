@@ -24,14 +24,16 @@
     if ($('hfActualizarSaldosModal')) return;
     document.body.insertAdjacentHTML('beforeend', `
       <div class="modal-overlay" id="hfActualizarSaldosModal" onclick="closeModalOutside(event,'hfActualizarSaldosModal')">
-        <div class="modal-sheet hf-update-balances-sheet" style="position:relative">
+        <div class="modal-sheet hf-app-sheet hf-form-sheet hf-update-balances-sheet" style="position:relative">
           <button class="modal-close" type="button" onclick="closeModal('hfActualizarSaldosModal')">✕</button>
           <div class="modal-handle"></div>
-          <div class="modal-title">Actualizar tarjetas</div>
-          <p class="hf-update-balances-intro">Ingresa el total que actualmente muestra cada banco. No necesitas completar un estado de cuenta tarjeta por tarjeta.</p>
-          <div class="hf-update-help"><strong>¿Qué monto va aquí?</strong><span>La deuda total pendiente de la tarjeta. No es lo gastado este mes ni solamente el monto excedido.</span></div>
+          <div class="hf-form-sheet-heading">
+            <span class="hf-form-sheet-icon debt">↻</span>
+            <div><div class="modal-title">Actualizar saldos</div><p>Confirma en una sola pantalla cuánto debes actualmente en cada tarjeta.</p></div>
+          </div>
+          <div class="hf-update-help"><strong>¿Qué monto debes copiar?</strong><span>La deuda total pendiente que aparece en la app o web del banco. No es solo el exceso ni lo gastado durante el mes.</span></div>
           <div id="hf-update-balances-list" class="hf-update-balances-list"><div class="hf-finance-empty">Cargando tarjetas…</div></div>
-          <button class="modal-btn primary" id="hf-update-balances-save" type="button">Guardar cambios</button>
+          <button class="modal-btn primary" id="hf-update-balances-save" type="button">Guardar saldos</button>
         </div>
       </div>`);
     $('hf-update-balances-save')?.addEventListener('click', guardar);
@@ -57,7 +59,7 @@
         <article class="hf-update-balance-card" data-tarjeta-id="${escapar(t.id)}">
           <div class="hf-update-balance-head">
             <div><strong>${escapar(tarjetaNombre(t))}</strong><small>${t.ultimosDigitos ? `•••• ${escapar(t.ultimosDigitos)}` : ''}${t.limite ? `${t.ultimosDigitos ? ' · ' : ''}Línea ${moneda(t.limite)}` : ''}</small></div>
-            <span>App: ${moneda(deuda)}</span>
+            <span>En la app: ${moneda(deuda)}</span>
           </div>
           <label>Deuda total que muestra el banco
             <input class="hf-update-debt" type="number" min="0" step="0.01" inputmode="decimal" value="${deuda.toFixed(2)}" data-inicial="${deuda.toFixed(2)}">
@@ -143,30 +145,23 @@
       console.error(error);
       toast('No se pudieron guardar todos los cambios.');
     } finally {
-      if (boton) { boton.disabled = false; boton.textContent = 'Guardar cambios'; }
+      if (boton) { boton.disabled = false; boton.textContent = 'Guardar saldos'; }
     }
   }
 
-  function agregarBotonGlobal() {
-    const cabecera = $('tarjetas-grid')?.closest('.section')?.querySelector('.section-head');
-    if (!cabecera || cabecera.querySelector('[data-hf-update-all]')) return;
-    const boton = document.createElement('button');
-    boton.type = 'button';
-    boton.className = 'btn-recurrentes';
-    boton.dataset.hfUpdateAll = 'true';
-    boton.textContent = 'Actualizar saldos';
-    boton.addEventListener('click', () => abrir());
-    cabecera.appendChild(boton);
+  function eliminarBotonesDuplicados() {
+    document.querySelectorAll('#page-deudas [data-hf-update-all]').forEach(boton => boton.remove());
   }
 
   function decorarTarjetas() {
     document.querySelectorAll('#tarjetas-grid .debt-card').forEach(card => {
-      const estado = card.querySelector('.debt-action-statement');
+      const actualizarIndividual = card.querySelector('.debt-action-statement');
       const conciliar = card.querySelector('.debt-action-secondary');
       const pagar = card.querySelector('.debt-action-primary');
       const historial = card.querySelector('.debt-action-history');
       const detalles = card.querySelector('.debt-details-toggle');
-      if (estado) { estado.textContent = 'Actualizar saldo'; estado.title = 'Confirmar el total que muestra el banco'; }
+
+      actualizarIndividual?.remove();
       conciliar?.remove();
       if (pagar) pagar.textContent = 'Registrar pago';
       if (historial) historial.textContent = 'Movimientos';
@@ -175,7 +170,7 @@
   }
 
   function decorar() {
-    agregarBotonGlobal();
+    eliminarBotonesDuplicados();
     decorarTarjetas();
   }
 
@@ -187,7 +182,7 @@
     decorar();
     if (!observer) observer = new MutationObserver(() => {
       clearTimeout(timer);
-      timer = setTimeout(decorar, 100);
+      timer = setTimeout(decorar, 80);
     });
     const pagina = $('page-deudas');
     if (pagina) observer.observe(pagina, { childList:true, subtree:true });
