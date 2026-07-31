@@ -35,6 +35,10 @@
     pruebas.push(prueba('Menú global de movimientos', () => typeof window.toggleExpenseMenu === 'function' && Boolean(document.getElementById('hfExpenseMenuPortal'))));
     pruebas.push(prueba('Pila de modales sin parpadeo', () => typeof window.HFModalStack?.aplicarPila === 'function' && typeof window.HFModalStack?.prepararApertura === 'function' && Boolean(document.getElementById('hf-modal-stack-styles'))));
     pruebas.push(prueba('Escáner de voucher retirado', () => !document.getElementById('voucher-toggle') && !document.getElementById('voucher-panel') && !document.getElementById('voucher-input')));
+    pruebas.push(prueba('Compatibilidad sin voucher', () => {
+      if (!window.HFGastosSinVoucher?.limpiarVoucherSeguro) return 'HFGastosSinVoucher no cargado';
+      return window.HFGastosSinVoucher.limpiarVoucherSeguro() === true ? true : 'La limpieza segura no respondió correctamente';
+    }));
     pruebas.push(prueba('Formulario de gasto íntegro', () => {
       const requeridos = ['gastoModal','gasto-modal-title','gasto-submit-btn','g-desc','g-monto','g-fecha','g-quien','g-medio','cat-chips'];
       const faltantes = requeridos.filter(id => !document.getElementById(id));
