@@ -55,6 +55,27 @@
       });
       return incorrectos.length === 0 ? true : `Revisar: ${incorrectos.join(', ')}`;
     }));
+    pruebas.push(prueba('Confirmaciones nativas reemplazadas', () => {
+      const estado = window.HFConfirmacionesApp?.obtenerEstado?.();
+      if (!estado) return 'HFConfirmacionesApp no cargado';
+      if (!estado.confirmNativoBloqueado) return 'window.confirm todavía puede abrir diálogos del navegador';
+      return estado.faltantes.length === 0 ? true : `Faltan envolturas: ${estado.faltantes.join(', ')}`;
+    }));
+
+    let auditoriaConfirmaciones = null;
+    try {
+      auditoriaConfirmaciones = await window.HFConfirmacionesApp?.auditar?.({ forzar:true });
+    } catch (error) {
+      auditoriaConfirmaciones = { listo:false, error:error.message };
+    }
+    pruebas.push(prueba('Auditoría de confirmaciones', () => {
+      if (!auditoriaConfirmaciones) return 'No se obtuvo la auditoría';
+      if (auditoriaConfirmaciones.error) return auditoriaConfirmaciones.error;
+      if (auditoriaConfirmaciones.funcionesFaltantes?.length) return `Funciones sin migrar: ${auditoriaConfirmaciones.funcionesFaltantes.join(', ')}`;
+      if (auditoriaConfirmaciones.inesperados?.length) return `Confirmaciones inesperadas: ${auditoriaConfirmaciones.inesperados.map(x => x.archivo).join(', ')}`;
+      return auditoriaConfirmaciones.listo ? true : 'La auditoría no quedó aprobada';
+    }));
+
     pruebas.push(prueba('Microsoft Entra no visible', () => !document.getElementById('btn-outlook') && !document.getElementById('outlookModal')));
     pruebas.push(prueba('Planificador separado', () => Boolean(document.getElementById('hfCentroFinancieroModal'))));
 
@@ -91,6 +112,7 @@
       total:pruebas.length,
       listo:pruebas.every(p => p.ok) && errores.length === 0 && rechazos.length === 0,
       pruebas,
+      auditoriaConfirmaciones,
       errores:[...errores],
       rechazos:[...rechazos]
     };
@@ -98,6 +120,7 @@
     try { localStorage.setItem('hf_diagnostico_visual', JSON.stringify(resultado)); } catch (_) {}
     console.group(`Hogar Finanzas · diagnóstico ${resultado.listo ? 'APROBADO' : 'CON INCIDENCIAS'}`);
     console.table(pruebas);
+    if (auditoriaConfirmaciones) console.info('Auditoría de confirmaciones:', auditoriaConfirmaciones);
     if (errores.length) console.warn('Errores capturados:', errores);
     if (rechazos.length) console.warn('Promesas rechazadas:', rechazos);
     console.groupEnd();
