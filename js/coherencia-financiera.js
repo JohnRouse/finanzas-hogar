@@ -19,20 +19,16 @@
     return g.tipoMovimiento === 'pagoPrestamo' || g.tipo === 'pago-prestamo' || (g.cat === 'Deudas' && /^pago pr[eé]stamo:/i.test(String(g.desc || '')));
   }
 
-  function esPagoDeuda(g = {}) {
-    return esPagoTarjeta(g) || esPagoPrestamo(g);
-  }
+  function esPagoDeuda(g = {}) { return esPagoTarjeta(g) || esPagoPrestamo(g); }
 
   function saldoPrestamo(p = {}) {
     const valores = [p.saldoPendiente, p.saldo, p.deuda, p.capitalPendiente, p.montoPendiente, p.monto];
-    const valor = valores.find(v => v !== undefined && v !== null && v !== '');
-    return Math.max(0, numero(valor));
+    return Math.max(0, numero(valores.find(v => v !== undefined && v !== null && v !== '')));
   }
 
   function cuotaPrestamo(p = {}) {
     const valores = [p.cuotaMensual, p.cuota, p.pagoMensual, p.minimo];
-    const valor = valores.find(v => v !== undefined && v !== null && v !== '');
-    return Math.max(0, numero(valor));
+    return Math.max(0, numero(valores.find(v => v !== undefined && v !== null && v !== '')));
   }
 
   function calcularResumen({ ingresos = [], gastos = [], metas = [], tarjetas = [], prestamos = [] } = {}) {
@@ -77,11 +73,18 @@
     const deuda = Math.max(0, numero(deudaTotal));
     const pago = Math.max(0, numero(pagoMensual));
     return {
-      deudaTotal:redondear(deuda),
-      pagoMensual:redondear(pago),
+      deudaTotal:redondear(deuda), pagoMensual:redondear(pago),
       meses:deuda > 0 && pago > 0 ? Math.ceil(deuda / pago) : null,
       porcentaje:deuda > 0 ? Math.min(100, pago / deuda * 100) : 0
     };
+  }
+
+  function asignarHTML(elemento, html) {
+    if (elemento && elemento.innerHTML !== html) elemento.innerHTML = html;
+  }
+
+  function asignarTexto(elemento, texto) {
+    if (elemento && elemento.textContent !== texto) elemento.textContent = texto;
   }
 
   function filaObjetivo(titulo, valor, detalle, tono = '') {
@@ -91,21 +94,17 @@
   function aplicarObjetivos(r) {
     const bloque = $('regla-502030');
     if (!bloque) return;
-    const seccion = bloque.closest('.section');
-    const titulo = seccion?.querySelector('.section-title');
-    if (titulo) titulo.textContent = 'Objetivos financieros del mes';
-
-    const meta20 = r.objetivoFinanciero20;
-    bloque.innerHTML = `
+    asignarTexto(bloque.closest('.section')?.querySelector('.section-title'), 'Objetivos financieros del mes');
+    asignarHTML(bloque, `
       <div class="hf-objectives-financial">
         <div class="hf-objectives-intro"><strong>El dinero solo cuenta cuando tiene un destino real</strong><p>El disponible no es ahorro hasta registrarlo en una meta, ni pago de deuda hasta registrar el abono.</p></div>
         <div class="hf-objectives-grid">
           ${filaObjetivo('Ahorro reservado', r.ahorroReservado, r.objetivoMetas > 0 ? `Fondo acumulado de metas por ${moneda(r.objetivoMetas)}` : 'Dinero registrado realmente en metas', r.ahorroReservado > 0 ? 'good' : '')}
           ${filaObjetivo('Pagado a deudas', r.pagosDeudaMes, r.compromisos > 0 ? `Compromisos informados: ${moneda(r.compromisos)}` : 'Pagos registrados durante el mes', r.pagosDeudaMes > 0 ? 'debt' : '')}
-          ${filaObjetivo('Disponible según movimientos', r.disponibleSinAsignar, `Referencia sugerida del 20%: ${moneda(meta20)}`, r.disponibleSinAsignar < 0 ? 'danger' : 'available')}
+          ${filaObjetivo('Disponible según movimientos', r.disponibleSinAsignar, `Referencia sugerida del 20%: ${moneda(r.objetivoFinanciero20)}`, r.disponibleSinAsignar < 0 ? 'danger' : 'available')}
         </div>
         <div class="hf-objectives-note">Necesidades pagadas: <b>${moneda(r.necesidades)}</b> · Gustos pagados: <b>${moneda(r.gustos)}</b>. Las compras con tarjeta por ${moneda(r.comprasCredito)} aumentan deuda, pero no reducen el efectivo de inmediato.</div>
-      </div>`;
+      </div>`);
   }
 
   function barraDistribucion(label, valor, ingreso, clase, ayuda) {
@@ -116,42 +115,33 @@
   function aplicarDistribucion(r) {
     const bloque = $('distribucion-content');
     if (!bloque) return;
-    if (r.ingresoTotal <= 0) {
-      bloque.innerHTML = '<div class="empty-state">Configura tus ingresos para ver la distribución real.</div>';
-      return;
-    }
-    bloque.innerHTML = `
+    if (r.ingresoTotal <= 0) return asignarHTML(bloque, '<div class="empty-state">Configura tus ingresos para ver la distribución real.</div>');
+    asignarHTML(bloque, `
       <div class="hf-coherent-distribution">
         ${barraDistribucion('Consumo pagado con dinero del mes', r.consumosEfectivo, r.ingresoTotal, 'consumption', 'Gastos que sí redujeron el efectivo disponible.')}
         ${barraDistribucion('Pagado a deudas', r.pagosDeudaMes, r.ingresoTotal, 'debt', 'Pagos de tarjetas y préstamos realmente registrados.')}
         ${barraDistribucion('Disponible según movimientos', Math.max(0, r.disponibleSinAsignar), r.ingresoTotal, 'available', 'Aún puede destinarse a gastos, ahorro o pagos adicionales.')}
         <div class="hf-credit-separate"><span>Compras con crédito</span><strong>${moneda(r.comprasCredito)}</strong><small>No salen del efectivo hoy; aumentan la deuda pendiente.</small></div>
-      </div>`;
+      </div>`);
   }
 
   function aplicarPresupuesto(r) {
     const bloque = $('presupuesto-list');
     if (!bloque) return;
-    const titulos = [...bloque.querySelectorAll('.budget-group-title')];
-    const titulo = titulos.find(el => /construcci[oó]n de patrimonio/i.test(el.textContent || ''));
-    if (titulo) titulo.textContent = 'Objetivos financieros';
-
-    const filas = [...bloque.querySelectorAll('.presup-fila')];
-    let ahorro = filas.find(f => /ahorro mensual/i.test(f.querySelector('.presup-label')?.textContent || ''));
+    [...bloque.querySelectorAll('.budget-group-title')].forEach(el => {
+      if (/construcci[oó]n de patrimonio/i.test(el.textContent || '')) asignarTexto(el, 'Objetivos financieros');
+    });
+    const ahorro = [...bloque.querySelectorAll('.presup-fila')].find(f => /ahorro mensual|ahorro reservado/i.test(f.querySelector('.presup-label')?.textContent || ''));
     if (!ahorro) return;
-
     const objetivo = r.objetivoMetas;
     const pct = objetivo > 0 ? Math.min(100, r.ahorroReservado / objetivo * 100) : 0;
     ahorro.classList.add('hf-real-saving-row');
-    const label = ahorro.querySelector('.presup-label');
-    const montos = ahorro.querySelector('.presup-montos');
+    asignarTexto(ahorro.querySelector('.presup-label'), 'Ahorro reservado');
+    asignarTexto(ahorro.querySelector('.presup-montos'), objetivo > 0 ? `Reservado ${moneda(r.ahorroReservado)} / Metas ${moneda(objetivo)}` : `Reservado ${moneda(r.ahorroReservado)} · Sin metas configuradas`);
     const barra = ahorro.querySelector('.presup-bar-fill');
-    if (label) label.textContent = 'Ahorro reservado';
-    if (montos) montos.textContent = objetivo > 0
-      ? `Reservado ${moneda(r.ahorroReservado)} / Metas ${moneda(objetivo)}`
-      : `Reservado ${moneda(r.ahorroReservado)} · Sin metas configuradas`;
     if (barra) {
-      barra.style.width = `${pct.toFixed(1)}%`;
+      const ancho = `${pct.toFixed(1)}%`;
+      if (barra.style.width !== ancho) barra.style.width = ancho;
       barra.style.background = r.ahorroReservado > 0 ? '#2d6a2d' : '#cbd5e1';
     }
 
@@ -162,19 +152,15 @@
       ahorro.insertAdjacentElement('beforebegin', deuda);
     }
     const cumplimiento = r.compromisos > 0 ? Math.min(100, r.pagosDeudaMes / r.compromisos * 100) : 0;
-    deuda.innerHTML = `<div class="presup-header"><span class="presup-label">Pago de deudas este mes</span><span class="presup-montos">Pagado ${moneda(r.pagosDeudaMes)}${r.compromisos > 0 ? ` / Compromisos ${moneda(r.compromisos)}` : ''}</span></div><div class="presup-bar-bg"><div class="presup-bar-fill" style="width:${cumplimiento.toFixed(1)}%;background:#b06a10"></div></div>`;
+    asignarHTML(deuda, `<div class="presup-header"><span class="presup-label">Pago de deudas este mes</span><span class="presup-montos">Pagado ${moneda(r.pagosDeudaMes)}${r.compromisos > 0 ? ` / Compromisos ${moneda(r.compromisos)}` : ''}</span></div><div class="presup-bar-bg"><div class="presup-bar-fill" style="width:${cumplimiento.toFixed(1)}%;background:#b06a10"></div></div>`);
   }
 
-  function fechaISO(valor) {
-    return /^\d{4}-\d{2}-\d{2}$/.test(String(valor || '')) ? String(valor) : '';
-  }
+  function fechaISO(valor) { return /^\d{4}-\d{2}-\d{2}$/.test(String(valor || '')) ? String(valor) : ''; }
 
   function diasHasta(fecha) {
     if (!fechaISO(fecha)) return null;
     const hoy = new Date();
-    const base = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 12);
-    const destino = new Date(`${fecha}T12:00:00`);
-    return Math.ceil((destino - base) / 86400000);
+    return Math.ceil((new Date(`${fecha}T12:00:00`) - new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 12)) / 86400000);
   }
 
   function alertaTarjeta(t = {}) {
@@ -194,8 +180,7 @@
   }
 
   function alertaPrestamo(p = {}) {
-    const fecha = fechaISO(p.proximoVencimiento || p.fechaVencimiento || p.vencimiento);
-    const dias = diasHasta(fecha);
+    const dias = diasHasta(fechaISO(p.proximoVencimiento || p.fechaVencimiento || p.vencimiento));
     if (dias === null || dias > 7) return null;
     const nombre = p.nombre || p.entidad || p.banco || 'Préstamo';
     const cuota = cuotaPrestamo(p);
@@ -206,17 +191,10 @@
   function aplicarAlertas(tarjetas, prestamos) {
     const bloque = $('necesita-atencion');
     if (!bloque) return;
-    const alertas = [...tarjetas.map(alertaTarjeta), ...prestamos.map(alertaPrestamo)]
-      .filter(Boolean)
-      .sort((a,b) => a.prioridad - b.prioridad || a.nombre.localeCompare(b.nombre));
-
-    if (!alertas.length) {
-      bloque.innerHTML = '<div class="hf-compact-alert-empty"><span>✓</span><div><strong>No hay alertas urgentes</strong><small>No se detectaron vencimientos cercanos ni tarjetas excedidas.</small></div></div>';
-      return;
-    }
-
+    const alertas = [...tarjetas.map(alertaTarjeta), ...prestamos.map(alertaPrestamo)].filter(Boolean).sort((a,b) => a.prioridad - b.prioridad || a.nombre.localeCompare(b.nombre));
+    if (!alertas.length) return asignarHTML(bloque, '<div class="hf-compact-alert-empty"><span>✓</span><div><strong>No hay alertas urgentes</strong><small>No se detectaron vencimientos cercanos ni tarjetas excedidas.</small></div></div>');
     const visibles = estado.alertasExpandidas ? alertas : alertas.slice(0, 3);
-    bloque.innerHTML = `<div class="hf-compact-alert-list">${visibles.map(a => `<div class="hf-compact-alert ${a.tipo}"><i>${a.tipo === 'danger' ? '!' : '•'}</i><div><strong>${escapar(a.nombre)}</strong><small>${escapar(a.detalle)}</small></div></div>`).join('')}</div>${alertas.length > 3 ? `<button type="button" class="hf-alert-toggle" onclick="HFCoherenciaFinanciera.toggleAlertas()">${estado.alertasExpandidas ? 'Ver menos' : `Ver todas (${alertas.length})`}</button>` : ''}`;
+    asignarHTML(bloque, `<div class="hf-compact-alert-list">${visibles.map(a => `<div class="hf-compact-alert ${a.tipo}"><i>${a.tipo === 'danger' ? '!' : '•'}</i><div><strong>${escapar(a.nombre)}</strong><small>${escapar(a.detalle)}</small></div></div>`).join('')}</div>${alertas.length > 3 ? `<button type="button" class="hf-alert-toggle" onclick="HFCoherenciaFinanciera.toggleAlertas()">${estado.alertasExpandidas ? 'Ver menos' : `Ver todas (${alertas.length})`}</button>` : ''}`);
   }
 
   function puedeMostrarTendencia(cierres = []) {
@@ -226,9 +204,7 @@
   async function aplicarTendenciaAhorro() {
     const canvas = $('savingChart');
     if (!canvas) return;
-    const seccion = canvas.closest('.section');
-    const titulo = seccion?.querySelector('.section-title');
-    if (titulo) titulo.textContent = 'Tendencia del ahorro reservado';
+    asignarTexto(canvas.closest('.section')?.querySelector('.section-title'), 'Tendencia del ahorro reservado');
     const contenedor = canvas.parentElement;
     let estadoEl = $('hf-saving-trend-state');
     if (!estadoEl) {
@@ -239,8 +215,7 @@
     }
 
     let cierres = [];
-    try { cierres = await window.HFCierreFinancieroMensual?.obtenerUltimosCierres?.(24) || []; }
-    catch (_) { cierres = []; }
+    try { cierres = await window.HFCierreFinancieroMensual?.obtenerUltimosCierres?.(24) || []; } catch (_) {}
     const datos = cierres
       .filter(c => Number.isFinite(Number(c?.totales?.ahorroReservado ?? c?.totales?.fondoReservado)))
       .map(c => ({ mes:c.mes || c.id, valor:numero(c.totales.ahorroReservado ?? c.totales.fondoReservado) }))
@@ -251,7 +226,7 @@
     if (datos.length < 3) {
       canvas.style.display = 'none';
       estadoEl.style.display = 'flex';
-      estadoEl.innerHTML = `<span>📈</span><strong>Aún no hay suficiente historial real</strong><p>El gráfico aparecerá después de guardar ahorro reservado en al menos 3 cierres mensuales. Actualmente hay ${datos.length}.</p>${datos.length ? `<div>${datos.map(d => `<b>${escapar(d.mes)} · ${moneda(d.valor)}</b>`).join('')}</div>` : ''}`;
+      asignarHTML(estadoEl, `<span>📈</span><strong>Aún no hay suficiente historial real</strong><p>El gráfico aparecerá después de guardar ahorro reservado en al menos 3 cierres mensuales. Actualmente hay ${datos.length}.</p>${datos.length ? `<div>${datos.map(d => `<b>${escapar(d.mes)} · ${moneda(d.valor)}</b>`).join('')}</div>` : ''}`);
       return;
     }
 
@@ -269,26 +244,27 @@
     const ruta = document.querySelector('#hf-family-debt-view .hf-family-route');
     if (!ruta) return;
     const p = proyeccionGlobal(r.deudaTotal, r.compromisos);
-    if (p.deudaTotal <= 0) {
-      ruta.innerHTML = '<span>Ruta de deuda</span><strong>No hay deuda pendiente registrada.</strong><p>Las tarjetas y préstamos aparecerán aquí cuando tengan saldo.</p>';
-      return;
-    }
-    if (!p.meses) {
-      ruta.innerHTML = `<span>Ruta de deuda</span><strong>Deben ${moneda(p.deudaTotal)} en total.</strong><p>Falta registrar pagos mínimos o cuotas para calcular una referencia global.</p>`;
-      return;
-    }
-    ruta.innerHTML = `<span>Referencia para todas las deudas</span><strong>Entre mínimos y cuotas tienen registrados ${moneda(p.pagoMensual)} al mes.</strong><p>La deuda actual equivale aproximadamente a ${p.meses} meses de esos pagos, suponiendo que no hagan nuevas compras y sin incluir intereses futuros.</p><div class="hf-family-route-bar"><i style="width:${p.porcentaje.toFixed(1)}%"></i></div><small>Es una referencia de tamaño, no una fecha exacta para quedar libres de deuda.</small>`;
+    if (p.deudaTotal <= 0) return asignarHTML(ruta, '<span>Ruta de deuda</span><strong>No hay deuda pendiente registrada.</strong><p>Las tarjetas y préstamos aparecerán aquí cuando tengan saldo.</p>');
+    if (!p.meses) return asignarHTML(ruta, `<span>Ruta de deuda</span><strong>Deben ${moneda(p.deudaTotal)} en total.</strong><p>Falta registrar pagos mínimos o cuotas para calcular una referencia global.</p>`);
+    asignarHTML(ruta, `<span>Referencia para todas las deudas</span><strong>Entre mínimos y cuotas tienen registrados ${moneda(p.pagoMensual)} al mes.</strong><p>La deuda actual equivale aproximadamente a ${p.meses} meses de esos pagos, suponiendo que no hagan nuevas compras y sin incluir intereses futuros.</p><div class="hf-family-route-bar"><i style="width:${p.porcentaje.toFixed(1)}%"></i></div><small>Es una referencia de tamaño, no una fecha exacta para quedar libres de deuda.</small>`);
+  }
+
+  function mesVisible() {
+    const texto = String($('month-display')?.textContent || '').toLowerCase();
+    const nombres = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const match = texto.match(new RegExp(`(${nombres.join('|')})\\s+(\\d{4})`));
+    return match ? `${match[2]}-${String(nombres.indexOf(match[1]) + 1).padStart(2,'0')}` : (DB.getMesActual?.() || new Date().toISOString().slice(0,7));
+  }
+
+  async function seguro(fn) {
+    try { return typeof fn === 'function' ? await fn() : []; } catch (_) { return []; }
   }
 
   async function cargarDatos() {
     if (!window.DB) return { ingresos:[], gastos:[], metas:[], tarjetas:[], prestamos:[] };
-    const mes = typeof DB.getMesActual === 'function' ? DB.getMesActual() : new Date().toISOString().slice(0,7);
+    const mes = mesVisible();
     const [ingresos, gastos, metas, tarjetas, prestamos] = await Promise.all([
-      DB.getIngresosMes?.(mes).catch(() => []) || [],
-      DB.getGastos?.(mes).catch(() => []) || [],
-      DB.getMetas?.().catch(() => []) || [],
-      DB.getTarjetas?.().catch(() => []) || [],
-      DB.getPrestamos?.().catch(() => []) || []
+      seguro(() => DB.getIngresosMes(mes)), seguro(() => DB.getGastos(mes)), seguro(() => DB.getMetas()), seguro(() => DB.getTarjetas()), seguro(() => DB.getPrestamos())
     ]);
     return { ingresos, gastos, metas, tarjetas, prestamos, mes };
   }
@@ -298,7 +274,7 @@
     if (!mes || !window.db || !window.DB?.hogarId) return;
     try {
       const [ingresos, gastos, metas, tarjetas, prestamos] = await Promise.all([
-        DB.getIngresosMes?.(mes) || [], DB.getGastos?.(mes) || [], DB.getMetas?.() || [], DB.getTarjetas?.() || [], DB.getPrestamos?.() || []
+        seguro(() => DB.getIngresosMes(mes)), seguro(() => DB.getGastos(mes)), seguro(() => DB.getMetas()), seguro(() => DB.getTarjetas()), seguro(() => DB.getPrestamos())
       ]);
       const r = calcularResumen({ ingresos, gastos, metas, tarjetas, prestamos });
       await db.collection('hogares').doc(DB.hogarId).collection('cierres_financieros').doc(mes).update({
@@ -312,9 +288,19 @@
     }
   }
 
+  function conectarObserver() {
+    if (!estado.observer) estado.observer = new MutationObserver(programar);
+    estado.observer.disconnect();
+    ['page-resumen','page-ahorro','page-deudas'].forEach(id => {
+      const nodo = $(id);
+      if (nodo) estado.observer.observe(nodo,{childList:true,subtree:true});
+    });
+  }
+
   async function actualizar() {
     if (estado.actualizando) return false;
     estado.actualizando = true;
+    estado.observer?.disconnect();
     try {
       const datos = await cargarDatos();
       const r = calcularResumen(datos);
@@ -332,6 +318,7 @@
       return false;
     } finally {
       estado.actualizando = false;
+      conectarObserver();
     }
   }
 
@@ -348,21 +335,24 @@
   function iniciar() {
     if (estado.iniciado) return;
     estado.iniciado = true;
+    conectarObserver();
     programar();
     ['hf:deudas-core-actualizadas','hf:deuda-actualizada','hf:gastos-actualizados','hf:cierre-mensual-guardado'].forEach(nombre => window.addEventListener(nombre, programar));
     window.addEventListener('hf:cierre-mensual-guardado', enriquecerCierre);
-    if (!estado.observer) {
-      estado.observer = new MutationObserver(programar);
-      ['page-resumen','page-ahorro','page-deudas'].forEach(id => { const nodo = $(id); if (nodo) estado.observer.observe(nodo,{childList:true,subtree:true}); });
-    }
   }
 
   function obtenerEstado() {
-    return { version:VERSION, iniciado:estado.iniciado, resumen:estado.ultimoResumen, objetivosDisponibles:Boolean(document.querySelector('#regla-502030 .hf-objectives-financial')), tendenciaDisponible:Boolean($('hf-saving-trend-state')), alertasCompactas:Boolean(document.querySelector('#necesita-atencion .hf-compact-alert-list, #necesita-atencion .hf-compact-alert-empty')) };
+    return {
+      version:VERSION,
+      iniciado:estado.iniciado,
+      resumen:estado.ultimoResumen,
+      objetivosDisponibles:Boolean(document.querySelector('#regla-502030 .hf-objectives-financial')),
+      tendenciaDisponible:Boolean($('hf-saving-trend-state')),
+      alertasCompactas:Boolean(document.querySelector('#necesita-atencion .hf-compact-alert-list, #necesita-atencion .hf-compact-alert-empty'))
+    };
   }
 
   window.HFCoherenciaFinanciera = Object.freeze({ iniciar, actualizar, calcularResumen, proyeccionGlobal, puedeMostrarTendencia, toggleAlertas, obtenerEstado });
-
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(iniciar, 360), { once:true });
   else setTimeout(iniciar, 180);
 })();
