@@ -164,6 +164,42 @@
     return 'Calculada con el saldo inicial, las compras y los pagos registrados en la app.';
   }
 
+  function actualizarDatosPago(card, resumen) {
+    const bloque = card.querySelector('.statement-summary');
+    if (!bloque) return;
+    const minimo = resumen.pagoMinimo;
+    const vence = resumen.fechaVencimiento;
+    if (minimo > 0 || vence) {
+      bloque.classList.remove('empty');
+      bloque.innerHTML = `
+        <div><small>Pago mínimo</small><strong>${minimo > 0 ? moneda(minimo) : 'No informado'}</strong></div>
+        <div><small>Próximo vencimiento</small><strong>${vence ? new Date(`${vence}T12:00:00`).toLocaleDateString('es-PE', { day:'2-digit', month:'short' }) : 'No informado'}</strong></div>
+        <span>Puedes cambiar estos datos junto con el saldo en “Actualizar saldo”.</span>`;
+    } else {
+      bloque.classList.add('empty');
+      bloque.innerHTML = '<span>Pago mínimo y vencimiento no informados. Agrégalos desde “Actualizar saldo”.</span>';
+    }
+  }
+
+  function actualizarEstadoVisual(card, resumen) {
+    const estado = card.querySelector('.reconcile-status');
+    if (!estado) return;
+    if (resumen.fuente === 'estado-cuenta') {
+      estado.className = 'reconcile-status reconciled';
+      estado.innerHTML = '<span>Saldo basado en información bancaria</span><small>La app añadió compras y pagos registrados posteriormente.</small>';
+      return;
+    }
+    if (resumen.fuente === 'saldo-confirmado') {
+      estado.className = 'reconcile-status reconciled';
+      estado.innerHTML = '<span>Saldo confirmado</span><small>Coincide con la última actualización manual.</small>';
+      return;
+    }
+    estado.className = resumen.fuente === 'saldo-confirmado-con-movimientos' ? 'reconcile-status pending' : 'reconcile-status neutral';
+    estado.innerHTML = resumen.fuente === 'saldo-confirmado-con-movimientos'
+      ? '<span>Saldo estimado por movimientos nuevos</span><small>Actualízalo cuando quieras volver a compararlo con el banco.</small>'
+      : '<span>Saldo calculado por la app</span><small>Confírmalo desde “Actualizar saldo” cuando revises tu banco.</small>';
+  }
+
   function enriquecerTarjeta(resumen) {
     const card = document.getElementById(`tarjeta-card-${resumen.tarjetaId}`);
     if (!card) return;
@@ -186,6 +222,9 @@
       <small><b>Qué significa:</b> este es el total que todavía debes. ${textoFuente(resumen)}</small>` : `
       <small><b>Qué significa:</b> este es el total que todavía debes en la tarjeta; no es el gasto del mes ni el monto excedido. ${textoFuente(resumen)}</small>`;
     if (detalle.innerHTML !== contenido) detalle.innerHTML = contenido;
+
+    actualizarDatosPago(card, resumen);
+    actualizarEstadoVisual(card, resumen);
 
     const exceso = resumen.lineaTotal > 0 ? Math.max(0, resumen.deudaEstimada - resumen.lineaTotal) : 0;
     const bloqueExceso = card.querySelector('.credit-overflow');
