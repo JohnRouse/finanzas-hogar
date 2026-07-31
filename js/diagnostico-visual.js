@@ -35,6 +35,11 @@
     pruebas.push(prueba('Menú global de movimientos', () => typeof window.toggleExpenseMenu === 'function' && Boolean(document.getElementById('hfExpenseMenuPortal'))));
     pruebas.push(prueba('Pila de modales sin parpadeo', () => typeof window.HFModalStack?.aplicarPila === 'function' && typeof window.HFModalStack?.prepararApertura === 'function' && Boolean(document.getElementById('hf-modal-stack-styles'))));
     pruebas.push(prueba('Escáner de voucher retirado', () => !document.getElementById('voucher-toggle') && !document.getElementById('voucher-panel') && !document.getElementById('voucher-input')));
+    pruebas.push(prueba('Formulario de gasto íntegro', () => {
+      const requeridos = ['gastoModal','gasto-modal-title','gasto-submit-btn','g-desc','g-monto','g-fecha','g-quien','g-medio','cat-chips'];
+      const faltantes = requeridos.filter(id => !document.getElementById(id));
+      return faltantes.length === 0 ? true : `Faltan: ${faltantes.join(', ')}`;
+    }));
     pruebas.push(prueba('Modales FAB unificados', () => Boolean(document.querySelector('#gastoChoiceModal .hf-app-sheet')) && Boolean(document.querySelector('#deudaChoiceModal .hf-app-sheet')) && Boolean(document.querySelector('#hfIngresoChoiceModal .hf-app-sheet'))));
     pruebas.push(prueba('Microsoft Entra no visible', () => !document.getElementById('btn-outlook') && !document.getElementById('outlookModal')));
     pruebas.push(prueba('Planificador separado', () => Boolean(document.getElementById('hfCentroFinancieroModal'))));
