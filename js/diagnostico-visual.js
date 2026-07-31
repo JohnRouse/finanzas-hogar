@@ -34,6 +34,14 @@
     pruebas.push(prueba('Sin actualización duplicada', () => !document.querySelector('#page-deudas [data-hf-update-all]') && !document.querySelector('#page-deudas .debt-action-statement')));
     pruebas.push(prueba('Menú global de movimientos', () => typeof window.toggleExpenseMenu === 'function' && Boolean(document.getElementById('hfExpenseMenuPortal'))));
     pruebas.push(prueba('Pila de modales sin parpadeo', () => typeof window.HFModalStack?.aplicarPila === 'function' && typeof window.HFModalStack?.prepararApertura === 'function' && Boolean(document.getElementById('hf-modal-stack-styles'))));
+    pruebas.push(prueba('Accesibilidad de modales anidados', () => {
+      const estado = window.HFModalStack?.obtenerEstadoAccesibilidad?.();
+      if (!estado) return 'No se encontró el diagnóstico de accesibilidad de modales';
+      if (!estado.usaInert) return 'Un modal de fondo no está marcado como inert';
+      if (estado.fondosConAriaHidden?.length) return `aria-hidden permanece en: ${estado.fondosConAriaHidden.join(', ')}`;
+      if (estado.focoEnFondo) return 'El foco permanece dentro de un modal de fondo';
+      return true;
+    }));
     pruebas.push(prueba('Escáner de voucher retirado', () => !document.getElementById('voucher-toggle') && !document.getElementById('voucher-panel') && !document.getElementById('voucher-input')));
     pruebas.push(prueba('Compatibilidad sin voucher', () => {
       if (!window.HFGastosSinVoucher?.limpiarVoucherSeguro) return 'HFGastosSinVoucher no cargado';
