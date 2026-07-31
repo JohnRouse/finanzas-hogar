@@ -32,13 +32,13 @@
   async function iniciar() {
     if (promesaInicio) return promesaInicio;
     promesaInicio = (async () => {
-      cargarCSS('css/ux-recuperacion.css?v=17.0');
+      cargarCSS('css/ux-recuperacion.css?v=17.1');
       const resultados = [];
-      resultados.push(await cargar('HFModalStack', 'js/modal-stack.js?v=17.0'));
-      resultados.push(await cargar('HFGastosSinVoucher', 'js/gastos-sin-voucher.js?v=17.0'));
-      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=17.0'));
-      resultados.push(await cargar('HFActualizadorSaldosTarjetas', 'js/actualizador-saldos-tarjetas.js?v=17.0'));
-      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=17.0'));
+      resultados.push(await cargar('HFModalStack', 'js/modal-stack.js?v=17.1'));
+      resultados.push(await cargar('HFGastosSinVoucher', 'js/gastos-sin-voucher.js?v=17.1'));
+      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=17.1'));
+      resultados.push(await cargar('HFActualizadorSaldosTarjetas', 'js/actualizador-saldos-tarjetas.js?v=17.1'));
+      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=17.1'));
       try {
         window.HFModalStack?.iniciar?.();
         window.HFGastosSinVoucher?.instalar?.();
