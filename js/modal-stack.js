@@ -37,6 +37,11 @@
       modal.style.setProperty('--hf-modal-z', String(BASE_Z + indice * 20));
       modal.classList.add(esSuperior ? 'hf-modal-top' : 'hf-modal-under');
       modal.setAttribute('aria-hidden', esSuperior ? 'false' : 'true');
+      modal.dataset.hfObservedOpen = '1';
+    });
+
+    document.querySelectorAll('.modal-overlay:not(.open):not(.active)').forEach(modal => {
+      modal.dataset.hfObservedOpen = '0';
     });
 
     document.body.classList.toggle('hf-has-stacked-modals', abiertos.length > 1);
@@ -63,7 +68,10 @@
       const envuelta = function(id, ...args) {
         const resultado = originalClose.call(this, id, ...args);
         const modal = document.getElementById(id);
-        if (modal) delete modal.dataset.hfModalOrder;
+        if (modal) {
+          delete modal.dataset.hfModalOrder;
+          modal.dataset.hfObservedOpen = '0';
+        }
         requestAnimationFrame(aplicarPila);
         return resultado;
       };
@@ -99,13 +107,23 @@
 
   function instalarObserver() {
     if (observer) return;
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+      modal.dataset.hfObservedOpen = estaAbierto(modal) ? '1' : '0';
+    });
+
     observer = new MutationObserver(cambios => {
       let requiereActualizar = false;
       cambios.forEach(cambio => {
         if (cambio.type !== 'attributes' || cambio.attributeName !== 'class') return;
         const modal = cambio.target;
         if (!modal.classList?.contains('modal-overlay')) return;
-        if (estaAbierto(modal)) asegurarOrden(modal);
+
+        const abierto = estaAbierto(modal);
+        const observado = modal.dataset.hfObservedOpen === '1';
+        if (abierto === observado) return;
+
+        modal.dataset.hfObservedOpen = abierto ? '1' : '0';
+        if (abierto) asegurarOrden(modal, true);
         else delete modal.dataset.hfModalOrder;
         requiereActualizar = true;
       });
