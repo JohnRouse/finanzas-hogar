@@ -112,7 +112,6 @@ async function transcribirVoz(buffer) {
         sampleRateHertz:48000,
         languageCode:'es-PE',
         enableAutomaticPunctuation:true,
-        model:'latest_short',
         speechContexts:[{
           phrases:[
             'Yape', 'Plin', 'BCP', 'BBVA', 'Ripley', 'Falabella', 'Santander',
