@@ -17,14 +17,14 @@
   }
 
   function cargar(globalEsperado, ruta) {
-    if (window[globalEsperado]) return Promise.resolve({ globalEsperado, estado: 'ya-cargado' });
+    if (window[globalEsperado]) return Promise.resolve({ globalEsperado, estado:'ya-cargado' });
     return new Promise(resolve => {
       const script = document.createElement('script');
       script.src = new URL(ruta, document.baseURI).href;
       script.async = false;
       script.dataset.hfBootstrap = globalEsperado;
-      script.onload = () => resolve({ globalEsperado, estado: window[globalEsperado] ? 'cargado' : 'sin-global' });
-      script.onerror = () => resolve({ globalEsperado, estado: 'error' });
+      script.onload = () => resolve({ globalEsperado, estado:window[globalEsperado] ? 'cargado' : 'sin-global' });
+      script.onerror = () => resolve({ globalEsperado, estado:'error' });
       document.body.appendChild(script);
     });
   }
@@ -32,12 +32,12 @@
   async function iniciar() {
     if (promesaInicio) return promesaInicio;
     promesaInicio = (async () => {
-      cargarCSS('css/ux-recuperacion.css?v=16.7');
+      cargarCSS('css/ux-recuperacion.css?v=16.8');
       const resultados = [];
-      resultados.push(await cargar('HFModalStack', 'js/modal-stack.js?v=16.7'));
-      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=16.7'));
-      resultados.push(await cargar('HFActualizadorSaldosTarjetas', 'js/actualizador-saldos-tarjetas.js?v=16.7'));
-      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=16.7'));
+      resultados.push(await cargar('HFModalStack', 'js/modal-stack.js?v=16.8'));
+      resultados.push(await cargar('HFRecuperacionProducto', 'js/recuperacion-producto.js?v=16.8'));
+      resultados.push(await cargar('HFActualizadorSaldosTarjetas', 'js/actualizador-saldos-tarjetas.js?v=16.8'));
+      resultados.push(await cargar('HFDiagnosticoVisual', 'js/diagnostico-visual.js?v=16.8'));
       try {
         window.HFModalStack?.iniciar?.();
         window.HFRecuperacionProducto?.iniciar?.();
