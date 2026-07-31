@@ -5,7 +5,7 @@
   if (window.__HF_BOOTSTRAP_AVANZADO__) return;
   window.__HF_BOOTSTRAP_AVANZADO__ = true;
 
-  const VERSION = '18.1';
+  const VERSION = '18.2';
   let promesaInicio = null;
 
   function cargarCSS(ruta, clave) {
@@ -36,6 +36,7 @@
       cargarCSS(`css/ux-recuperacion.css?v=${VERSION}`, 'ux-recuperacion');
       cargarCSS(`css/cierre-financiero-mensual.css?v=${VERSION}`, 'cierre-financiero-mensual');
       cargarCSS(`css/deudas-familiares.css?v=${VERSION}`, 'deudas-familiares');
+      cargarCSS(`css/coherencia-financiera.css?v=${VERSION}`, 'coherencia-financiera');
 
       const resultados = [];
       resultados.push(await cargar('HFModalStack', `js/modal-stack.js?v=${VERSION}`));
@@ -45,6 +46,8 @@
       resultados.push(await cargar('HFActualizadorSaldosTarjetas', `js/actualizador-saldos-tarjetas.js?v=${VERSION}`));
       resultados.push(await cargar('HFCierreFinancieroMensual', `js/cierre-financiero-mensual.js?v=${VERSION}`));
       resultados.push(await cargar('HFDeudasFamiliares', `js/deudas-familiares.js?v=${VERSION}`));
+      resultados.push(await cargar('HFCoherenciaFinanciera', `js/coherencia-financiera.js?v=${VERSION}`));
+      resultados.push(await cargar('HFSimuladorPagoExtra', `js/simulador-pago-extra.js?v=${VERSION}`));
       resultados.push(await cargar('HFDiagnosticoVisual', `js/diagnostico-visual.js?v=${VERSION}`));
       resultados.push(await cargar('HFDiagnosticoEtapa12', `js/diagnostico-etapa-12.js?v=${VERSION}`));
 
@@ -56,8 +59,11 @@
         window.HFActualizadorSaldosTarjetas?.iniciar?.();
         window.HFCierreFinancieroMensual?.iniciar?.();
         window.HFDeudasFamiliares?.iniciar?.();
+        window.HFCoherenciaFinanciera?.iniciar?.();
+        window.HFSimuladorPagoExtra?.iniciar?.();
         await window.HFDeudasActuales?.actualizar?.(true);
         await window.HFDeudasFamiliares?.renderizar?.();
+        await window.HFCoherenciaFinanciera?.actualizar?.();
       } catch (error) {
         console.warn('El arranque avanzado inició con una incidencia:', error);
       }
