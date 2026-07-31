@@ -45,6 +45,16 @@
       return faltantes.length === 0 ? true : `Faltan: ${faltantes.join(', ')}`;
     }));
     pruebas.push(prueba('Modales FAB unificados', () => Boolean(document.querySelector('#gastoChoiceModal .hf-app-sheet')) && Boolean(document.querySelector('#deudaChoiceModal .hf-app-sheet')) && Boolean(document.querySelector('#hfIngresoChoiceModal .hf-app-sheet'))));
+    pruebas.push(prueba('Cierre contenido en los modales FAB', () => {
+      const ids = ['hfIngresoChoiceModal','gastoChoiceModal','deudaChoiceModal'];
+      const incorrectos = ids.filter(id => {
+        const sheet = document.querySelector(`#${id} .hf-app-sheet`);
+        const close = sheet?.querySelector('.hf-sheet-close');
+        if (!sheet || !close) return true;
+        return getComputedStyle(sheet).position !== 'relative' || getComputedStyle(close).position !== 'absolute';
+      });
+      return incorrectos.length === 0 ? true : `Revisar: ${incorrectos.join(', ')}`;
+    }));
     pruebas.push(prueba('Microsoft Entra no visible', () => !document.getElementById('btn-outlook') && !document.getElementById('outlookModal')));
     pruebas.push(prueba('Planificador separado', () => Boolean(document.getElementById('hfCentroFinancieroModal'))));
 
