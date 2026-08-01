@@ -3,7 +3,7 @@
   'use strict';
   if (window.HFAjustesPostPruebaMovil) return;
 
-  const VERSION = '19.1';
+  const VERSION = '19.2';
   const ICONOS = Object.freeze({
     'Alimentación':'🛒',
     'Servicios':'⚡',
@@ -29,6 +29,77 @@
 
   function iconoCategoria(categoria) {
     return ICONOS[categoriaCompatible(categoria)] || ICONOS.Otros;
+  }
+
+  function valorTemporal(valor) {
+    if (!valor) return 0;
+    if (typeof valor === 'number' && Number.isFinite(valor)) return valor;
+    if (typeof valor === 'string') {
+      const fecha = Date.parse(valor);
+      return Number.isFinite(fecha) ? fecha : 0;
+    }
+    if (valor instanceof Date) return valor.getTime();
+    if (typeof valor.toMillis === 'function') {
+      const ms = Number(valor.toMillis());
+      return Number.isFinite(ms) ? ms : 0;
+    }
+    if (typeof valor.toDate === 'function') {
+      const fecha = valor.toDate();
+      return fecha instanceof Date ? fecha.getTime() : 0;
+    }
+    if (Number.isFinite(Number(valor.seconds))) {
+      return Number(valor.seconds) * 1000 + Number(valor.nanoseconds || 0) / 1000000;
+    }
+    return 0;
+  }
+
+  function fechaISOCompatible(valor) {
+    const ms = valorTemporal(valor);
+    return ms > 0 ? new Date(ms).toISOString() : null;
+  }
+
+  function instalarRenderGastosSeguro() {
+    if (window.__HF_RENDER_GASTOS_SEGURO__) return;
+    window.__HF_RENDER_GASTOS_SEGURO__ = true;
+
+    window.renderGastos = function renderGastosSeguro(gastos, cfg) {
+      const el = document.getElementById('expenseList');
+      if (!el) return;
+
+      gastosDelMesCache = [...(Array.isArray(gastos) ? gastos : [])].sort((a, b) => {
+        const fechaDiff = String(b.fecha || '').localeCompare(String(a.fecha || ''));
+        if (fechaDiff !== 0) return fechaDiff;
+        return valorTemporal(b.creadoEn) - valorTemporal(a.creadoEn);
+      });
+      configCache = cfg || {};
+
+      if (gastosDelMesCache.length === 0) {
+        el.innerHTML = '<div class="empty-state">Sin gastos registrados este mes.<br>Presiona "+ Agregar" para empezar.</div>';
+        return;
+      }
+
+      const gastosFiltrados = aplicarFiltroGastos(gastosDelMesCache);
+      if (gastosFiltrados.length === 0) {
+        el.innerHTML = '<div class="empty-state">No hay movimientos para este filtro.</div>';
+        return;
+      }
+
+      const resumen = gastosFiltrados.slice(0, 5);
+      let html = resumen.map(g => generarGastoHTML(g, configCache)).join('');
+
+      if (gastosFiltrados.length > 5) {
+        const mesTexto = DB.formatMes(mesActual);
+        html += `
+          <div class="ver-todo-container">
+            <button class="btn-ver-todo" onclick="abrirHistorialCompleto()">
+              Ver todos los movimientos de ${mesTexto}
+            </button>
+          </div>`;
+      }
+
+      el.innerHTML = html;
+      setTimeout(initGestures, 100);
+    };
   }
 
   function prepararModalRevision() {
@@ -85,6 +156,10 @@
       cambios.medioOriginalTelegram = gasto.medio || null;
       cambios.medio = medio;
     }
+    if (gasto.creadoEn && typeof gasto.creadoEn !== 'string') {
+      const creadoEnISO = fechaISOCompatible(gasto.creadoEn);
+      if (creadoEnISO) cambios.creadoEn = creadoEnISO;
+    }
     if (!Object.keys(cambios).length) return false;
     cambios.normalizadoEn = firebase.firestore.FieldValue.serverTimestamp();
     await ref.set(cambios, { merge:true });
@@ -110,6 +185,7 @@
   }
 
   function instalar() {
+    instalarRenderGastosSeguro();
     prepararModalRevision();
     observer = new MutationObserver(prepararModalRevision);
     observer.observe(document.body, { childList:true, subtree:true });
@@ -124,7 +200,10 @@
       }
     });
 
-    setTimeout(repararMovimientosTelegram, 1200);
+    setTimeout(async () => {
+      await repararMovimientosTelegram();
+      if (typeof window.renderTodo === 'function') await window.renderTodo();
+    }, 350);
     return true;
   }
 
@@ -134,6 +213,7 @@
     medioCompatible,
     categoriaCompatible,
     iconoCategoria,
+    valorTemporal,
     version:VERSION
   });
 })();
