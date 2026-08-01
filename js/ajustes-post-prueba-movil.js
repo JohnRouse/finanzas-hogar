@@ -3,7 +3,7 @@
   'use strict';
   if (window.HFAjustesPostPruebaMovil) return;
 
-  const VERSION = '19.2';
+  const VERSION = '19.3';
   const ICONOS = Object.freeze({
     'Alimentación':'🛒',
     'Servicios':'⚡',
@@ -18,6 +18,15 @@
   const MEDIOS_DINERO = new Set(['yape','plin','debito','transferencia']);
   let reparando = false;
   let observer = null;
+
+  function numero(valor) {
+    const n = Number(valor);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function redondearDinero(valor) {
+    return Math.round(numero(valor) * 100) / 100;
+  }
 
   function medioCompatible(medio) {
     return MEDIOS_DINERO.has(String(medio || '').toLowerCase()) ? 'efectivo' : (medio || 'efectivo');
@@ -138,6 +147,63 @@
     }, true);
   }
 
+  async function aplicarImpactoTarjetaSiFalta(gastoRef) {
+    let detalle = null;
+    const aplicado = await db.runTransaction(async transaction => {
+      const gastoSnap = await transaction.get(gastoRef);
+      if (!gastoSnap.exists) return false;
+      const gasto = gastoSnap.data() || {};
+      const monto = redondearDinero(gasto.monto);
+      const esCompraTarjeta = gasto.fuente === 'telegram'
+        && (gasto.tipoMovimiento || 'gasto') === 'gasto'
+        && gasto.medio === 'tarjeta'
+        && gasto.tarjetaId
+        && monto > 0;
+
+      if (!esCompraTarjeta || gasto.impactoTarjetaAplicado === true) return false;
+
+      const tarjetaRef = db.collection('hogares').doc(DB.hogarId)
+        .collection('tarjetas').doc(String(gasto.tarjetaId));
+      const tarjetaSnap = await transaction.get(tarjetaRef);
+      if (!tarjetaSnap.exists) throw new Error('La tarjeta vinculada al gasto de Telegram ya no existe.');
+
+      const tarjeta = tarjetaSnap.data() || {};
+      const deudaAnterior = redondearDinero(tarjeta.deuda);
+      const deudaNueva = redondearDinero(deudaAnterior + monto);
+      const actualizadoEn = new Date().toISOString();
+
+      transaction.update(tarjetaRef, {
+        deuda:deudaNueva,
+        saldoEstimado:true,
+        pendienteConciliar:true,
+        actualizadoEn
+      });
+      transaction.set(gastoRef, {
+        impactoTarjetaAplicado:true,
+        impactoTarjetaMonto:monto,
+        impactoTarjetaDeudaAnterior:deudaAnterior,
+        impactoTarjetaDeudaNueva:deudaNueva,
+        impactoTarjetaAplicadoEn:firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge:true });
+
+      detalle = {
+        gastoId:gastoRef.id,
+        tarjetaId:String(gasto.tarjetaId),
+        monto,
+        deudaAnterior,
+        deudaNueva
+      };
+      return true;
+    });
+
+    if (aplicado && detalle) {
+      window.dispatchEvent(new CustomEvent('hf:deuda-actualizada', {
+        detail:{ fuente:'telegram', ...detalle }
+      }));
+    }
+    return aplicado;
+  }
+
   async function repararGasto(id) {
     if (!id || !window.db || !window.DB?.hogarId) return false;
     const ref = db.collection('hogares').doc(DB.hogarId).collection('gastos').doc(id);
@@ -160,10 +226,16 @@
       const creadoEnISO = fechaISOCompatible(gasto.creadoEn);
       if (creadoEnISO) cambios.creadoEn = creadoEnISO;
     }
-    if (!Object.keys(cambios).length) return false;
-    cambios.normalizadoEn = firebase.firestore.FieldValue.serverTimestamp();
-    await ref.set(cambios, { merge:true });
-    return true;
+
+    let normalizado = false;
+    if (Object.keys(cambios).length) {
+      cambios.normalizadoEn = firebase.firestore.FieldValue.serverTimestamp();
+      await ref.set(cambios, { merge:true });
+      normalizado = true;
+    }
+
+    const impactoTarjeta = await aplicarImpactoTarjetaSiFalta(ref);
+    return normalizado || impactoTarjeta;
   }
 
   async function repararMovimientosTelegram() {
@@ -177,6 +249,7 @@
         if (await repararGasto(doc.id)) cambios += 1;
       }
       if (cambios && typeof window.renderTodo === 'function') await window.renderTodo();
+      if (cambios) await window.HFDeudasFamiliares?.renderizar?.();
     } catch (error) {
       console.warn('No se pudieron normalizar algunos movimientos de Telegram:', error);
     } finally {
@@ -195,6 +268,7 @@
       try {
         const cambio = await repararGasto(id);
         if (cambio && typeof window.renderTodo === 'function') await window.renderTodo();
+        if (cambio) await window.HFDeudasFamiliares?.renderizar?.();
       } catch (error) {
         console.warn('No se pudo completar el movimiento de Telegram:', error);
       }
@@ -214,6 +288,7 @@
     categoriaCompatible,
     iconoCategoria,
     valorTemporal,
+    aplicarImpactoTarjetaSiFalta,
     version:VERSION
   });
 })();
