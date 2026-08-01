@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '19.0';
+  const VERSION = '19.2';
   let temporizador = null;
   let bootstrapSolicitado = false;
 
