@@ -5,7 +5,7 @@
   if (window.__HF_BOOTSTRAP_AVANZADO__) return;
   window.__HF_BOOTSTRAP_AVANZADO__ = true;
 
-  const VERSION = '19.3';
+  const VERSION = '19.4';
   let promesaInicio = null;
 
   function cargarCSS(ruta, clave) {
