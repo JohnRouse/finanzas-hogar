@@ -1,5 +1,11 @@
 /* Hogar Finanzas — correcciones visuales posteriores a la prueba móvil */
 
+/* Se retiran del recorrido diario los bloques solicitados. */
+#atencion-section,
+#page-deudas .hf-family-route{
+  display:none!important;
+}
+
 /* El contador debe ser una insignia junto al título, no una barra completa. */
 .hf-telegram-pending-head{
   display:grid!important;
