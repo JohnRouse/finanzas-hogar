@@ -2,7 +2,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '19.4';
+  const VERSION = '20.0';
   let temporizador = null;
   let bootstrapSolicitado = false;
 
@@ -18,6 +18,7 @@
         await window.HFCoherenciaFinanciera?.actualizar?.();
         window.HFSimuladorPagoExtra?.iniciar?.();
         window.HFTelegramPendientes?.conectar?.();
+        window.HFExperienciaFinanciera14?.iniciar?.();
       } catch (error) {
         console.warn('No se pudo refrescar la interfaz financiera:', error);
       }
@@ -33,6 +34,7 @@
         window.HFCierreFinancieroMensual?.iniciar?.();
         await window.HFDeudasFamiliares?.renderizar?.();
         await window.HFCoherenciaFinanciera?.actualizar?.();
+        window.HFExperienciaFinanciera14?.iniciar?.();
       } catch (error) {
         console.warn('No se pudo actualizar el resumen de deudas:', error);
       }
@@ -73,6 +75,7 @@
     window.HFCierreFinancieroMensual?.iniciar?.();
     window.HFDeudasFamiliares?.renderizar?.();
     window.HFCoherenciaFinanciera?.actualizar?.();
+    window.HFExperienciaFinanciera14?.iniciar?.();
   });
 
   if (document.readyState === 'loading') {
