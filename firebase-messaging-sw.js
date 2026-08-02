@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v20-etapa14';
+const CACHE_NAME = 'hogar-finanzas-v21-correccion-visual-v2';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
@@ -37,6 +37,8 @@ const APP_SHELL = [
   './js/experiencia-financiera-14.js?v=20.0',
   './js/diagnostico-etapa-14.js?v=20.0',
   './css/experiencia-financiera-14.css?v=20.0',
+  './css/experiencia-financiera-v2.css?v=21.0',
+  './js/experiencia-financiera-v2.js?v=21.0',
   './js/motor-predictivo-financiero.js?v=11.5.4',
   './js/panel-predicciones-financieras.js?v=11.5.4',
   './js/optimizador-pagos.js?v=11.5.4'
