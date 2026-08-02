@@ -5,7 +5,7 @@
   if (window.__HF_BOOTSTRAP_AVANZADO__) return;
   window.__HF_BOOTSTRAP_AVANZADO__ = true;
 
-  const VERSION = '19.4';
+  const VERSION = '20.0';
   let promesaInicio = null;
 
   function cargarCSS(ruta, clave) {
@@ -40,6 +40,7 @@
       cargarCSS(`css/coherencia-financiera.css?v=${VERSION}`, 'coherencia-financiera');
       cargarCSS(`css/telegram-pendientes.css?v=${VERSION}`, 'telegram-pendientes');
       cargarCSS(`css/ajustes-post-prueba-movil.css?v=${VERSION}`, 'ajustes-post-prueba-movil');
+      cargarCSS(`css/experiencia-financiera-14.css?v=${VERSION}`, 'experiencia-financiera-14');
 
       const resultados = [];
       resultados.push(await cargar('HFModalStack', `js/modal-stack.js?v=${VERSION}`));
@@ -53,9 +54,11 @@
       resultados.push(await cargar('HFSimuladorPagoExtra', `js/simulador-pago-extra.js?v=${VERSION}`));
       resultados.push(await cargar('HFTelegramPendientes', `js/telegram-pendientes.js?v=${VERSION}`));
       resultados.push(await cargar('HFAjustesPostPruebaMovil', `js/ajustes-post-prueba-movil.js?v=${VERSION}`));
+      resultados.push(await cargar('HFExperienciaFinanciera14', `js/experiencia-financiera-14.js?v=${VERSION}`));
       resultados.push(await cargar('HFDiagnosticoVisual', `js/diagnostico-visual.js?v=${VERSION}`));
       resultados.push(await cargar('HFDiagnosticoEtapa12', `js/diagnostico-etapa-12.js?v=${VERSION}`));
       resultados.push(await cargar('HFDiagnosticoEtapa13', `js/diagnostico-etapa-13.js?v=${VERSION}`));
+      resultados.push(await cargar('HFDiagnosticoEtapa14', `js/diagnostico-etapa-14.js?v=${VERSION}`));
 
       try {
         window.HFModalStack?.iniciar?.();
@@ -69,6 +72,7 @@
         window.HFSimuladorPagoExtra?.iniciar?.();
         window.HFTelegramPendientes?.iniciar?.();
         window.HFAjustesPostPruebaMovil?.instalar?.();
+        window.HFExperienciaFinanciera14?.iniciar?.();
         await window.HFDeudasActuales?.actualizar?.(true);
         await window.HFDeudasFamiliares?.renderizar?.();
         await window.HFCoherenciaFinanciera?.actualizar?.();

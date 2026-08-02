@@ -1,0 +1,520 @@
+/* Hogar Finanzas — Etapa 14: experiencia financiera multidispositivo */
+
+#estado-mes,
+#estado-mes[data-hf-stage14-hidden="true"]{
+  display:none!important;
+}
+
+#hf-family-debt-view .hf-family-debt-head,
+#hf-family-debt-view .hf-family-priority,
+#hf-family-debt-view .hf-family-route{
+  display:none!important;
+}
+#hf-family-debt-view{
+  padding-top:4px!important;
+}
+
+#page-gastos .expense-card-shell{
+  padding:10px!important;
+}
+#page-gastos .expense-list{
+  display:grid;
+  gap:10px;
+}
+#page-gastos .expense-item{
+  border:0!important;
+  margin:0!important;
+  min-width:0;
+}
+#page-gastos .expense-item-inner{
+  display:grid!important;
+  grid-template-columns:48px minmax(0,1fr) auto 28px!important;
+  grid-template-areas:"icon info amount menu"!important;
+  align-items:center!important;
+  gap:12px!important;
+  min-width:0!important;
+  padding:14px!important;
+  border:1px solid var(--border)!important;
+  border-radius:18px!important;
+  background:var(--surface)!important;
+  box-shadow:0 3px 12px rgba(20,31,55,.06)!important;
+}
+#page-gastos .expense-icon,
+#modalHistorial .expense-icon{
+  grid-area:icon;
+  width:44px!important;
+  height:44px!important;
+  min-width:44px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:14px!important;
+  font-size:21px!important;
+}
+#page-gastos .expense-info,
+#modalHistorial .expense-info{
+  grid-area:info;
+  min-width:0!important;
+}
+#page-gastos .expense-name,
+#modalHistorial .expense-name{
+  display:-webkit-box!important;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden!important;
+  white-space:normal!important;
+  text-overflow:initial!important;
+  font-size:15px!important;
+  line-height:1.25!important;
+  font-weight:650!important;
+  color:var(--text)!important;
+}
+#page-gastos .expense-cat,
+#modalHistorial .expense-cat{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:0!important;
+  margin-top:4px!important;
+  font-size:12.5px!important;
+  line-height:1.3!important;
+  color:var(--text2)!important;
+  white-space:normal!important;
+}
+#page-gastos .expense-right,
+#modalHistorial .expense-right{
+  grid-area:amount;
+  min-width:max-content!important;
+  text-align:right!important;
+  align-self:center!important;
+}
+#page-gastos .expense-amount,
+#modalHistorial .expense-amount{
+  font-size:16px!important;
+  line-height:1.1!important;
+  font-weight:700!important;
+  white-space:nowrap!important;
+}
+#page-gastos .expense-who,
+#modalHistorial .expense-who{
+  display:block!important;
+  margin-top:5px!important;
+  font-size:11.5px!important;
+  white-space:nowrap!important;
+  color:var(--text3)!important;
+}
+#page-gastos .expense-more-wrap,
+#modalHistorial .expense-more-wrap{
+  grid-area:menu;
+  align-self:center!important;
+}
+.hf-movement-badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+  min-width:0;
+}
+.hf-movement-badge{
+  display:inline-flex;
+  align-items:center;
+  max-width:100%;
+  padding:4px 7px;
+  border-radius:7px;
+  font-size:10.5px;
+  line-height:1.15;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.hf-movement-badge.card{
+  color:#1556b8;
+  background:#edf4ff;
+  border:1px solid #bdd5ff;
+}
+.hf-movement-badge.payment{
+  color:#5d3ca8;
+  background:#f4efff;
+}
+.hf-movement-badge.source{
+  color:#4f5b6d;
+  background:#eef1f5;
+}
+.hf-movement-card.is-payment .expense-amount{
+  color:#445065!important;
+}
+.hf-movement-card.is-credit .expense-amount{
+  color:#b42318!important;
+}
+#modalHistorial .modal-sheet{
+  width:min(100%, 620px)!important;
+}
+#modalHistorial .modal-header{
+  align-items:flex-start!important;
+  gap:12px!important;
+}
+#historialTitle{
+  margin:0!important;
+  padding-right:4px!important;
+  font-size:25px!important;
+  line-height:1.15!important;
+  overflow-wrap:anywhere;
+}
+#modalHistorial .lista-gastos-full{
+  display:grid;
+  gap:10px;
+}
+#modalHistorial .expense-item-inner{
+  display:grid!important;
+  grid-template-columns:48px minmax(0,1fr) auto 28px!important;
+  grid-template-areas:"icon info amount menu"!important;
+  align-items:center!important;
+  gap:12px!important;
+  padding:14px!important;
+  border:1px solid var(--border)!important;
+  border-radius:18px!important;
+  background:var(--surface)!important;
+}
+
+.hf-stage14-debt-actions{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+  margin-top:13px;
+  padding-top:12px;
+  border-top:1px solid var(--border);
+}
+.hf-stage14-debt-actions button{
+  min-width:0;
+  padding:9px 5px;
+  border:1px solid #d9e1ee;
+  border-radius:10px;
+  background:#f8fafc;
+  color:#334155;
+  font-size:11px;
+  font-weight:650;
+  cursor:pointer;
+}
+.hf-stage14-debt-actions button:first-child{
+  color:#1559b7;
+  background:#eef5ff;
+  border-color:#c8dcff;
+}
+.hf-stage14-debt-actions button.danger{
+  color:#b42318;
+  background:#fff3f2;
+  border-color:#ffd1cc;
+}
+
+.hf-stage14-statement-note{
+  margin:4px 0 18px;
+  padding:12px 14px;
+  border-radius:12px;
+  background:#f2f6fb;
+  color:#526071;
+  font-size:12.5px;
+  line-height:1.45;
+}
+.hf-payment-bank-balance .field-help,
+.hf-stage14-card-extra + .field-help{
+  display:block;
+  margin-top:6px;
+}
+
+.hf-stage14-sheet{
+  width:min(100%, 760px)!important;
+  max-height:min(92vh, 900px)!important;
+  overflow-y:auto!important;
+}
+.hf-stage14-intro{
+  margin:-8px 0 18px;
+  color:var(--text2);
+  font-size:13px;
+  line-height:1.45;
+}
+.hf-stage14-chart-card{
+  margin-bottom:16px;
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:var(--surface);
+}
+.hf-stage14-chart-card>div:first-child{
+  display:grid;
+  gap:3px;
+}
+.hf-stage14-chart-card strong{
+  font-size:14px;
+}
+.hf-stage14-chart-card small{
+  color:var(--text3);
+  line-height:1.35;
+}
+.hf-stage14-chart-card.compact{
+  margin-top:18px;
+}
+.hf-stage14-chart-wrap{
+  height:220px;
+  margin-top:12px;
+}
+.hf-stage14-card-list{
+  display:grid;
+  gap:10px;
+}
+.hf-stage14-card-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--surface);
+}
+.hf-stage14-card-row>div{
+  display:grid;
+  gap:4px;
+  min-width:0;
+}
+.hf-stage14-card-row strong{
+  font-size:14px;
+}
+.hf-stage14-card-row small{
+  color:var(--text3);
+  line-height:1.35;
+}
+.hf-stage14-card-row button,
+.hf-statement-history-row button{
+  padding:9px 11px;
+  border:0;
+  border-radius:10px;
+  color:#1559b7;
+  background:#edf4ff;
+  font-size:12px;
+  font-weight:650;
+  cursor:pointer;
+}
+.hf-statement-form{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.hf-statement-form label{
+  display:grid;
+  gap:6px;
+  min-width:0;
+  color:var(--text2);
+  font-size:12px;
+  font-weight:600;
+}
+.hf-statement-form label.wide{
+  grid-column:1/-1;
+}
+.hf-statement-form input{
+  width:100%;
+  min-width:0;
+  padding:12px 13px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface);
+  color:var(--text);
+  font:inherit;
+  font-size:14px;
+  font-weight:400;
+}
+.hf-stage14-subtitle{
+  margin:18px 0 9px;
+  color:var(--text3);
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.hf-statement-history{
+  display:grid;
+  gap:9px;
+}
+.hf-statement-history-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:14px;
+}
+.hf-statement-history-row>div{
+  display:grid;
+  gap:3px;
+  min-width:0;
+}
+.hf-statement-history-row span{
+  font-size:13px;
+}
+.hf-statement-history-row small{
+  color:var(--text3);
+  line-height:1.35;
+}
+
+#hfCentroFinancieroModal .hf-finance-form input,
+#hfCentroFinancieroModal .hf-finance-form select{
+  min-width:0!important;
+}
+
+.hf-card-bank-history{
+  display:grid;
+  gap:9px;
+  padding-bottom:8px;
+}
+.hf-bank-movement{
+  display:grid;
+  grid-template-columns:40px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface);
+}
+.hf-bank-movement-icon{
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:#f3f6fa;
+}
+.hf-bank-movement>div:nth-child(2){
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+.hf-bank-movement strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:13.5px;
+}
+.hf-bank-movement span,
+.hf-bank-movement small{
+  color:var(--text3);
+  font-size:11.5px;
+  line-height:1.3;
+}
+.hf-bank-movement>b{
+  white-space:nowrap;
+  font-size:14px;
+}
+.hf-bank-movement.debit>b{color:#c43030;}
+.hf-bank-movement.credit>b{color:#198754;}
+.hf-bank-movement.credit .hf-bank-movement-icon{background:#eaf8ef;color:#198754;}
+.hf-bank-movement.debit .hf-bank-movement-icon{background:#fff0ef;color:#c43030;}
+
+[hidden]{display:none!important;}
+
+@media(max-width:560px){
+  #page-gastos .expense-item-inner,
+  #modalHistorial .expense-item-inner{
+    grid-template-columns:44px minmax(0,1fr) 28px!important;
+    grid-template-areas:
+      "icon info menu"
+      "icon amount amount"!important;
+    align-items:start!important;
+    gap:8px 10px!important;
+    padding:13px!important;
+  }
+  #page-gastos .expense-right,
+  #modalHistorial .expense-right{
+    display:flex!important;
+    justify-content:space-between!important;
+    align-items:center!important;
+    width:100%!important;
+    padding-top:5px!important;
+    text-align:left!important;
+    border-top:1px dashed #e4e9f0;
+  }
+  #page-gastos .expense-who,
+  #modalHistorial .expense-who{
+    margin:0!important;
+  }
+  #page-gastos .expense-name,
+  #modalHistorial .expense-name{
+    font-size:14px!important;
+  }
+  #page-gastos .expense-amount,
+  #modalHistorial .expense-amount{
+    font-size:15px!important;
+  }
+  #page-gastos .expense-card-shell{
+    padding:8px!important;
+  }
+  #historialTitle{
+    font-size:22px!important;
+  }
+  .hf-stage14-debt-actions{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .hf-statement-form{
+    grid-template-columns:1fr;
+  }
+  .hf-statement-form label.wide{
+    grid-column:auto;
+  }
+  .hf-stage14-chart-wrap{
+    height:190px;
+  }
+  #tarjetaModal .input-row-two,
+  #pagoTarjetaModal .input-row-two{
+    grid-template-columns:1fr!important;
+  }
+}
+
+@media(max-width:390px){
+  .app-header{
+    padding-left:14px!important;
+    padding-right:14px!important;
+  }
+  #page-gastos .section,
+  #page-deudas .section{
+    padding-left:10px!important;
+    padding-right:10px!important;
+  }
+  .expense-filter-bar{
+    gap:6px!important;
+  }
+  .expense-filter{
+    padding-left:11px!important;
+    padding-right:11px!important;
+  }
+  .hf-family-card{
+    padding:13px!important;
+  }
+  .hf-stage14-card-row,
+  .hf-statement-history-row{
+    grid-template-columns:1fr;
+  }
+  .hf-stage14-card-row button,
+  .hf-statement-history-row button{
+    width:100%;
+  }
+  .hf-bank-movement{
+    grid-template-columns:38px minmax(0,1fr);
+  }
+  .hf-bank-movement>b{
+    grid-column:2;
+    justify-self:start;
+  }
+}
+
+@media(min-width:760px){
+  #page-gastos .expense-list{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  #page-gastos .ver-todo-container{
+    grid-column:1/-1;
+  }
+  #hf-family-debt-view .hf-family-card-list{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:14px!important;
+  }
+  .hf-stage14-card-list{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
