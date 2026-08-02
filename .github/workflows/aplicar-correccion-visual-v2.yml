@@ -1,0 +1,47 @@
+name: Aplicar corrección visual V2
+
+on:
+  push:
+    branches:
+      - etapa-15-correccion-visual-v2
+    paths:
+      - .github/workflows/aplicar-correccion-visual-v2.yml
+      - scripts/aplicar_correccion_visual_v2.py
+      - css/experiencia-financiera-v2.css
+      - js/experiencia-financiera-v2.js
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  aplicar:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar rama de validación
+        uses: actions/checkout@v4
+        with:
+          ref: etapa-15-correccion-visual-v2
+          fetch-depth: 0
+
+      - name: Aplicar cambios en HTML y caché PWA
+        run: python3 scripts/aplicar_correccion_visual_v2.py
+
+      - name: Validar JavaScript
+        run: |
+          node --check js/app.js
+          node --check js/experiencia-financiera-v2.js
+
+      - name: Guardar archivos generados
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html firebase-messaging-sw.js
+          if git diff --cached --quiet; then
+            echo "No hay cambios pendientes."
+            exit 0
+          fi
+          git commit -m "Aplica corrección visual V2 para validación"
+          git push origin etapa-15-correccion-visual-v2
