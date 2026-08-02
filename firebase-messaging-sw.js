@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v3-etapa11-5-4';
+const CACHE_NAME = 'hogar-finanzas-v20-etapa14';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
@@ -32,7 +32,11 @@ const APP_SHELL = [
   './js/actualizador-tarjetas-outlook.js?v=11.5.4',
   './js/outlook-ui.js?v=11.5.4',
   './js/deudas-inteligentes.js?v=11.2.1',
-  './js/sincronizacion-financiera-ui.js?v=11.5.4',
+  './js/sincronizacion-financiera-ui.js?v=20.0',
+  './js/bootstrap-avanzado.js?v=20.0',
+  './js/experiencia-financiera-14.js?v=20.0',
+  './js/diagnostico-etapa-14.js?v=20.0',
+  './css/experiencia-financiera-14.css?v=20.0',
   './js/motor-predictivo-financiero.js?v=11.5.4',
   './js/panel-predicciones-financieras.js?v=11.5.4',
   './js/optimizador-pagos.js?v=11.5.4'
