@@ -1,0 +1,42 @@
+name: Aplicar rediseño etapa 15
+
+on:
+  push:
+    branches:
+      - etapa-15-rediseño-visual
+    paths:
+      - scripts/aplicar_etapa15.py
+      - .github/workflows/aplicar-etapa15.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  aplicar:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar rama
+        uses: actions/checkout@v4
+        with:
+          ref: etapa-15-rediseño-visual
+          fetch-depth: 0
+
+      - name: Aplicar cambios visuales
+        run: python3 scripts/aplicar_etapa15.py
+
+      - name: Validar JavaScript
+        run: node --check js/app.js
+
+      - name: Guardar cambios
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add css/styles.css index.html
+          if git diff --cached --quiet; then
+            echo "No hay cambios nuevos."
+            exit 0
+          fi
+          git commit -m "Aplica rediseño visual y menús de edición de deudas"
+          git push origin etapa-15-rediseño-visual
