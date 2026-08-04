@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '29.0';
+  const VERSION = '29.1';
   if (window.HFExperienciaIntegrada29?.version === VERSION) return;
 
   const state = {
@@ -83,7 +83,6 @@
   function classicIcon(item = {}) {
     if (isCardPayment(item)) return '💳';
     if (isLoanPayment(item)) return '🏦';
-    if (item.icono && !String(item.icono).includes('<svg')) return item.icono;
 
     const category = normalize(item.cat || item.categoria || 'otros');
     if (category.includes('aliment')) return '🛒';
@@ -94,6 +93,10 @@
     if (category.includes('hogar') || category.includes('casa')) return '🏠';
     if (category.includes('educ')) return '🎓';
     if (category.includes('deuda')) return '💳';
+
+    const stored = String(item.icono || '').trim();
+    const paymentMethodIcons = new Set(['💳', '✈️', '💸', '💵', '📲', '💰']);
+    if (stored && !stored.includes('<svg') && !paymentMethodIcons.has(stored)) return stored;
     return '📦';
   }
 
@@ -105,6 +108,8 @@
       icon.innerHTML = `<span class="hf-v29-classic-icon" aria-hidden="true">${classicIcon(item)}</span>`;
       icon.classList.add('hf-v29-classic-category');
     }
+    const amount = element.querySelector('.hf-v28-movement-amount strong');
+    if (amount) amount.style.setProperty('color', '#172033', 'important');
     element.classList.add('hf-v29-movement');
   }
 
@@ -200,7 +205,9 @@
     version: VERSION,
     reload,
     editMovement,
-    patchRenderedMovements
+    patchRenderedMovements,
+    classicIcon,
+    getMovements: () => [...state.movements]
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
