@@ -10,13 +10,16 @@ SERVICE_WORKER = ROOT / "firebase-messaging-sw.js"
 BASE_VERSION = "22.0"
 DEBT_VERSION = "24.0"
 FIX_VERSION = "25.0"
+CARD_DATA_VERSION = "26.0"
 RESOURCES = [
     ("css", "css/experiencia-financiera-v2.css", BASE_VERSION),
     ("css", "css/deudas-redesign-v23.css", DEBT_VERSION),
     ("css", "css/deudas-fixes-v25.css", FIX_VERSION),
+    ("css", "css/tarjetas-consistencia-v26.css", CARD_DATA_VERSION),
     ("js", "js/experiencia-financiera-v2.js", BASE_VERSION),
     ("js", "js/deudas-redesign-v23.js", DEBT_VERSION),
     ("js", "js/deudas-fixes-v25.js", FIX_VERSION),
+    ("js", "js/tarjetas-consistencia-v26.js", CARD_DATA_VERSION),
 ]
 
 FONT_TAG = (
@@ -113,7 +116,7 @@ def patch_service_worker() -> None:
     text = SERVICE_WORKER.read_text(encoding="utf-8")
     text = re.sub(
         r"const CACHE_NAME = '[^']+';",
-        "const CACHE_NAME = 'hogar-finanzas-v25-menu-unico-workstation';",
+        "const CACHE_NAME = 'hogar-finanzas-v26-tarjetas-consistentes';",
         text,
         count=1,
     )
@@ -148,6 +151,7 @@ def main() -> None:
     patch_service_worker()
     print("✓ Sistema visual UIUX Pro Max aplicado")
     print(f"✓ Rediseño de Deudas {DEBT_VERSION} + correcciones {FIX_VERSION}")
+    print(f"✓ Ficha y estados de tarjetas normalizados en {CARD_DATA_VERSION}")
     print("✓ Preview de Cloud Workstations sin solicitud de manifest")
     print("✓ Caché PWA renovada")
 
