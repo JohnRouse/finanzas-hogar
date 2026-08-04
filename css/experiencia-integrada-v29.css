@@ -1,6 +1,6 @@
-/* Hogar Finanzas — Ajustes visuales V29
+/* Hogar Finanzas — Ajustes visuales V29.3
  * - KPIs consistentes entre Deudas y Plan/Ahorro.
- * - Iconos clásicos por categoría.
+ * - Iconos clásicos por categoría controlados únicamente por CSS.
  * - Badges de tarjeta y Telegram alineados.
  */
 
@@ -79,12 +79,87 @@
   line-height: 1.35 !important;
 }
 
-/* Restauración de los iconos clásicos usados originalmente por las categorías. */
-.hf-v28-movement-icon.hf-v29-classic-category,
-.hf-v28-detail-icon.hf-v29-classic-category {
+/*
+ * El icono visible queda fijado por la clase de categoría que ya trae cada
+ * movimiento. Así, aunque un render heredado inserte un SVG o un emoji guardado,
+ * el usuario siempre ve el mismo icono final y no existe alternancia visual.
+ */
+.hf-v28-movement-icon,
+.hf-v28-detail-icon {
+  position: relative !important;
   border-color: #e2e8f0 !important;
   background: #f8fafc !important;
   color: inherit !important;
+}
+
+.hf-v28-movement-icon > *,
+.hf-v28-detail-icon > * {
+  visibility: hidden !important;
+}
+
+.hf-v28-movement-icon::before,
+.hf-v28-detail-icon::before {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  visibility: visible;
+  line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  pointer-events: none;
+}
+
+.hf-v28-movement-icon::before {
+  font-size: 20px;
+}
+
+.hf-v28-detail-icon::before {
+  font-size: 25px;
+}
+
+.hf-v28-movement.cat-food .hf-v28-movement-icon::before,
+.hf-v28-detail-icon.cat-food::before {
+  content: "🛒";
+}
+
+.hf-v28-movement.cat-services .hf-v28-movement-icon::before,
+.hf-v28-detail-icon.cat-services::before {
+  content: "⚡";
+}
+
+.hf-v28-movement.cat-entertainment .hf-v28-movement-icon::before,
+.hf-v28-detail-icon.cat-entertainment::before {
+  content: "🎬";
+}
+
+.hf-v28-movement.cat-transport .hf-v28-movement-icon::before,
+.hf-v28-detail-icon.cat-transport::before {
+  content: "🚕";
+}
+
+.hf-v28-movement.cat-health .hf-v28-movement-icon::before,
+.hf-v28-detail-icon.cat-health::before {
+  content: "💊";
+}
+
+.hf-v28-movement.cat-home .hf-v28-movement-icon::before,
+.hf-v28-detail-icon.cat-home::before {
+  content: "🏠";
+}
+
+.hf-v28-movement.cat-education .hf-v28-movement-icon::before,
+.hf-v28-detail-icon.cat-education::before {
+  content: "🎓";
+}
+
+.hf-v28-movement.cat-debt .hf-v28-movement-icon::before,
+.hf-v28-detail-icon.cat-debt::before {
+  content: "💳";
+}
+
+.hf-v28-movement.cat-other .hf-v28-movement-icon::before,
+.hf-v28-detail-icon.cat-other::before {
+  content: "📦";
 }
 
 .hf-v29-classic-icon,
@@ -93,14 +168,6 @@
   place-items: center;
   line-height: 1;
   font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-}
-
-.hf-v29-classic-icon {
-  font-size: 20px;
-}
-
-.hf-v29-classic-detail-icon {
-  font-size: 25px;
 }
 
 /* Badges: misma altura y alineación aunque coincidan tarjeta + Telegram. */
@@ -126,7 +193,8 @@
   line-height: 1 !important;
 }
 
-.hf-v28-method-badge.card {
+.hf-v28-method-badge.card,
+.hf-v28-method-badge.method-card {
   flex: 0 1 auto !important;
   max-width: 106px !important;
 }
@@ -187,7 +255,8 @@
     font-size: 19px !important;
   }
 
-  .hf-v28-method-badge.card {
+  .hf-v28-method-badge.card,
+  .hf-v28-method-badge.method-card {
     max-width: 88px !important;
   }
 }
