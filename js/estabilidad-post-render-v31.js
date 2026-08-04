@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '31.1';
+  const VERSION = '31.2';
   if (window.HFEstabilidadPostRender31?.version === VERSION) return;
 
   const state = {
@@ -30,19 +30,9 @@
     return false;
   }
 
-  function patchMovementIcons(root = document) {
-    const movements = window.HFExperienciaIntegrada29?.getMovements?.() || [];
-    const byId = new Map(movements.map(item => [String(item.id), item]));
-
+  function normalizeMovementAppearance(root = document) {
     currentMovementElements(root).forEach(element => {
-      const item = byId.get(String(element.dataset.movementId || ''));
-      if (!item) return;
-      const desired = window.HFExperienciaIntegrada29?.classicIcon?.(item);
-      const icon = element.querySelector('.hf-v28-movement-icon');
-      if (icon && desired && icon.textContent.trim() !== desired) {
-        icon.innerHTML = `<span class="hf-v29-classic-icon" aria-hidden="true">${desired}</span>`;
-        icon.classList.add('hf-v29-classic-category');
-      }
+      element.querySelector('.hf-v28-movement-icon')?.classList.add('hf-v29-classic-category');
       const amount = element.querySelector('.hf-v28-movement-amount strong');
       if (amount) amount.style.setProperty('color', '#172033', 'important');
     });
@@ -51,7 +41,7 @@
   async function repairMovements(forceReload = false) {
     if (state.repairingMovements) return;
     const elapsed = now() - state.lastMovementRepair;
-    if (!forceReload && elapsed < 150) return;
+    if (!forceReload && elapsed < 180) return;
 
     state.repairingMovements = true;
     state.lastMovementRepair = now();
@@ -64,10 +54,10 @@
         window.HFExperienciaIntegrada28?.repair?.();
       }
       window.HFExperienciaIntegrada29?.patchRenderedMovements?.();
-      patchMovementIcons();
+      normalizeMovementAppearance();
       window.HFExperienciaIntegrada30?.repair?.();
     } catch (error) {
-      console.warn('No se pudo estabilizar Movimientos V31:', error);
+      console.warn('No se pudo estabilizar Movimientos V31.2:', error);
     } finally {
       state.repairingMovements = false;
     }
@@ -100,7 +90,7 @@
   async function repairDebts(force = false) {
     if (state.repairingDebts) return;
     const elapsed = now() - state.lastDebtRepair;
-    if (!force && elapsed < 150) return;
+    if (!force && elapsed < 180) return;
 
     state.repairingDebts = true;
     state.lastDebtRepair = now();
@@ -111,7 +101,7 @@
       window.HFTarjetasConsistencia26?.repair?.();
       window.HFExperienciaIntegrada30?.repair?.();
     } catch (error) {
-      console.warn('No se pudo estabilizar Deudas V31:', error);
+      console.warn('No se pudo estabilizar Deudas V31.2:', error);
     } finally {
       state.repairingDebts = false;
     }
@@ -122,17 +112,17 @@
     state.repairTimer = setTimeout(() => {
       repairMovements(force);
       repairDebts(force);
-    }, force ? 30 : 110);
+    }, force ? 30 : 120);
   }
 
   function scheduleMovementRepair(force = false) {
     clearTimeout(state.movementTimer);
-    state.movementTimer = setTimeout(() => repairMovements(force), force ? 30 : 100);
+    state.movementTimer = setTimeout(() => repairMovements(force), force ? 30 : 110);
   }
 
   function scheduleDebtRepair(force = false) {
     clearTimeout(state.debtTimer);
-    state.debtTimer = setTimeout(() => repairDebts(force), force ? 30 : 100);
+    state.debtTimer = setTimeout(() => repairDebts(force), force ? 30 : 110);
   }
 
   function installMutationObserver() {
@@ -169,13 +159,12 @@
       'hf:deudas-core-actualizadas',
       'hf:estado-cuenta-confirmado',
       'hf:deudas-recalculadas'
-    ].forEach(name => window.addEventListener(name, () => repairAll(true)));
+    ].forEach(name => window.addEventListener(name, () => repairAll(false)));
 
     document.addEventListener('click', event => {
       if (!event.target.closest('#gasto-submit-btn, #gastoModal .modal-btn.primary, #editGastoModal .modal-btn.primary')) return;
-      setTimeout(() => repairAll(true), 180);
-      setTimeout(() => repairAll(true), 750);
-      setTimeout(() => repairAll(true), 1700);
+      setTimeout(() => repairAll(false), 260);
+      setTimeout(() => repairAll(false), 950);
     }, true);
   }
 
@@ -183,13 +172,6 @@
     installMutationObserver();
     installPostSaveHooks();
     repairAll(true);
-
-    let attempts = 0;
-    const bootstrap = setInterval(() => {
-      repairAll(true);
-      attempts += 1;
-      if (attempts >= 20) clearInterval(bootstrap);
-    }, 500);
   }
 
   window.HFEstabilidadPostRender31 = Object.freeze({
