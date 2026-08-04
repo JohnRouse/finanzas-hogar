@@ -3,6 +3,7 @@ name: Aplicar corrección visual V2
 on:
   push:
     branches:
+      - master
       - etapa-15-correccion-visual-v2
     paths:
       - .github/workflows/aplicar-correccion-visual-v2.yml
@@ -24,6 +25,7 @@ on:
       - js/experiencia-integrada-v29.js
       - css/experiencia-integrada-v30.css
       - js/experiencia-integrada-v30.js
+      - js/estabilidad-post-render-v31.js
   workflow_dispatch:
 
 permissions:
@@ -35,13 +37,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Descargar rama de validación
+      - name: Descargar rama activa
         uses: actions/checkout@v4
         with:
-          ref: etapa-15-correccion-visual-v2
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Aplicar cambios en HTML y caché PWA
+        if: github.ref_name == 'etapa-15-correccion-visual-v2'
         run: python3 scripts/aplicar_correccion_visual_v2.py
 
       - name: Validar JavaScript
@@ -56,8 +59,10 @@ jobs:
           node --check js/experiencia-integrada-v28-estabilidad.js
           node --check js/experiencia-integrada-v29.js
           node --check js/experiencia-integrada-v30.js
+          node --check js/estabilidad-post-render-v31.js
 
       - name: Guardar archivos generados
+        if: github.ref_name == 'etapa-15-correccion-visual-v2'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -66,5 +71,5 @@ jobs:
             echo "No hay cambios pendientes."
             exit 0
           fi
-          git commit -m "Aplica experiencia integrada V30"
+          git commit -m "Aplica experiencia integrada V31.1"
           git push origin etapa-15-correccion-visual-v2
