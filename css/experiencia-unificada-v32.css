@@ -1,0 +1,151 @@
+/* Hogar Finanzas — Experiencia unificada V32
+ * Un único controlador para Movimientos, historial, avatar y formularios auxiliares.
+ */
+
+/* Los accesos rápidos antiguos dejan de formar parte de la interfaz. */
+#page-gastos button[onclick*="openGastoRapidoModal"],
+#gastoChoiceModal button[onclick*="openGastoRapidoModal"],
+#hfDebtAdminModal .hf-debt-admin-separator,
+#hfDebtAdminModal #hf-admin-card-actions {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Una sola representación visible por movimiento: no hay transiciones de iconos. */
+.hf-v32-movement,
+.hf-v32-movement .hf-v28-movement-icon,
+.hf-v32-movement .hf-v28-movement-icon::before,
+.hf-v32-movement .hf-v32-category-glyph {
+  animation: none !important;
+  transition: none !important;
+}
+
+.hf-v32-movement .hf-v28-movement-amount strong {
+  color: #172033 !important;
+}
+
+/* El título del historial ya no depende del mes ni queda incompleto. */
+#modalHistorial #historialTitle {
+  max-width: calc(100% - 58px);
+  overflow: visible;
+  color: #0f172a;
+  font-family: "IBM Plex Sans", sans-serif !important;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+#modalHistorial .btn-ver-todo,
+#page-gastos .btn-ver-todo {
+  width: 100% !important;
+  max-width: none !important;
+  white-space: nowrap !important;
+}
+
+/* El FAB debe mostrar únicamente el símbolo +. */
+#fab-global::before,
+#fab-global::after,
+#fab-global.hf-v30-icon-only::before,
+#fab-global.hf-v30-icon-only::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* El modal de pago mantiene un solo campo de línea disponible. */
+#pagoTarjetaModal .hf-v27-payment-available {
+  margin-top: 4px !important;
+  padding: 14px !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 15px !important;
+  background: #eff6ff !important;
+}
+
+#pagoTarjetaModal .hf-v27-payment-available .input-field,
+#pagoTarjetaModal .hf-v27-payment-available input {
+  background: #fff !important;
+}
+
+/* Personalización del avatar conservada en el Resumen y Ajustes. */
+.hf-v27-avatar-settings {
+  width: 100%;
+  margin: 12px 0 2px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+  background: #fff;
+  color: #172033;
+  text-align: left;
+}
+
+.hf-v27-settings-avatar {
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #dbeafe;
+}
+
+.hf-v27-avatar-settings > span:nth-child(2) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hf-v27-avatar-settings small,
+.hf-v27-avatar-settings em {
+  color: #64748b;
+  font-size: 10.5px;
+  font-style: normal;
+}
+
+.hf-v27-avatar-settings strong {
+  margin: 2px 0;
+  font-size: 13px;
+}
+
+.hf-v27-avatar-grid {
+  margin: 16px 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.hf-v27-avatar-option {
+  aspect-ratio: 1;
+  padding: 4px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.hf-v27-avatar-option.selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.hf-v27-avatar-option img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.hf-v27-avatar-credit {
+  display: block;
+  margin-top: 9px;
+  color: #94a3b8;
+  font-size: 10px;
+  text-align: center;
+}
+
+@media (max-width: 360px) {
+  .hf-v27-avatar-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
