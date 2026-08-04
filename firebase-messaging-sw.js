@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v25-menu-unico-workstation';
+const CACHE_NAME = 'hogar-finanzas-v26-tarjetas-consistentes';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
@@ -36,6 +36,8 @@ const APP_SHELL = [
   './js/experiencia-financiera-14.js?v=20.0',
   './js/diagnostico-etapa-14.js?v=20.0',
   './css/experiencia-financiera-14.css?v=20.0',
+  './css/tarjetas-consistencia-v26.css?v=26.0',
+  './js/tarjetas-consistencia-v26.js?v=26.0',
   './css/deudas-fixes-v25.css?v=25.0',
   './js/deudas-fixes-v25.js?v=25.0',
   './css/deudas-redesign-v23.css?v=24.0',
