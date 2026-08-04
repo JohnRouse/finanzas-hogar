@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '29.2';
+  const VERSION = '29.3';
   if (window.HFExperienciaIntegrada29?.version === VERSION) return;
 
   const state = {
@@ -93,10 +93,6 @@
     if (category.includes('hogar') || category.includes('casa')) return '🏠';
     if (category.includes('educ')) return '🎓';
     if (category.includes('deuda')) return '💳';
-
-    const stored = String(item.icono || '').trim();
-    const paymentMethodIcons = new Set(['💳', '✈️', '💸', '💵', '📲', '💰']);
-    if (stored && !stored.includes('<svg') && !paymentMethodIcons.has(stored)) return stored;
     return '📦';
   }
 
@@ -104,15 +100,8 @@
     const item = state.byId.get(String(element.dataset.movementId || ''));
     if (!item) return;
 
-    const desiredIcon = classicIcon(item);
     const icon = element.querySelector('.hf-v28-movement-icon');
-    if (icon) {
-      const currentIcon = icon.textContent.trim();
-      if (currentIcon !== desiredIcon || !icon.classList.contains('hf-v29-classic-category')) {
-        icon.innerHTML = `<span class="hf-v29-classic-icon" aria-hidden="true">${desiredIcon}</span>`;
-        icon.classList.add('hf-v29-classic-category');
-      }
-    }
+    if (icon) icon.classList.add('hf-v29-classic-category');
 
     const amount = element.querySelector('.hf-v28-movement-amount strong');
     if (amount && amount.style.getPropertyValue('color') !== '#172033') {
@@ -129,11 +118,7 @@
     const item = state.byId.get(String(id));
     const icon = $('hf-v27-detail-icon');
     if (!item || !icon) return;
-    const desiredIcon = classicIcon(item);
-    if (icon.textContent.trim() !== desiredIcon || !icon.classList.contains('hf-v29-classic-category')) {
-      icon.innerHTML = `<span class="hf-v29-classic-detail-icon" aria-hidden="true">${desiredIcon}</span>`;
-      icon.classList.add('hf-v29-classic-category');
-    }
+    icon.classList.add('hf-v29-classic-category');
   }
 
   async function editMovement(id) {
@@ -178,7 +163,7 @@
     state.repairTimer = setTimeout(() => {
       patchRenderedMovements();
       syncLegacyCaches();
-    }, 80);
+    }, 40);
   }
 
   function scheduleReload() {
