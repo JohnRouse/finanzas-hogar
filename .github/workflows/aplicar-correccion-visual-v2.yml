@@ -1,4 +1,4 @@
-name: Aplicar corrección visual V2
+name: Aplicar experiencia unificada
 
 on:
   push:
@@ -17,15 +17,11 @@ on:
       - css/tarjetas-consistencia-v26.css
       - js/tarjetas-consistencia-v26.js
       - css/experiencia-integrada-v27.css
-      - js/experiencia-integrada-v27.js
       - css/experiencia-integrada-v28.css
-      - js/experiencia-integrada-v28.js
-      - js/experiencia-integrada-v28-estabilidad.js
       - css/experiencia-integrada-v29.css
-      - js/experiencia-integrada-v29.js
       - css/experiencia-integrada-v30.css
-      - js/experiencia-integrada-v30.js
-      - js/estabilidad-post-render-v31.js
+      - css/experiencia-unificada-v32.css
+      - js/experiencia-unificada-v32.js
   workflow_dispatch:
 
 permissions:
@@ -43,22 +39,17 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Aplicar cambios en HTML y caché PWA
+      - name: Aplicar recursos en HTML y caché PWA
         run: python3 scripts/aplicar_correccion_visual_v2.py
 
-      - name: Validar JavaScript
+      - name: Validar JavaScript activo
         run: |
           node --check js/app.js
           node --check js/experiencia-financiera-v2.js
           node --check js/deudas-redesign-v23.js
           node --check js/deudas-fixes-v25.js
           node --check js/tarjetas-consistencia-v26.js
-          node --check js/experiencia-integrada-v27.js
-          node --check js/experiencia-integrada-v28.js
-          node --check js/experiencia-integrada-v28-estabilidad.js
-          node --check js/experiencia-integrada-v29.js
-          node --check js/experiencia-integrada-v30.js
-          node --check js/estabilidad-post-render-v31.js
+          node --check js/experiencia-unificada-v32.js
 
       - name: Guardar archivos generados
         run: |
@@ -69,5 +60,5 @@ jobs:
             echo "No hay cambios pendientes."
             exit 0
           fi
-          git commit -m "Aplica experiencia integrada V31.2"
+          git commit -m "Aplica experiencia unificada V32"
           git push origin "${GITHUB_REF_NAME}"
