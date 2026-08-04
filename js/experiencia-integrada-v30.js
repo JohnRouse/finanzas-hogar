@@ -1,13 +1,12 @@
 (() => {
   'use strict';
 
-  const VERSION = '31.1';
+  const VERSION = '31.2';
   if (window.HFExperienciaIntegrada30?.version === VERSION) return;
 
   const state = {
     observer: null,
     timer: null,
-    attempts: 0,
     loadingV31: false
   };
 
@@ -63,7 +62,7 @@
     if (window.HFEstabilidadPostRender31 || state.loadingV31) return;
     state.loadingV31 = true;
     const script = document.createElement('script');
-    script.src = 'js/estabilidad-post-render-v31.js?v=31.1';
+    script.src = 'js/estabilidad-post-render-v31.js?v=31.2';
     script.async = false;
     script.onload = () => {
       state.loadingV31 = false;
@@ -71,7 +70,7 @@
     };
     script.onerror = () => {
       state.loadingV31 = false;
-      console.warn('No se pudo cargar la estabilización V31.1.');
+      console.warn('No se pudo cargar la estabilización V31.2.');
     };
     document.body.appendChild(script);
   }
@@ -112,12 +111,6 @@
     window.addEventListener('resize', () => scheduleRepair(), { passive: true });
     ['hf:gastos-actualizados', 'hf:deuda-actualizada', 'hf:deudas-core-actualizadas']
       .forEach(name => window.addEventListener(name, () => scheduleRepair()));
-
-    const stabilizer = setInterval(() => {
-      repair();
-      state.attempts += 1;
-      if (state.attempts >= 40) clearInterval(stabilizer);
-    }, 350);
   }
 
   window.HFExperienciaIntegrada30 = Object.freeze({
