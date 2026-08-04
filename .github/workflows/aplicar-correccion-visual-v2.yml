@@ -9,6 +9,8 @@ on:
       - scripts/aplicar_correccion_visual_v2.py
       - css/experiencia-financiera-v2.css
       - js/experiencia-financiera-v2.js
+      - css/deudas-redesign-v23.css
+      - js/deudas-redesign-v23.js
   workflow_dispatch:
 
 permissions:
@@ -33,6 +35,7 @@ jobs:
         run: |
           node --check js/app.js
           node --check js/experiencia-financiera-v2.js
+          node --check js/deudas-redesign-v23.js
 
       - name: Guardar archivos generados
         run: |
@@ -43,5 +46,5 @@ jobs:
             echo "No hay cambios pendientes."
             exit 0
           fi
-          git commit -m "Aplica corrección visual V2 para validación"
+          git commit -m "Aplica rediseño de Deudas V23"
           git push origin etapa-15-correccion-visual-v2
