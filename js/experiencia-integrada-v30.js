@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '31.0';
+  const VERSION = '31.1';
   if (window.HFExperienciaIntegrada30?.version === VERSION) return;
 
   const state = {
@@ -63,7 +63,7 @@
     if (window.HFEstabilidadPostRender31 || state.loadingV31) return;
     state.loadingV31 = true;
     const script = document.createElement('script');
-    script.src = 'js/estabilidad-post-render-v31.js?v=31.0';
+    script.src = 'js/estabilidad-post-render-v31.js?v=31.1';
     script.async = false;
     script.onload = () => {
       state.loadingV31 = false;
@@ -71,7 +71,7 @@
     };
     script.onerror = () => {
       state.loadingV31 = false;
-      console.warn('No se pudo cargar la estabilización V31.');
+      console.warn('No se pudo cargar la estabilización V31.1.');
     };
     document.body.appendChild(script);
   }
