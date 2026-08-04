@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v31-2-sin-parpadeos';
+const CACHE_NAME = 'hogar-finanzas-v32-experiencia-unificada';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
@@ -36,16 +36,12 @@ const APP_SHELL = [
   './js/experiencia-financiera-14.js?v=20.0',
   './js/diagnostico-etapa-14.js?v=20.0',
   './css/experiencia-financiera-14.css?v=20.0',
+  './css/experiencia-unificada-v32.css?v=32.0',
+  './js/experiencia-unificada-v32.js?v=32.0',
   './css/experiencia-integrada-v30.css?v=31.2',
-  './js/experiencia-integrada-v30.js?v=31.2',
-  './js/estabilidad-post-render-v31.js?v=31.2',
   './css/experiencia-integrada-v29.css?v=29.3',
-  './js/experiencia-integrada-v29.js?v=29.3',
-  './js/experiencia-integrada-v28-estabilidad.js?v=28.1',
   './css/experiencia-integrada-v28.css?v=28.0',
-  './js/experiencia-integrada-v28.js?v=28.0',
   './css/experiencia-integrada-v27.css?v=27.0',
-  './js/experiencia-integrada-v27.js?v=27.0',
   './css/tarjetas-consistencia-v26.css?v=26.0',
   './js/tarjetas-consistencia-v26.js?v=26.0',
   './css/deudas-fixes-v25.css?v=25.0',
