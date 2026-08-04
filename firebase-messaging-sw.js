@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v29-edicion-iconos-kpis';
+const CACHE_NAME = 'hogar-finanzas-v30-prioridad-visual';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
@@ -36,6 +36,8 @@ const APP_SHELL = [
   './js/experiencia-financiera-14.js?v=20.0',
   './js/diagnostico-etapa-14.js?v=20.0',
   './css/experiencia-financiera-14.css?v=20.0',
+  './css/experiencia-integrada-v30.css?v=30.0',
+  './js/experiencia-integrada-v30.js?v=30.0',
   './css/experiencia-integrada-v29.css?v=29.0',
   './js/experiencia-integrada-v29.js?v=29.0',
   './js/experiencia-integrada-v28-estabilidad.js?v=28.1',
