@@ -15,6 +15,7 @@ INTEGRATED_VERSION = "27.0"
 MOVEMENTS_FIX_VERSION = "28.0"
 STABILITY_VERSION = "28.1"
 CONSISTENCY_VERSION = "29.0"
+PRIORITY_FIX_VERSION = "30.0"
 RESOURCES = [
     ("css", "css/experiencia-financiera-v2.css", BASE_VERSION),
     ("css", "css/deudas-redesign-v23.css", DEBT_VERSION),
@@ -23,6 +24,7 @@ RESOURCES = [
     ("css", "css/experiencia-integrada-v27.css", INTEGRATED_VERSION),
     ("css", "css/experiencia-integrada-v28.css", MOVEMENTS_FIX_VERSION),
     ("css", "css/experiencia-integrada-v29.css", CONSISTENCY_VERSION),
+    ("css", "css/experiencia-integrada-v30.css", PRIORITY_FIX_VERSION),
     ("js", "js/experiencia-financiera-v2.js", BASE_VERSION),
     ("js", "js/deudas-redesign-v23.js", DEBT_VERSION),
     ("js", "js/deudas-fixes-v25.js", FIX_VERSION),
@@ -31,6 +33,7 @@ RESOURCES = [
     ("js", "js/experiencia-integrada-v28.js", MOVEMENTS_FIX_VERSION),
     ("js", "js/experiencia-integrada-v28-estabilidad.js", STABILITY_VERSION),
     ("js", "js/experiencia-integrada-v29.js", CONSISTENCY_VERSION),
+    ("js", "js/experiencia-integrada-v30.js", PRIORITY_FIX_VERSION),
 ]
 
 FONT_TAG = (
@@ -127,7 +130,7 @@ def patch_service_worker() -> None:
     text = SERVICE_WORKER.read_text(encoding="utf-8")
     text = re.sub(
         r"const CACHE_NAME = '[^']+';",
-        "const CACHE_NAME = 'hogar-finanzas-v29-edicion-iconos-kpis';",
+        "const CACHE_NAME = 'hogar-finanzas-v30-prioridad-visual';",
         text,
         count=1,
     )
@@ -165,6 +168,7 @@ def main() -> None:
     print(f"✓ Categorías, badges, gasto detallado y avatar corregidos en {MOVEMENTS_FIX_VERSION}")
     print(f"✓ Prioridad de la experiencia asegurada en {STABILITY_VERSION}")
     print(f"✓ Edición, iconos clásicos, badges y KPIs unificados en {CONSISTENCY_VERSION}")
+    print(f"✓ FAB, historial, badges sin colisión y KPIs forzados en {PRIORITY_FIX_VERSION}")
     print("✓ Preview de Cloud Workstations sin solicitud de manifest")
     print("✓ Caché PWA renovada")
 
