@@ -11,31 +11,34 @@ BASE_VERSION = "22.0"
 DEBT_VERSION = "24.0"
 FIX_VERSION = "25.0"
 CARD_DATA_VERSION = "26.0"
-INTEGRATED_VERSION = "27.0"
-MOVEMENTS_FIX_VERSION = "28.0"
-STABILITY_VERSION = "28.1"
-CONSISTENCY_VERSION = "29.3"
-PRIORITY_FIX_VERSION = "31.2"
-POST_RENDER_VERSION = "31.2"
+UNIFIED_VERSION = "32.0"
+
+# Las hojas históricas se conservan temporalmente porque contienen la apariencia
+# aprobada. La lógica de interfaz, en cambio, queda concentrada en un solo archivo.
 RESOURCES = [
     ("css", "css/experiencia-financiera-v2.css", BASE_VERSION),
     ("css", "css/deudas-redesign-v23.css", DEBT_VERSION),
     ("css", "css/deudas-fixes-v25.css", FIX_VERSION),
     ("css", "css/tarjetas-consistencia-v26.css", CARD_DATA_VERSION),
-    ("css", "css/experiencia-integrada-v27.css", INTEGRATED_VERSION),
-    ("css", "css/experiencia-integrada-v28.css", MOVEMENTS_FIX_VERSION),
-    ("css", "css/experiencia-integrada-v29.css", CONSISTENCY_VERSION),
-    ("css", "css/experiencia-integrada-v30.css", PRIORITY_FIX_VERSION),
+    ("css", "css/experiencia-integrada-v27.css", "27.0"),
+    ("css", "css/experiencia-integrada-v28.css", "28.0"),
+    ("css", "css/experiencia-integrada-v29.css", "29.3"),
+    ("css", "css/experiencia-integrada-v30.css", "31.2"),
+    ("css", "css/experiencia-unificada-v32.css", UNIFIED_VERSION),
     ("js", "js/experiencia-financiera-v2.js", BASE_VERSION),
     ("js", "js/deudas-redesign-v23.js", DEBT_VERSION),
     ("js", "js/deudas-fixes-v25.js", FIX_VERSION),
     ("js", "js/tarjetas-consistencia-v26.js", CARD_DATA_VERSION),
-    ("js", "js/experiencia-integrada-v27.js", INTEGRATED_VERSION),
-    ("js", "js/experiencia-integrada-v28.js", MOVEMENTS_FIX_VERSION),
-    ("js", "js/experiencia-integrada-v28-estabilidad.js", STABILITY_VERSION),
-    ("js", "js/experiencia-integrada-v29.js", CONSISTENCY_VERSION),
-    ("js", "js/experiencia-integrada-v30.js", PRIORITY_FIX_VERSION),
-    ("js", "js/estabilidad-post-render-v31.js", POST_RENDER_VERSION),
+    ("js", "js/experiencia-unificada-v32.js", UNIFIED_VERSION),
+]
+
+OBSOLETE_UI_SCRIPTS = [
+    "js/experiencia-integrada-v27.js",
+    "js/experiencia-integrada-v28.js",
+    "js/experiencia-integrada-v28-estabilidad.js",
+    "js/experiencia-integrada-v29.js",
+    "js/experiencia-integrada-v30.js",
+    "js/estabilidad-post-render-v31.js",
 ]
 
 FONT_TAG = (
@@ -79,6 +82,16 @@ def upsert_html_resource(text: str, kind: str, path: str, version: str) -> str:
     return text.replace("</body>", f"{tag}\n</body>", 1)
 
 
+def remove_obsolete_html_scripts(text: str) -> str:
+    for path in OBSOLETE_UI_SCRIPTS:
+        text = re.sub(
+            rf'\s*<script src="{re.escape(path)}\?v=[^"]+"></script>',
+            '',
+            text,
+        )
+    return text
+
+
 def patch_manifest_and_favicon(text: str) -> str:
     marker_pattern = r'\s*<!-- HF_MANIFEST_START -->.*?<!-- HF_MANIFEST_END -->'
     if re.search(marker_pattern, text, flags=re.DOTALL):
@@ -93,6 +106,7 @@ def patch_manifest_and_favicon(text: str) -> str:
 
 def patch_index() -> None:
     text = INDEX.read_text(encoding="utf-8")
+    text = remove_obsolete_html_scripts(text)
 
     text = re.sub(
         r'<link href="https://fonts\.googleapis\.com/css2\?[^\"]+" rel="stylesheet">',
@@ -125,18 +139,24 @@ def patch_index() -> None:
     INDEX.write_text(text, encoding="utf-8")
 
 
+def remove_obsolete_sw_assets(text: str) -> str:
+    for path in OBSOLETE_UI_SCRIPTS:
+        text = re.sub(rf"\s*'\./{re.escape(path)}\?v=[^']+',", '', text)
+    return text
+
+
 def patch_service_worker() -> None:
     if not SERVICE_WORKER.exists():
         return
 
     text = SERVICE_WORKER.read_text(encoding="utf-8")
+    text = remove_obsolete_sw_assets(text)
     text = re.sub(
         r"const CACHE_NAME = '[^']+';",
-        "const CACHE_NAME = 'hogar-finanzas-v31-2-sin-parpadeos';",
+        "const CACHE_NAME = 'hogar-finanzas-v32-experiencia-unificada';",
         text,
         count=1,
     )
-
     text = re.sub(r"\s*'\./manifest\.json',", "", text, count=1)
 
     assets: list[str] = []
@@ -163,14 +183,10 @@ def patch_service_worker() -> None:
 def main() -> None:
     patch_index()
     patch_service_worker()
-    print("✓ Sistema visual UIUX Pro Max aplicado")
-    print(f"✓ Rediseño de Deudas {DEBT_VERSION} + correcciones {FIX_VERSION}")
-    print(f"✓ Ficha y estados de tarjetas normalizados en {CARD_DATA_VERSION}")
-    print(f"✓ Movimientos, pago único y avatar Micah integrados en {INTEGRATED_VERSION}")
-    print(f"✓ Categorías y badges consolidados en {CONSISTENCY_VERSION}")
-    print(f"✓ Prioridad visual y carga estable en {PRIORITY_FIX_VERSION}")
-    print(f"✓ Reparación posterior al guardado sin bucles en {POST_RENDER_VERSION}")
-    print("✓ Preview de Cloud Workstations sin solicitud de manifest")
+    print("✓ Apariencia aprobada conservada")
+    print("✓ Un solo controlador de Movimientos, historial, avatar y formularios")
+    print(f"✓ Experiencia unificada {UNIFIED_VERSION}")
+    print("✓ Scripts visuales históricos retirados de la carga")
     print("✓ Caché PWA renovada")
 
 
