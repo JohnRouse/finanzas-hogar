@@ -11,14 +11,13 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v24-deudas-detalles-tea';
+const CACHE_NAME = 'hogar-finanzas-v25-menu-unico-workstation';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
   './js/data.js?v=10.0',
   './js/app.js?v=10.0',
   './css/importaciones.css?v=11.1',
-  './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './css/deudas-inteligentes.css?v=11.2.1',
@@ -37,6 +36,8 @@ const APP_SHELL = [
   './js/experiencia-financiera-14.js?v=20.0',
   './js/diagnostico-etapa-14.js?v=20.0',
   './css/experiencia-financiera-14.css?v=20.0',
+  './css/deudas-fixes-v25.css?v=25.0',
+  './js/deudas-fixes-v25.js?v=25.0',
   './css/deudas-redesign-v23.css?v=24.0',
   './js/deudas-redesign-v23.js?v=24.0',
   './css/experiencia-financiera-v2.css?v=22.0',
