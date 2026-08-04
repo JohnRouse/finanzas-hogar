@@ -1,0 +1,50 @@
+/* Hogar Finanzas — Ajustes de Deudas V25
+ * - Un solo menú de tres puntos por obligación.
+ * - Sin avatar/iniciales en tarjetas y préstamos.
+ */
+
+/* Las capas visuales anteriores añadían sus propios menús al mismo componente. */
+#hf-family-debt-view .hf-v24-debt-card .hf-card-menu-wrap,
+#hf-family-debt-view .hf-v24-debt-card .debt-more-wrap,
+#hf-family-debt-view .hf-v24-debt-card .debt-more-btn,
+#hf-family-debt-view .hf-v24-debt-card .debt-more-menu {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* El identificador con iniciales se retira por solicitud del usuario. */
+#hf-family-debt-view .hf-v24-debt-card .hf-v24-brand {
+  display: none !important;
+}
+
+/* Cabecera limpia: nombre/estado y un único botón de opciones. */
+#hf-family-debt-view .hf-v24-card-head {
+  grid-template-columns: minmax(0, 1fr) 40px !important;
+  gap: 10px !important;
+}
+
+#hf-family-debt-view .hf-v24-identity {
+  padding-left: 0 !important;
+}
+
+#hf-family-debt-view .hf-v24-menu-wrap {
+  grid-column: 2 !important;
+  justify-self: end !important;
+}
+
+#hf-family-debt-view .hf-v24-title-row {
+  padding-right: 2px !important;
+}
+
+/* Evita que un menú heredado conserve foco aunque otra hoja lo haya inyectado. */
+#hf-family-debt-view [data-hf-v25-legacy-menu="true"] {
+  display: none !important;
+}
+
+@media (max-width: 360px) {
+  #hf-family-debt-view .hf-v24-card-head {
+    grid-template-columns: minmax(0, 1fr) 38px !important;
+    gap: 8px !important;
+  }
+}
