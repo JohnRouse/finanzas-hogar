@@ -44,7 +44,6 @@ jobs:
           fetch-depth: 0
 
       - name: Aplicar cambios en HTML y caché PWA
-        if: github.ref_name == 'etapa-15-correccion-visual-v2'
         run: python3 scripts/aplicar_correccion_visual_v2.py
 
       - name: Validar JavaScript
@@ -62,7 +61,6 @@ jobs:
           node --check js/estabilidad-post-render-v31.js
 
       - name: Guardar archivos generados
-        if: github.ref_name == 'etapa-15-correccion-visual-v2'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -71,5 +69,5 @@ jobs:
             echo "No hay cambios pendientes."
             exit 0
           fi
-          git commit -m "Aplica experiencia integrada V31.1"
-          git push origin etapa-15-correccion-visual-v2
+          git commit -m "Aplica experiencia integrada V31.2"
+          git push origin "${GITHUB_REF_NAME}"
