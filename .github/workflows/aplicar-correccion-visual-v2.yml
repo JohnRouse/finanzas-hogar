@@ -13,6 +13,8 @@ on:
       - js/deudas-redesign-v23.js
       - css/deudas-fixes-v25.css
       - js/deudas-fixes-v25.js
+      - css/tarjetas-consistencia-v26.css
+      - js/tarjetas-consistencia-v26.js
   workflow_dispatch:
 
 permissions:
@@ -39,6 +41,7 @@ jobs:
           node --check js/experiencia-financiera-v2.js
           node --check js/deudas-redesign-v23.js
           node --check js/deudas-fixes-v25.js
+          node --check js/tarjetas-consistencia-v26.js
 
       - name: Guardar archivos generados
         run: |
@@ -49,5 +52,5 @@ jobs:
             echo "No hay cambios pendientes."
             exit 0
           fi
-          git commit -m "Aplica correcciones V25 y ajusta preview de Workstations"
+          git commit -m "Aplica consistencia de tarjetas V26"
           git push origin etapa-15-correccion-visual-v2
