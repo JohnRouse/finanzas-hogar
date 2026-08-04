@@ -8,7 +8,7 @@ INDEX = ROOT / "index.html"
 SERVICE_WORKER = ROOT / "firebase-messaging-sw.js"
 
 BASE_VERSION = "22.0"
-DEBT_VERSION = "23.0"
+DEBT_VERSION = "24.0"
 RESOURCES = [
     ("css", "css/experiencia-financiera-v2.css", BASE_VERSION),
     ("css", "css/deudas-redesign-v23.css", DEBT_VERSION),
@@ -82,7 +82,7 @@ def patch_service_worker() -> None:
     text = SERVICE_WORKER.read_text(encoding="utf-8")
     text = re.sub(
         r"const CACHE_NAME = '[^']+';",
-        "const CACHE_NAME = 'hogar-finanzas-v23-deudas-redesign';",
+        "const CACHE_NAME = 'hogar-finanzas-v24-deudas-detalles-tea';",
         text,
         count=1,
     )
