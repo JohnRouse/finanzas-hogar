@@ -1,0 +1,74 @@
+/* Hogar Finanzas — Consistencia de tarjetas V26
+ * Separa la ficha permanente de la tarjeta de sus estados mensuales.
+ */
+
+/* Evita que reaparezcan los campos inyectados por capas anteriores. */
+#tarjetaModal .hf-stage14-card-extra,
+#tarjetaModal .hf-v24-card-finance-fields,
+#tarjetaModal .statement-initial-box,
+#tarjetaModal .hf-stage14-statement-note,
+#tarjetaModal .hf-v24-statement-note {
+  display: none !important;
+}
+
+#tarjetaModal .hf-v26-card-profile-form {
+  display: block;
+}
+
+#tarjetaModal .hf-v26-card-identifiers .field-help {
+  display: block;
+  margin-top: 6px;
+  color: var(--hf-text-muted);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+#tarjetaModal .hf-v26-profile-note,
+#hfCardStatementModal .hf-v26-state-scope {
+  margin: 2px 0 18px;
+  padding: 12px 13px;
+  display: grid;
+  gap: 4px;
+  border: 1px solid #cfe0fb;
+  border-radius: 14px;
+  background: #f5f9ff;
+  color: var(--hf-text-secondary);
+}
+
+#tarjetaModal .hf-v26-profile-note strong,
+#hfCardStatementModal .hf-v26-state-scope strong {
+  color: var(--hf-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#tarjetaModal .hf-v26-profile-note span,
+#hfCardStatementModal .hf-v26-state-scope span {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+#hfCardStatementModal .hf-v26-state-scope {
+  margin-top: 0;
+  margin-bottom: 14px;
+}
+
+#hfCardStatementModal .hf-statement-form label {
+  color: var(--hf-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#hfCardStatementModal #hf-st-admin-note {
+  color: var(--hf-text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+@media (max-width: 390px) {
+  #tarjetaModal .hf-v26-card-identifiers,
+  #tarjetaModal .input-row-two {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+}
