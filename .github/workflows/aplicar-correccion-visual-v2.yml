@@ -15,6 +15,8 @@ on:
       - js/deudas-fixes-v25.js
       - css/tarjetas-consistencia-v26.css
       - js/tarjetas-consistencia-v26.js
+      - css/experiencia-integrada-v27.css
+      - js/experiencia-integrada-v27.js
   workflow_dispatch:
 
 permissions:
@@ -42,6 +44,7 @@ jobs:
           node --check js/deudas-redesign-v23.js
           node --check js/deudas-fixes-v25.js
           node --check js/tarjetas-consistencia-v26.js
+          node --check js/experiencia-integrada-v27.js
 
       - name: Guardar archivos generados
         run: |
@@ -52,5 +55,5 @@ jobs:
             echo "No hay cambios pendientes."
             exit 0
           fi
-          git commit -m "Aplica consistencia de tarjetas V26"
+          git commit -m "Aplica experiencia integrada V27"
           git push origin etapa-15-correccion-visual-v2
