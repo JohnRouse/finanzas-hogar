@@ -19,6 +19,7 @@ on:
       - js/experiencia-integrada-v27.js
       - css/experiencia-integrada-v28.css
       - js/experiencia-integrada-v28.js
+      - js/experiencia-integrada-v28-estabilidad.js
   workflow_dispatch:
 
 permissions:
@@ -48,6 +49,7 @@ jobs:
           node --check js/tarjetas-consistencia-v26.js
           node --check js/experiencia-integrada-v27.js
           node --check js/experiencia-integrada-v28.js
+          node --check js/experiencia-integrada-v28-estabilidad.js
 
       - name: Guardar archivos generados
         run: |
@@ -58,5 +60,5 @@ jobs:
             echo "No hay cambios pendientes."
             exit 0
           fi
-          git commit -m "Aplica experiencia integrada V28"
+          git commit -m "Aplica experiencia integrada V28.1"
           git push origin etapa-15-correccion-visual-v2
