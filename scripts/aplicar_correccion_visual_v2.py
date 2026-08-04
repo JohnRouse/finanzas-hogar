@@ -14,8 +14,9 @@ CARD_DATA_VERSION = "26.0"
 INTEGRATED_VERSION = "27.0"
 MOVEMENTS_FIX_VERSION = "28.0"
 STABILITY_VERSION = "28.1"
-CONSISTENCY_VERSION = "29.0"
-PRIORITY_FIX_VERSION = "30.0"
+CONSISTENCY_VERSION = "29.3"
+PRIORITY_FIX_VERSION = "31.2"
+POST_RENDER_VERSION = "31.2"
 RESOURCES = [
     ("css", "css/experiencia-financiera-v2.css", BASE_VERSION),
     ("css", "css/deudas-redesign-v23.css", DEBT_VERSION),
@@ -34,6 +35,7 @@ RESOURCES = [
     ("js", "js/experiencia-integrada-v28-estabilidad.js", STABILITY_VERSION),
     ("js", "js/experiencia-integrada-v29.js", CONSISTENCY_VERSION),
     ("js", "js/experiencia-integrada-v30.js", PRIORITY_FIX_VERSION),
+    ("js", "js/estabilidad-post-render-v31.js", POST_RENDER_VERSION),
 ]
 
 FONT_TAG = (
@@ -130,7 +132,7 @@ def patch_service_worker() -> None:
     text = SERVICE_WORKER.read_text(encoding="utf-8")
     text = re.sub(
         r"const CACHE_NAME = '[^']+';",
-        "const CACHE_NAME = 'hogar-finanzas-v30-prioridad-visual';",
+        "const CACHE_NAME = 'hogar-finanzas-v31-2-sin-parpadeos';",
         text,
         count=1,
     )
@@ -165,10 +167,9 @@ def main() -> None:
     print(f"✓ Rediseño de Deudas {DEBT_VERSION} + correcciones {FIX_VERSION}")
     print(f"✓ Ficha y estados de tarjetas normalizados en {CARD_DATA_VERSION}")
     print(f"✓ Movimientos, pago único y avatar Micah integrados en {INTEGRATED_VERSION}")
-    print(f"✓ Categorías, badges, gasto detallado y avatar corregidos en {MOVEMENTS_FIX_VERSION}")
-    print(f"✓ Prioridad de la experiencia asegurada en {STABILITY_VERSION}")
-    print(f"✓ Edición, iconos clásicos, badges y KPIs unificados en {CONSISTENCY_VERSION}")
-    print(f"✓ FAB, historial, badges sin colisión y KPIs forzados en {PRIORITY_FIX_VERSION}")
+    print(f"✓ Categorías y badges consolidados en {CONSISTENCY_VERSION}")
+    print(f"✓ Prioridad visual y carga estable en {PRIORITY_FIX_VERSION}")
+    print(f"✓ Reparación posterior al guardado sin bucles en {POST_RENDER_VERSION}")
     print("✓ Preview de Cloud Workstations sin solicitud de manifest")
     print("✓ Caché PWA renovada")
 
