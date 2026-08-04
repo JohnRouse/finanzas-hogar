@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '29.1';
+  const VERSION = '29.2';
   if (window.HFExperienciaIntegrada29?.version === VERSION) return;
 
   const state = {
@@ -103,13 +103,21 @@
   function patchOneMovement(element) {
     const item = state.byId.get(String(element.dataset.movementId || ''));
     if (!item) return;
+
+    const desiredIcon = classicIcon(item);
     const icon = element.querySelector('.hf-v28-movement-icon');
     if (icon) {
-      icon.innerHTML = `<span class="hf-v29-classic-icon" aria-hidden="true">${classicIcon(item)}</span>`;
-      icon.classList.add('hf-v29-classic-category');
+      const currentIcon = icon.textContent.trim();
+      if (currentIcon !== desiredIcon || !icon.classList.contains('hf-v29-classic-category')) {
+        icon.innerHTML = `<span class="hf-v29-classic-icon" aria-hidden="true">${desiredIcon}</span>`;
+        icon.classList.add('hf-v29-classic-category');
+      }
     }
+
     const amount = element.querySelector('.hf-v28-movement-amount strong');
-    if (amount) amount.style.setProperty('color', '#172033', 'important');
+    if (amount && amount.style.getPropertyValue('color') !== '#172033') {
+      amount.style.setProperty('color', '#172033', 'important');
+    }
     element.classList.add('hf-v29-movement');
   }
 
@@ -121,8 +129,11 @@
     const item = state.byId.get(String(id));
     const icon = $('hf-v27-detail-icon');
     if (!item || !icon) return;
-    icon.innerHTML = `<span class="hf-v29-classic-detail-icon" aria-hidden="true">${classicIcon(item)}</span>`;
-    icon.classList.add('hf-v29-classic-category');
+    const desiredIcon = classicIcon(item);
+    if (icon.textContent.trim() !== desiredIcon || !icon.classList.contains('hf-v29-classic-category')) {
+      icon.innerHTML = `<span class="hf-v29-classic-detail-icon" aria-hidden="true">${desiredIcon}</span>`;
+      icon.classList.add('hf-v29-classic-category');
+    }
   }
 
   async function editMovement(id) {
@@ -188,12 +199,14 @@
     });
 
     state.observer = new MutationObserver(mutations => {
+      let needsRepair = false;
       mutations.forEach(mutation => mutation.addedNodes.forEach(node => {
         if (!(node instanceof Element)) return;
-        if (node.matches?.('.hf-v28-movement')) patchOneMovement(node);
-        patchRenderedMovements(node);
+        if (node.matches?.('.hf-v28-movement') || node.querySelector?.('.hf-v28-movement')) {
+          needsRepair = true;
+        }
       }));
-      scheduleRepair();
+      if (needsRepair) scheduleRepair();
     });
     state.observer.observe(document.body, { childList: true, subtree: true });
 
