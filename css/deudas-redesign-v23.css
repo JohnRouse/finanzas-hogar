@@ -1,0 +1,493 @@
+/* Hogar Finanzas — Deudas Redesign V23 */
+
+/* Tarjetas y préstamos: más jerarquía, menos cajas y menos rojo decorativo. */
+#hf-family-debt-view .hf-family-card {
+  position: relative !important;
+  padding: 16px !important;
+  overflow: visible !important;
+  border: 1px solid var(--hf-border) !important;
+  border-top: 1px solid var(--hf-border) !important;
+  border-radius: 20px !important;
+  background: var(--hf-surface) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 10px 28px rgba(15, 23, 42, .05) !important;
+}
+
+#hf-family-debt-view .hf-family-card::before,
+#hf-family-debt-view .hf-family-card::after {
+  display: none !important;
+  content: none !important;
+}
+
+#hf-family-debt-view .hf-family-card-head {
+  min-height: 48px !important;
+  padding: 0 46px 0 0 !important;
+  display: grid !important;
+  grid-template-columns: 44px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.hf-debt-brand {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #eaf1ff;
+  color: #1e40af;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -.2px;
+  box-shadow: inset 0 0 0 1px rgba(30, 64, 175, .08);
+}
+
+.hf-debt-brand-bbva { background: #edf4ff; color: #004481; }
+.hf-debt-brand-bcp { background: #eef3ff; color: #143c8b; }
+.hf-debt-brand-ripley { background: #f5efff; color: #5b21b6; }
+.hf-debt-brand-falabella { background: #f0fbe9; color: #4d7c0f; }
+.hf-debt-brand-santander { background: #fff0f0; color: #b91c1c; }
+.hf-debt-brand-portuaria,
+.hf-debt-brand.is-loan { background: #ecfdf5; color: #047857; }
+
+.hf-debt-name-block {
+  min-width: 0;
+}
+
+.hf-debt-title-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+#hf-family-debt-view .hf-family-card-head strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hf-text) !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#hf-family-debt-view .hf-family-card-head small {
+  margin-top: 3px !important;
+  color: var(--hf-text-muted) !important;
+  font-size: 11.5px !important;
+  line-height: 1.25 !important;
+}
+
+#hf-family-debt-view .hf-family-status {
+  min-height: 23px !important;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+  font-size: 10.5px !important;
+  line-height: 1.2 !important;
+}
+
+/* Resumen financiero central sin apariencia de formulario. */
+#hf-family-debt-view .hf-family-card-main {
+  margin-top: 15px !important;
+  padding: 0 !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+#hf-family-debt-view .hf-family-card-main > div {
+  min-width: 0;
+  padding: 2px 14px 2px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+#hf-family-debt-view .hf-family-card-main > div + div {
+  padding-left: 14px !important;
+  padding-right: 0 !important;
+  border-left: 1px solid var(--hf-border) !important;
+}
+
+#hf-family-debt-view .hf-family-card-main span {
+  color: var(--hf-text-muted) !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: .035em !important;
+  text-transform: uppercase !important;
+}
+
+#hf-family-debt-view .hf-family-card-main strong {
+  margin-top: 3px !important;
+  color: var(--hf-text) !important;
+  font-size: clamp(19px, 5.5vw, 23px) !important;
+  font-weight: 700 !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.5px !important;
+}
+
+#hf-family-debt-view .hf-family-card-main .debt strong {
+  color: var(--hf-text) !important;
+}
+
+#hf-family-debt-view .status-danger .hf-family-card-main .debt strong {
+  color: var(--hf-danger) !important;
+}
+
+#hf-family-debt-view .hf-family-loan-card .hf-family-card-main .debt strong {
+  color: var(--hf-success) !important;
+}
+
+#hf-family-debt-view .hf-family-credit-bar {
+  height: 6px !important;
+  margin-top: 14px !important;
+  overflow: hidden !important;
+  border-radius: 999px !important;
+  background: #edf1f6 !important;
+}
+
+#hf-family-debt-view .hf-family-credit-bar i {
+  background: var(--hf-primary) !important;
+}
+
+#hf-family-debt-view .status-watch .hf-family-credit-bar i {
+  background: var(--hf-warning) !important;
+}
+
+#hf-family-debt-view .status-danger .hf-family-credit-bar i {
+  background: linear-gradient(90deg, #dc2626, #ef4444) !important;
+}
+
+#hf-family-debt-view .hf-family-loan-card .hf-family-credit-bar i {
+  background: linear-gradient(90deg, #059669, #10b981) !important;
+}
+
+#hf-family-debt-view .hf-family-credit-labels {
+  margin-top: 5px !important;
+  color: var(--hf-text-muted) !important;
+  font-size: 10.5px !important;
+}
+
+/* Datos clave siempre visibles. */
+.hf-debt-glance {
+  margin-top: 13px;
+  padding: 11px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  border-top: 1px solid var(--hf-border);
+}
+
+.hf-debt-glance-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.hf-debt-glance-item > span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--hf-surface-soft);
+  color: var(--hf-text-muted);
+}
+
+.hf-debt-glance-item svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hf-debt-glance-item div {
+  min-width: 0;
+}
+
+.hf-debt-glance-item small,
+.hf-debt-more-details small {
+  display: block;
+  color: var(--hf-text-muted);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.hf-debt-glance-item strong,
+.hf-debt-more-details strong {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--hf-text);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Detalles progresivos. */
+#hf-family-debt-view .hf-family-card-foot,
+#hf-family-debt-view .hf-family-advice {
+  display: none !important;
+}
+
+.hf-debt-more-details {
+  display: none;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--hf-border);
+  border-radius: 14px;
+  background: var(--hf-surface-soft);
+}
+
+#hf-family-debt-view .hf-family-card.is-expanded .hf-debt-more-details {
+  display: block;
+}
+
+.hf-debt-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px 12px;
+}
+
+.hf-debt-detail-note {
+  margin-top: 12px;
+  padding-top: 11px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 8px;
+  border-top: 1px solid var(--hf-border);
+  color: var(--hf-text-secondary);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.hf-debt-detail-note svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+/* Acciones con un CTA claro y una acción secundaria ligera. */
+#hf-family-debt-view .hf-card-actions {
+  margin-top: 13px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) !important;
+  gap: 8px !important;
+}
+
+#hf-family-debt-view .hf-card-actions button {
+  min-height: 43px !important;
+  border-radius: 12px !important;
+  font-size: 12.5px !important;
+}
+
+#hf-family-debt-view .hf-card-primary-action {
+  background: var(--hf-primary) !important;
+  border-color: var(--hf-primary) !important;
+  box-shadow: none !important;
+}
+
+#hf-family-debt-view .hf-card-expand {
+  background: #fff !important;
+  border-color: var(--hf-border-strong) !important;
+  color: var(--hf-text-secondary) !important;
+}
+
+/* Menú de tres puntos permanece independiente y accesible. */
+#hf-family-debt-view .hf-card-menu-wrap {
+  top: 7px !important;
+  right: 7px !important;
+}
+
+#hf-family-debt-view .hf-card-menu-button {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+}
+
+/* Administrar deudas: solo las herramientas acordadas. */
+#hfDebtAdminModal .hf-debt-admin-sheet {
+  max-height: min(86vh, 760px) !important;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+}
+
+#hfDebtAdminModal .hf-debt-admin-heading {
+  margin-bottom: 16px !important;
+}
+
+#hfDebtAdminModal .hf-debt-admin-heading p {
+  max-width: 270px;
+  color: var(--hf-text-muted) !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+}
+
+#hfDebtAdminModal .hf-debt-admin-actions {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+#hfDebtAdminModal [data-admin-action="actualizar"],
+#hfDebtAdminModal [data-admin-action="cierre"] {
+  display: none !important;
+}
+
+#hfDebtAdminModal .hf-debt-admin-action {
+  min-height: 66px !important;
+  padding: 10px 12px !important;
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr) 18px !important;
+  align-items: center !important;
+  gap: 10px !important;
+  border: 1px solid var(--hf-border) !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  color: var(--hf-text) !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+
+#hfDebtAdminModal .hf-admin-featured-action {
+  border-color: #cfe0fb !important;
+  background: linear-gradient(145deg, #ffffff, #f5f8fe) !important;
+}
+
+#hfDebtAdminModal .hf-admin-action-icon,
+#hfDebtAdminModal .hf-debt-admin-action > span:first-child {
+  width: 38px !important;
+  height: 38px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 12px !important;
+  background: var(--hf-primary-soft) !important;
+  color: var(--hf-primary) !important;
+  font-size: 0 !important;
+}
+
+#hfDebtAdminModal .hf-admin-action-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#hfDebtAdminModal .hf-debt-admin-action strong {
+  color: var(--hf-text) !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+}
+
+#hfDebtAdminModal .hf-debt-admin-action small {
+  display: block !important;
+  margin-top: 2px !important;
+  color: var(--hf-text-muted) !important;
+  font-size: 10.5px !important;
+  line-height: 1.3 !important;
+}
+
+#hfDebtAdminModal .hf-debt-admin-action em {
+  color: var(--hf-text-subtle) !important;
+  font-size: 20px !important;
+  font-style: normal !important;
+}
+
+#hfDebtAdminModal .hf-debt-admin-separator {
+  margin: 18px 0 8px !important;
+  color: var(--hf-text-muted) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+}
+
+#hfDebtAdminModal .hf-admin-card-actions {
+  display: grid !important;
+  gap: 7px !important;
+}
+
+#hfDebtAdminModal .hf-admin-card-row {
+  min-height: 56px !important;
+  padding: 9px 10px !important;
+  border: 1px solid var(--hf-border) !important;
+  border-radius: 13px !important;
+  background: var(--hf-surface-soft) !important;
+}
+
+#hfDebtAdminModal .hf-admin-card-row strong {
+  color: var(--hf-text) !important;
+  font-size: 12px !important;
+}
+
+#hfDebtAdminModal .hf-admin-card-row small {
+  color: var(--hf-text-muted) !important;
+  font-size: 10px !important;
+}
+
+#hfDebtAdminModal .hf-admin-card-row button {
+  min-width: 64px !important;
+  min-height: 36px !important;
+  padding: 7px 11px !important;
+  border: 1px solid #cde9dc !important;
+  border-radius: 11px !important;
+  background: var(--hf-success-soft) !important;
+  color: var(--hf-success) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+/* Modal registrar pago: campo bancario relevante y comprensible. */
+#pagoTarjetaModal .hf-payment-bank-balance {
+  margin-top: 12px !important;
+  padding: 13px !important;
+  border: 1px solid #d7e3f5 !important;
+  border-radius: 14px !important;
+  background: #f7faff !important;
+}
+
+#pagoTarjetaModal .hf-payment-bank-balance .input-label {
+  color: var(--hf-text) !important;
+  font-weight: 650 !important;
+}
+
+#pagoTarjetaModal .hf-payment-bank-balance .field-help {
+  display: block !important;
+  margin-top: 6px !important;
+  color: var(--hf-text-muted) !important;
+  font-size: 10.5px !important;
+  line-height: 1.4 !important;
+}
+
+@media (max-width: 360px) {
+  #hf-family-debt-view .hf-family-card {
+    padding: 14px !important;
+  }
+
+  #hf-family-debt-view .hf-family-card-main strong {
+    font-size: 18px !important;
+  }
+
+  .hf-debt-glance {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  #hf-family-debt-view .hf-card-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
