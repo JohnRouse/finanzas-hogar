@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v31-1-estabilidad-post-render';
+const CACHE_NAME = 'hogar-finanzas-v30-prioridad-visual';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
