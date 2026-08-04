@@ -9,17 +9,35 @@ SERVICE_WORKER = ROOT / "firebase-messaging-sw.js"
 
 BASE_VERSION = "22.0"
 DEBT_VERSION = "24.0"
+FIX_VERSION = "25.0"
 RESOURCES = [
     ("css", "css/experiencia-financiera-v2.css", BASE_VERSION),
     ("css", "css/deudas-redesign-v23.css", DEBT_VERSION),
+    ("css", "css/deudas-fixes-v25.css", FIX_VERSION),
     ("js", "js/experiencia-financiera-v2.js", BASE_VERSION),
     ("js", "js/deudas-redesign-v23.js", DEBT_VERSION),
+    ("js", "js/deudas-fixes-v25.js", FIX_VERSION),
 ]
 
 FONT_TAG = (
     '<link href="https://fonts.googleapis.com/css2?'
     'family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">'
 )
+
+MANIFEST_BLOCK = """  <!-- HF_MANIFEST_START -->
+  <script>
+    (() => {
+      const isCloudWorkstation = location.hostname.endsWith('.cloudworkstations.dev');
+      if (!isCloudWorkstation) {
+        const manifest = document.createElement('link');
+        manifest.rel = 'manifest';
+        manifest.href = './manifest.json';
+        document.head.appendChild(manifest);
+      }
+    })();
+  </script>
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <!-- HF_MANIFEST_END -->"""
 
 
 def resource_tag(kind: str, path: str, version: str) -> str:
@@ -42,6 +60,18 @@ def upsert_html_resource(text: str, kind: str, path: str, version: str) -> str:
     return text.replace("</body>", f"{tag}\n</body>", 1)
 
 
+def patch_manifest_and_favicon(text: str) -> str:
+    marker_pattern = r'\s*<!-- HF_MANIFEST_START -->.*?<!-- HF_MANIFEST_END -->'
+    if re.search(marker_pattern, text, flags=re.DOTALL):
+        return re.sub(marker_pattern, f"\n{MANIFEST_BLOCK}", text, count=1, flags=re.DOTALL)
+
+    static_manifest = r'\s*<link\s+rel=["\']manifest["\']\s+href=["\'][^"\']+["\']\s*/?>'
+    if re.search(static_manifest, text, flags=re.IGNORECASE):
+        return re.sub(static_manifest, f"\n{MANIFEST_BLOCK}", text, count=1, flags=re.IGNORECASE)
+
+    return text.replace("</head>", f"{MANIFEST_BLOCK}\n</head>", 1)
+
+
 def patch_index() -> None:
     text = INDEX.read_text(encoding="utf-8")
 
@@ -57,6 +87,7 @@ def patch_index() -> None:
         text,
         count=1,
     )
+    text = patch_manifest_and_favicon(text)
 
     for kind, path, version in RESOURCES:
         text = upsert_html_resource(text, kind, path, version)
@@ -82,10 +113,14 @@ def patch_service_worker() -> None:
     text = SERVICE_WORKER.read_text(encoding="utf-8")
     text = re.sub(
         r"const CACHE_NAME = '[^']+';",
-        "const CACHE_NAME = 'hogar-finanzas-v24-deudas-detalles-tea';",
+        "const CACHE_NAME = 'hogar-finanzas-v25-menu-unico-workstation';",
         text,
         count=1,
     )
+
+    # El manifest no es parte necesaria del shell offline. En el preview privado de
+    # Cloud Workstations su redirección de autenticación cruza de puerto y genera CORS.
+    text = re.sub(r"\s*'\./manifest\.json',", "", text, count=1)
 
     assets: list[str] = []
     for _, path, version in RESOURCES:
@@ -112,7 +147,8 @@ def main() -> None:
     patch_index()
     patch_service_worker()
     print("✓ Sistema visual UIUX Pro Max aplicado")
-    print(f"✓ Rediseño de Deudas actualizado a {DEBT_VERSION}")
+    print(f"✓ Rediseño de Deudas {DEBT_VERSION} + correcciones {FIX_VERSION}")
+    print("✓ Preview de Cloud Workstations sin solicitud de manifest")
     print("✓ Caché PWA renovada")
 
 
