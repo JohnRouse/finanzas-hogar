@@ -1,13 +1,14 @@
 (() => {
   'use strict';
 
-  const VERSION = '30.0';
+  const VERSION = '31.0';
   if (window.HFExperienciaIntegrada30?.version === VERSION) return;
 
   const state = {
     observer: null,
     timer: null,
-    attempts: 0
+    attempts: 0,
+    loadingV31: false
   };
 
   function normalizeCardBadges(root = document) {
@@ -58,11 +59,29 @@
     enforceKpiGrid('page-ahorro');
   }
 
+  function loadStability31() {
+    if (window.HFEstabilidadPostRender31 || state.loadingV31) return;
+    state.loadingV31 = true;
+    const script = document.createElement('script');
+    script.src = 'js/estabilidad-post-render-v31.js?v=31.0';
+    script.async = false;
+    script.onload = () => {
+      state.loadingV31 = false;
+      window.HFEstabilidadPostRender31?.repairAll?.(true);
+    };
+    script.onerror = () => {
+      state.loadingV31 = false;
+      console.warn('No se pudo cargar la estabilización V31.');
+    };
+    document.body.appendChild(script);
+  }
+
   function repair(root = document) {
     normalizeCardBadges(root);
     normalizeViewAll(root);
     hideFabLabels();
     enforceKpis();
+    loadStability31();
     document.body?.classList.add('hf-experiencia-integrada-v30');
   }
 
@@ -106,7 +125,8 @@
     repair,
     normalizeCardBadges,
     normalizeViewAll,
-    enforceKpis
+    enforceKpis,
+    loadStability31
   });
 
   if (document.readyState === 'loading') {
