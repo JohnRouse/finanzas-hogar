@@ -1,46 +1,49 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = ROOT / "index.html"
 SERVICE_WORKER = ROOT / "firebase-messaging-sw.js"
-
-CSS_TAG = '  <link rel="stylesheet" href="css/experiencia-financiera-v2.css?v=21.0">'
-JS_TAG = '  <script src="js/experiencia-financiera-v2.js?v=21.0"></script>'
-
-
-def replace_once(text: str, old: str, new: str, description: str) -> str:
-    if old not in text:
-        if new in text:
-            return text
-        raise RuntimeError(f"No se encontró el marcador para {description}")
-    return text.replace(old, new, 1)
+VERSION = "22.0"
+CSS_PATH = "css/experiencia-financiera-v2.css"
+JS_PATH = "js/experiencia-financiera-v2.js"
+CSS_TAG = f'  <link rel="stylesheet" href="{CSS_PATH}?v={VERSION}">'
+JS_TAG = f'  <script src="{JS_PATH}?v={VERSION}"></script>'
+FONT_TAG = (
+    '<link href="https://fonts.googleapis.com/css2?'
+    'family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">'
+)
 
 
 def patch_index() -> None:
     text = INDEX.read_text(encoding="utf-8")
 
-    old_font = (
-        '<link href="https://fonts.googleapis.com/css2?'
-        'family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600'
-        '&family=DM+Serif+Display&display=swap" rel="stylesheet">'
+    text = re.sub(
+        r'<link href="https://fonts\.googleapis\.com/css2\?[^\"]+" rel="stylesheet">',
+        FONT_TAG,
+        text,
+        count=1,
     )
-    new_font = (
-        '<link href="https://fonts.googleapis.com/css2?'
-        'family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800&display=swap" '
-        'rel="stylesheet">'
+    text = re.sub(
+        r'<meta name="theme-color" content="#[0-9A-Fa-f]{6}">',
+        '<meta name="theme-color" content="#1E40AF">',
+        text,
+        count=1,
     )
-    text = replace_once(text, old_font, new_font, "actualizar la tipografía")
 
-    text = text.replace('<meta name="theme-color" content="#2563eb">',
-                        '<meta name="theme-color" content="#2457a7">', 1)
+    css_pattern = rf'\s*<link rel="stylesheet" href="{re.escape(CSS_PATH)}\?v=[^"]+">'
+    if re.search(css_pattern, text):
+        text = re.sub(css_pattern, f"\n{CSS_TAG}", text, count=1)
+    else:
+        text = text.replace("</head>", f"{CSS_TAG}\n</head>", 1)
 
-    if CSS_TAG not in text:
-        text = replace_once(text, "</head>", f"{CSS_TAG}\n</head>", "insertar el CSS V2")
-
-    if JS_TAG not in text:
-        text = replace_once(text, "</body>", f"{JS_TAG}\n</body>", "insertar el JavaScript V2")
+    js_pattern = rf'\s*<script src="{re.escape(JS_PATH)}\?v=[^"]+"></script>'
+    if re.search(js_pattern, text):
+        text = re.sub(js_pattern, f"\n{JS_TAG}", text, count=1)
+    else:
+        text = text.replace("</body>", f"{JS_TAG}\n</body>", 1)
 
     text = text.replace(
         '<button class="tab" onclick="showPage(\'gastos\',1)">Gastos</button>',
@@ -61,27 +64,35 @@ def patch_service_worker() -> None:
         return
 
     text = SERVICE_WORKER.read_text(encoding="utf-8")
-
-    import re
     text = re.sub(
         r"const CACHE_NAME = '[^']+';",
-        "const CACHE_NAME = 'hogar-finanzas-v21-correccion-visual-v2';",
+        "const CACHE_NAME = 'hogar-finanzas-v22-uiux-pro-max';",
         text,
         count=1,
     )
 
-    assets = [
-        "  './css/experiencia-financiera-v2.css?v=21.0',",
-        "  './js/experiencia-financiera-v2.js?v=21.0',",
-    ]
+    text = re.sub(
+        rf"'\./{re.escape(CSS_PATH)}\?v=[^']+'",
+        f"'./{CSS_PATH}?v={VERSION}'",
+        text,
+    )
+    text = re.sub(
+        rf"'\./{re.escape(JS_PATH)}\?v=[^']+'",
+        f"'./{JS_PATH}?v={VERSION}'",
+        text,
+    )
 
+    assets = [
+        f"  './{CSS_PATH}?v={VERSION}',",
+        f"  './{JS_PATH}?v={VERSION}',",
+    ]
     missing = [asset for asset in assets if asset not in text]
     if missing:
         marker = "  './css/experiencia-financiera-14.css?v=20.0',"
         fallback = "  './css/styles.css?v=10.0',"
         target = marker if marker in text else fallback
         if target not in text:
-            raise RuntimeError("No se encontró dónde añadir los recursos V2 en el service worker")
+            raise RuntimeError("No se encontró dónde añadir los recursos visuales en el service worker")
         text = text.replace(target, target + "\n" + "\n".join(missing), 1)
 
     SERVICE_WORKER.write_text(text, encoding="utf-8")
@@ -90,9 +101,9 @@ def patch_service_worker() -> None:
 def main() -> None:
     patch_index()
     patch_service_worker()
-    print("✓ Corrección visual V2 aplicada")
-    print("✓ index.html actualizado")
-    print("✓ caché PWA actualizada")
+    print("✓ Sistema visual UIUX Pro Max aplicado")
+    print(f"✓ Recursos actualizados a {VERSION}")
+    print("✓ Caché PWA renovada")
 
 
 if __name__ == "__main__":
