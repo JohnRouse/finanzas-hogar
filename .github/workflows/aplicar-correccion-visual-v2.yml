@@ -11,6 +11,8 @@ on:
       - js/experiencia-financiera-v2.js
       - css/deudas-redesign-v23.css
       - js/deudas-redesign-v23.js
+      - css/deudas-fixes-v25.css
+      - js/deudas-fixes-v25.js
   workflow_dispatch:
 
 permissions:
@@ -36,6 +38,7 @@ jobs:
           node --check js/app.js
           node --check js/experiencia-financiera-v2.js
           node --check js/deudas-redesign-v23.js
+          node --check js/deudas-fixes-v25.js
 
       - name: Guardar archivos generados
         run: |
@@ -46,5 +49,5 @@ jobs:
             echo "No hay cambios pendientes."
             exit 0
           fi
-          git commit -m "Aplica Deudas V24 en HTML y caché PWA"
+          git commit -m "Aplica correcciones V25 y ajusta preview de Workstations"
           git push origin etapa-15-correccion-visual-v2
