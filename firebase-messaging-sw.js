@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v31-estabilidad-post-render';
+const CACHE_NAME = 'hogar-finanzas-v31-1-estabilidad-post-render';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
@@ -38,7 +38,7 @@ const APP_SHELL = [
   './css/experiencia-financiera-14.css?v=20.0',
   './css/experiencia-integrada-v30.css?v=30.0',
   './js/experiencia-integrada-v30.js?v=30.0',
-  './js/estabilidad-post-render-v31.js?v=31.0',
+  './js/estabilidad-post-render-v31.js?v=31.1',
   './css/experiencia-integrada-v29.css?v=29.0',
   './js/experiencia-integrada-v29.js?v=29.0',
   './js/experiencia-integrada-v28-estabilidad.js?v=28.1',
