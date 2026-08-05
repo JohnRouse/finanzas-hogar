@@ -57,10 +57,16 @@ jobs:
           node --check js/avatar-random-v33-2.js
           node --check firebase-messaging-sw.js
 
-      - name: Verificar recursos V33.2
+      - name: Verificar recursos V33.3
         run: |
-          grep -q "hotfix-v33-1.js?v=33.2" js/experiencia-unificada-v32.js
-          grep -q "avatar-random-v33-2.js?v=33.2" js/experiencia-unificada-v32.js
+          grep -q "hotfix-v33-1.js?v=33.3" js/experiencia-unificada-v32.js
+          grep -q "avatar-random-v33-2.js?v=33.3" js/experiencia-unificada-v32.js
+          grep -q "const VERSION = '33.3'" js/tarjetas-consistencia-v26.js
+          grep -q "hf:bootstrap-avanzado-completado" js/hotfix-v33-1.js
+          if grep -q "state.observer = new MutationObserver" js/tarjetas-consistencia-v26.js; then
+            echo "Tarjetas volvió a instalar un observador global" >&2
+            exit 1
+          fi
           grep -q "hf-debt-v33-ready" css/experiencia-unificada-v32.css
           grep -q "summary-secondary-list" js/experiencia-financiera-v2.js
           grep -q "nav-icon" js/experiencia-financiera-v2.js
