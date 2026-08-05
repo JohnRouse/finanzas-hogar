@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '33.1';
+  const VERSION = '33.2';
   if (window.HFVisualUIUX22?.version === VERSION) return;
 
   const ICONS = {
@@ -30,13 +30,25 @@
     }
 
     const monthButton = document.getElementById('monthBtn');
-    if (monthButton && !monthButton.querySelector('.hf-month-chevron')) {
+    if (!monthButton) return;
+
+    [...monthButton.childNodes].forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        node.nodeValue = String(node.nodeValue || '').replace(/[▾▼⌄]/g, '');
+      }
+    });
+
+    const chevrons = [...monthButton.querySelectorAll('.hf-month-chevron')];
+    chevrons.slice(1).forEach(node => node.remove());
+
+    if (!chevrons.length) {
       const chevron = document.createElement('span');
       chevron.className = 'hf-month-chevron';
       chevron.innerHTML = ICONS.chevron;
       monthButton.appendChild(chevron);
-      monthButton.setAttribute('aria-label', 'Cambiar mes');
     }
+
+    monthButton.setAttribute('aria-label', 'Cambiar mes');
   }
 
   function enhanceNavigation() {
