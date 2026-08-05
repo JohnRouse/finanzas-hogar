@@ -1,13 +1,13 @@
 (() => {
   'use strict';
 
-  const VERSION = '33.1';
+  const VERSION = '33.2';
   if (window.HFHotfix331?.version === VERSION) return;
 
   const state = {
-    observer: null,
     timer: null,
-    rendering: false
+    rendering: false,
+    retries: 0
   };
 
   function visibleFinalCards() {
@@ -18,19 +18,25 @@
     document.body?.classList.toggle('hf-debt-v33-ready', visibleFinalCards());
   }
 
-  async function renderDebtSafely() {
+  async function renderDebtSafely(force = false) {
     if (state.rendering) return;
+    if (!force && visibleFinalCards()) {
+      syncReadyState();
+      return;
+    }
+
     const view = document.getElementById('hf-family-debt-view');
     const lists = view?.querySelectorAll('.hf-family-card-list');
-    if (!view || !lists || lists.length < 2) {
+    const renderer = window.HFDeudasRedesign24?.renderDebtPage;
+
+    if (!view || !lists || lists.length < 2 || typeof renderer !== 'function') {
       syncReadyState();
       return;
     }
 
     state.rendering = true;
     try {
-      const renderer = window.HFDeudasRedesign24?.renderDebtPage;
-      if (typeof renderer === 'function') await renderer();
+      await renderer();
     } catch (error) {
       console.warn('La vista final de Deudas no pudo reconstruirse; se conserva la vista de respaldo.', error);
     } finally {
@@ -39,20 +45,20 @@
     }
   }
 
-  function scheduleDebtRender(delay = 0) {
+  function scheduleDebtRender(delay = 0, force = false) {
     clearTimeout(state.timer);
-    state.timer = setTimeout(renderDebtSafely, delay);
+    state.timer = setTimeout(() => renderDebtSafely(force), delay);
   }
 
-  function observeDebtPage() {
-    const page = document.getElementById('page-deudas');
-    if (!page || state.observer) return;
-
-    state.observer = new MutationObserver(mutations => {
-      const changed = mutations.some(mutation => mutation.type === 'childList' && mutation.addedNodes.length);
-      if (changed) scheduleDebtRender(0);
+  function retryUntilReady() {
+    if (visibleFinalCards() || state.retries >= 4) {
+      syncReadyState();
+      return;
+    }
+    state.retries += 1;
+    renderDebtSafely(false).finally(() => {
+      if (!visibleFinalCards()) setTimeout(retryUntilReady, 450);
     });
-    state.observer.observe(page, { childList: true, subtree: true });
   }
 
   function preserveFabSymbol() {
@@ -64,19 +70,18 @@
   }
 
   function start() {
-    observeDebtPage();
     preserveFabSymbol();
-    scheduleDebtRender(0);
-
-    [150, 450, 1000, 2000].forEach(delay => setTimeout(renderDebtSafely, delay));
+    retryUntilReady();
 
     ['hf:deuda-actualizada', 'hf:deudas-core-actualizadas', 'hf:estado-cuenta-confirmado', 'hf:deudas-recalculadas']
-      .forEach(name => window.addEventListener(name, () => scheduleDebtRender(0)));
+      .forEach(name => window.addEventListener(name, () => scheduleDebtRender(60, true)));
 
     document.addEventListener('click', event => {
-      if (event.target.closest('.tab, .bnav-btn')) {
-        preserveFabSymbol();
-        setTimeout(renderDebtSafely, 0);
+      if (!event.target.closest('.tab, .bnav-btn')) return;
+      preserveFabSymbol();
+      const debtPage = document.getElementById('page-deudas');
+      if (debtPage?.classList.contains('active') && !visibleFinalCards()) {
+        scheduleDebtRender(0, false);
       }
     });
   }
