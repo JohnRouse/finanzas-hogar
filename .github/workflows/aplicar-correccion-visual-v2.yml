@@ -93,8 +93,9 @@ jobs:
           grep -q "hf-nav-avatar" js/identidad-navegacion-v34.js
           grep -q "openAjustesModal" js/identidad-navegacion-v34.js
           grep -q "removeHeaderSettings" js/identidad-navegacion-v34.js
-          if grep -q "hf-nav-avatar-label">/dev/null 2>&1; then
-            true
+          if grep -q "hf-nav-avatar-label"> /dev/null 2>&1; then
+            echo "La etiqueta Ajustes volvió al botón central" >&2
+            exit 1
           fi
           grep -q "app-icon.svg" manifest.json
           grep -q "app-icon-maskable.svg" manifest.json
