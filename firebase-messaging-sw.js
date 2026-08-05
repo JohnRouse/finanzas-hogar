@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v33-3-estabilidad-red';
+const CACHE_NAME = 'hogar-finanzas-v33-4-render-unico';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
@@ -31,17 +31,18 @@ const APP_SHELL = [
   './js/actualizador-tarjetas-outlook.js?v=11.5.4',
   './js/outlook-ui.js?v=11.5.4',
   './js/deudas-inteligentes.js?v=11.2.1',
-  './js/sincronizacion-financiera-ui.js?v=20.0',
-  './js/bootstrap-avanzado.js?v=20.0',
-  './js/experiencia-financiera-14.js?v=20.0',
+  './js/sincronizacion-financiera-ui.js?v=33.4',
+  './js/bootstrap-avanzado.js?v=33.4',
+  './js/deudas-coordinator-v33-4.js?v=33.4',
+  './js/experiencia-financiera-14.js?v=33.4',
   './js/diagnostico-etapa-14.js?v=20.0',
   './css/experiencia-financiera-14.css?v=20.0',
   './css/experiencia-unificada-v32.css?v=33.2',
-  './js/experiencia-unificada-v32.js?v=33.3',
-  './js/movimientos-unificados-v33.js?v=33.3',
-  './js/experiencia-auxiliar-v33.js?v=33.3',
-  './js/hotfix-v33-1.js?v=33.3',
-  './js/avatar-random-v33-2.js?v=33.3',
+  './js/experiencia-unificada-v32.js?v=33.4',
+  './js/movimientos-unificados-v33.js?v=33.4',
+  './js/experiencia-auxiliar-v33.js?v=33.4',
+  './js/hotfix-v33-1.js?v=33.4',
+  './js/avatar-random-v33-2.js?v=33.4',
   './css/experiencia-integrada-v30.css?v=31.2',
   './css/experiencia-integrada-v29.css?v=29.3',
   './css/experiencia-integrada-v28.css?v=28.0',
