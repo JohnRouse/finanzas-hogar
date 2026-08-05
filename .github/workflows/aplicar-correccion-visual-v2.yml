@@ -6,6 +6,7 @@ on:
       - master
       - etapa-15-correccion-visual-v2
       - etapa-16-identidad-y-navegacion
+      - etapa-17-nav-avatar-flotante
     paths:
       - .github/workflows/aplicar-correccion-visual-v2.yml
       - js/app.js
@@ -86,9 +87,9 @@ jobs:
             exit 1
           fi
 
-      - name: Verificar identidad y navegación V34.0
+      - name: Verificar identidad y navegación
         run: |
-          grep -q "identidad-navegacion-v34.css?v=34.0" js/experiencia-unificada-v32.js
+          grep -q "identidad-navegacion-v34.css?v=" js/experiencia-unificada-v32.js
           grep -q "identidad-navegacion-v34.js?v=34.0" js/experiencia-unificada-v32.js
           grep -q "const VERSION = '34.0'" js/identidad-navegacion-v34.js
           grep -q "hf-nav-avatar" js/identidad-navegacion-v34.js
@@ -100,6 +101,17 @@ jobs:
           fi
           grep -q "app-icon.svg?v=34.0" manifest.json
           grep -q "app-icon-maskable.svg?v=34.0" manifest.json
-          grep -qx "34.0" VERSION
           grep -q "hf-nav-avatar-ready" css/identidad-navegacion-v34.css
           grep -q ".app-header .settings-btn" css/identidad-navegacion-v34.css
+
+      - name: Verificar avatar flotante V34.1 beta
+        if: github.ref_name == 'etapa-17-nav-avatar-flotante'
+        run: |
+          grep -qx "34.1-beta.1" VERSION
+          grep -q "34.1-beta.1" manifest.json
+          grep -q "const VERSION = '34.1-beta.1'" js/experiencia-unificada-v32.js
+          grep -q "--hf-nav-avatar-rise: 20px" css/identidad-navegacion-v34.css
+          grep -q "top: calc(-1 \* var(--hf-nav-avatar-rise))" css/identidad-navegacion-v34.css
+          grep -q "position: absolute" css/identidad-navegacion-v34.css
+          grep -q "align-items: center" css/identidad-navegacion-v34.css
+          grep -q "hogar-finanzas-v34-1-beta1-avatar-flotante" firebase-messaging-sw.js
