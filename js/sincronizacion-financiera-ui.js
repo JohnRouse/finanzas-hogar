@@ -13,7 +13,7 @@
     temporizador = setTimeout(() => ejecutarRefresco(opciones), 220);
   }
 
-  async function ejecutarRefresco({ principal = true, deudas = true, coherencia = false } = {}) {
+  async function ejecutarRefresco({ principal = true, deudas = false, coherencia = false } = {}) {
     if (refrescoEnCurso) {
       refrescoPendiente = true;
       return;
@@ -47,7 +47,7 @@
   }
 
   function refrescarVistas(forzar = true) {
-    programarRefresco({ principal: forzar, deudas: true, coherencia: false });
+    programarRefresco({ principal: forzar, deudas: false, coherencia: false });
   }
 
   function refrescarSoloDeudas() {
@@ -75,22 +75,27 @@
   ['hf:gastos-actualizados', 'hf:objetivo-financiero-guardado'].forEach(nombre => {
     window.addEventListener(nombre, () => programarRefresco({
       principal: true,
-      deudas: nombre === 'hf:gastos-actualizados',
+      deudas: false,
       coherencia: false
     }));
   });
 
   ['hf:deuda-actualizada', 'hf:deudas-recalculadas', 'hf:estado-cuenta-confirmado', 'hf:cierre-mensual-guardado']
+    .forEach(() => {
+      window.addEventListener(arguments[0], () => {});
+    });
+
+  ['hf:deuda-actualizada', 'hf:deudas-recalculadas', 'hf:estado-cuenta-confirmado', 'hf:cierre-mensual-guardado']
     .forEach(nombre => {
       window.addEventListener(nombre, () => programarRefresco({
         principal: true,
-        deudas: true,
-        coherencia: nombre !== 'hf:gastos-actualizados'
+        deudas: false,
+        coherencia: true
       }));
     });
 
   window.addEventListener('hf:deudas-core-actualizadas', () => {
-    programarRefresco({ principal: false, deudas: true, coherencia: true });
+    programarRefresco({ principal: false, deudas: false, coherencia: true });
   });
 
   if (document.readyState === 'loading') {
