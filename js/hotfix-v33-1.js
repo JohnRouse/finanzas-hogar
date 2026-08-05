@@ -69,6 +69,21 @@
     fab.style.setProperty('overflow', 'visible', 'important');
   }
 
+  function restoreMovementDetailIcon(row) {
+    const detailIcon = document.getElementById('hf-v33-detail-icon');
+    if (!detailIcon || !row) return;
+
+    [...detailIcon.classList]
+      .filter(className => className.startsWith('cat-'))
+      .forEach(className => detailIcon.classList.remove(className));
+
+    const categoryClass = [...row.classList].find(className => className.startsWith('cat-')) || 'cat-other';
+    detailIcon.classList.add(categoryClass);
+
+    const glyph = row.querySelector('.hf-v32-category-glyph');
+    detailIcon.innerHTML = `<span class="hf-v32-category-glyph">${glyph?.textContent || '📦'}</span>`;
+  }
+
   function start() {
     preserveFabSymbol();
     retryUntilReady();
@@ -77,11 +92,20 @@
       .forEach(name => window.addEventListener(name, () => scheduleDebtRender(60, true)));
 
     document.addEventListener('click', event => {
-      if (!event.target.closest('.tab, .bnav-btn')) return;
-      preserveFabSymbol();
-      const debtPage = document.getElementById('page-deudas');
-      if (debtPage?.classList.contains('active') && !visibleFinalCards()) {
-        scheduleDebtRender(0, false);
+      const navigation = event.target.closest('.tab, .bnav-btn');
+      if (navigation) {
+        preserveFabSymbol();
+        const debtPage = document.getElementById('page-deudas');
+        if (debtPage?.classList.contains('active') && !visibleFinalCards()) {
+          scheduleDebtRender(0, false);
+        }
+        return;
+      }
+
+      const movement = event.target.closest('.hf-v33-movement');
+      const isMovementAction = event.target.closest('.hf-v28-movement-more, [data-action]');
+      if (movement && !isMovementAction) {
+        setTimeout(() => restoreMovementDetailIcon(movement), 0);
       }
     });
   }
@@ -89,7 +113,8 @@
   window.HFHotfix331 = Object.freeze({
     version: VERSION,
     renderDebtSafely,
-    syncReadyState
+    syncReadyState,
+    restoreMovementDetailIcon
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
