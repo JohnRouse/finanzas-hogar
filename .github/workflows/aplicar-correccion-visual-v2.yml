@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - etapa-15-correccion-visual-v2
+      - etapa-16-identidad-y-navegacion
     paths:
       - .github/workflows/aplicar-correccion-visual-v2.yml
       - js/app.js
@@ -21,6 +22,7 @@ on:
       - js/experiencia-auxiliar-v33.js
       - js/hotfix-v33-1.js
       - js/avatar-random-v33-2.js
+      - js/identidad-navegacion-v34.js
       - css/experiencia-financiera-v2.css
       - css/deudas-redesign-v23.css
       - css/deudas-fixes-v25.css
@@ -30,8 +32,12 @@ on:
       - css/experiencia-integrada-v29.css
       - css/experiencia-integrada-v30.css
       - css/experiencia-unificada-v32.css
+      - css/identidad-navegacion-v34.css
+      - icons/app-icon.svg
+      - icons/app-icon-maskable.svg
       - index.html
       - manifest.json
+      - VERSION
       - firebase-messaging-sw.js
   workflow_dispatch:
 
@@ -62,15 +68,14 @@ jobs:
           node --check js/experiencia-auxiliar-v33.js
           node --check js/hotfix-v33-1.js
           node --check js/avatar-random-v33-2.js
+          node --check js/identidad-navegacion-v34.js
           node --check firebase-messaging-sw.js
 
-      - name: Verificar recursos V33.4
+      - name: Verificar estabilidad V33.4
         run: |
           grep -q "deudas-coordinator-v33-4.js" js/bootstrap-avanzado.js
           grep -q "renderizador antiguo fue retirado" js/deudas-familiares.js
           grep -q "const VERSION = '33.4'" js/deudas-coordinator-v33-4.js
-          grep -q "hotfix-v33-1.js?v=33.4" js/experiencia-unificada-v32.js
-          grep -q "avatar-random-v33-2.js?v=33.4" js/experiencia-unificada-v32.js
           grep -q "const VERSION = '33.3'" js/tarjetas-consistencia-v26.js
           if grep -q "state.observer = new MutationObserver" js/tarjetas-consistencia-v26.js; then
             echo "Tarjetas volvió a instalar un observador global" >&2
@@ -80,6 +85,14 @@ jobs:
             echo "El renderizador visual antiguo volvió a deudas-familiares.js" >&2
             exit 1
           fi
-          grep -q "hf-debt-v33-ready" css/experiencia-unificada-v32.css
-          grep -q "summary-secondary-list" js/experiencia-financiera-v2.js
-          grep -q "nav-icon" js/experiencia-financiera-v2.js
+
+      - name: Verificar identidad y navegación V34
+        run: |
+          grep -q "identidad-navegacion-v34.css?v=34.0-beta.1" js/experiencia-unificada-v32.js
+          grep -q "identidad-navegacion-v34.js?v=34.0-beta.1" js/experiencia-unificada-v32.js
+          grep -q "hf-nav-avatar" js/identidad-navegacion-v34.js
+          grep -q "openAjustesModal" js/identidad-navegacion-v34.js
+          grep -q "app-icon.svg" manifest.json
+          grep -q "app-icon-maskable.svg" manifest.json
+          grep -q "34.0-beta.1" VERSION
+          grep -q "hf-nav-avatar-ready" css/identidad-navegacion-v34.css
