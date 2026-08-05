@@ -101,7 +101,6 @@
       else tabs.appendChild(button);
     }
 
-    button.querySelector('.hf-nav-avatar-label')?.remove();
     tabs.classList.add('hf-nav-avatar-ready');
     removeHeaderSettings();
     return button;
