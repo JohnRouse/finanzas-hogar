@@ -17,6 +17,7 @@ on:
       - js/movimientos-unificados-v33.js
       - js/experiencia-auxiliar-v33.js
       - js/hotfix-v33-1.js
+      - js/avatar-random-v33-2.js
       - css/experiencia-financiera-v2.css
       - css/deudas-redesign-v23.css
       - css/deudas-fixes-v25.css
@@ -53,11 +54,13 @@ jobs:
           node --check js/movimientos-unificados-v33.js
           node --check js/experiencia-auxiliar-v33.js
           node --check js/hotfix-v33-1.js
+          node --check js/avatar-random-v33-2.js
           node --check firebase-messaging-sw.js
 
-      - name: Verificar recursos V33.1
+      - name: Verificar recursos V33.2
         run: |
-          grep -q "hotfix-v33-1.js" js/experiencia-unificada-v32.js
+          grep -q "hotfix-v33-1.js?v=33.2" js/experiencia-unificada-v32.js
+          grep -q "avatar-random-v33-2.js?v=33.2" js/experiencia-unificada-v32.js
           grep -q "hf-debt-v33-ready" css/experiencia-unificada-v32.css
           grep -q "summary-secondary-list" js/experiencia-financiera-v2.js
           grep -q "nav-icon" js/experiencia-financiera-v2.js
