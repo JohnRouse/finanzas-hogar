@@ -10,17 +10,17 @@
   "theme_color": "#315efb",
   "icons": [
     {
-      "src": "icons/app-icon.svg?v=34.0-beta.1",
+      "src": "icons/app-icon.svg?v=34.0-beta.2",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "icons/app-icon-maskable.svg?v=34.0-beta.1",
+      "src": "icons/app-icon-maskable.svg?v=34.0-beta.2",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"
     }
   ],
-  "version": "34.0-beta.1"
+  "version": "34.0-beta.2"
 }
