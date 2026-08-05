@@ -33,6 +33,7 @@ const APP_SHELL = [
   './js/deudas-inteligentes.js?v=11.2.1',
   './js/sincronizacion-financiera-ui.js?v=33.4',
   './js/bootstrap-avanzado.js?v=33.4',
+  './js/deudas-familiares.js?v=33.4',
   './js/deudas-coordinator-v33-4.js?v=33.4',
   './js/experiencia-financiera-14.js?v=33.4',
   './js/diagnostico-etapa-14.js?v=20.0',
