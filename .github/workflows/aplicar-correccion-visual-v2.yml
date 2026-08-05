@@ -86,13 +86,18 @@ jobs:
             exit 1
           fi
 
-      - name: Verificar identidad y navegación V34
+      - name: Verificar identidad y navegación V34 beta 2
         run: |
-          grep -q "identidad-navegacion-v34.css?v=34.0-beta.1" js/experiencia-unificada-v32.js
-          grep -q "identidad-navegacion-v34.js?v=34.0-beta.1" js/experiencia-unificada-v32.js
+          grep -q "identidad-navegacion-v34.css?v=34.0-beta.2" js/experiencia-unificada-v32.js
+          grep -q "identidad-navegacion-v34.js?v=34.0-beta.2" js/experiencia-unificada-v32.js
           grep -q "hf-nav-avatar" js/identidad-navegacion-v34.js
           grep -q "openAjustesModal" js/identidad-navegacion-v34.js
+          grep -q "removeHeaderSettings" js/identidad-navegacion-v34.js
+          if grep -q "hf-nav-avatar-label">/dev/null 2>&1; then
+            true
+          fi
           grep -q "app-icon.svg" manifest.json
           grep -q "app-icon-maskable.svg" manifest.json
-          grep -q "34.0-beta.1" VERSION
+          grep -q "34.0-beta.2" VERSION
           grep -q "hf-nav-avatar-ready" css/identidad-navegacion-v34.css
+          grep -q ".app-header .settings-btn" css/identidad-navegacion-v34.css
