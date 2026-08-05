@@ -8,10 +8,13 @@ on:
     paths:
       - .github/workflows/aplicar-correccion-visual-v2.yml
       - scripts/aplicar_correccion_visual_v2.py
+      - scripts/consolidar_renderizadores_v33.py
+      - js/app.js
+      - js/deudas-familiares.js
+      - js/deudas-redesign-v23.js
       - css/experiencia-financiera-v2.css
       - js/experiencia-financiera-v2.js
       - css/deudas-redesign-v23.css
-      - js/deudas-redesign-v23.js
       - css/deudas-fixes-v25.css
       - js/deudas-fixes-v25.js
       - css/tarjetas-consistencia-v26.css
@@ -39,14 +42,18 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
+      - name: Consolidar renderizadores principales
+        run: python3 scripts/consolidar_renderizadores_v33.py
+
       - name: Aplicar recursos en HTML y caché PWA
         run: python3 scripts/aplicar_correccion_visual_v2.py
 
       - name: Validar JavaScript activo
         run: |
           node --check js/app.js
-          node --check js/experiencia-financiera-v2.js
+          node --check js/deudas-familiares.js
           node --check js/deudas-redesign-v23.js
+          node --check js/experiencia-financiera-v2.js
           node --check js/deudas-fixes-v25.js
           node --check js/tarjetas-consistencia-v26.js
           node --check js/experiencia-unificada-v32.js
@@ -55,10 +62,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html firebase-messaging-sw.js
+          git add index.html firebase-messaging-sw.js js/app.js js/deudas-familiares.js js/deudas-redesign-v23.js
           if git diff --cached --quiet; then
             echo "No hay cambios pendientes."
             exit 0
           fi
-          git commit -m "Aplica experiencia unificada V32"
+          git commit -m "Consolida renderizadores V33"
           git push origin "${GITHUB_REF_NAME}"
