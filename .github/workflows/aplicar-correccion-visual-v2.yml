@@ -43,36 +43,67 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Consolidar renderizadores principales
-        run: python3 scripts/finalizar_consolidacion_v33.py
-
-      - name: Aplicar recursos visuales y caché PWA
-        run: python3 scripts/aplicar_correccion_visual_v2.py
-
-      - name: Fijar versiones y retirar ciclos heredados
-        run: python3 scripts/finalizar_consolidacion_v33.py
-
-      - name: Validar JavaScript activo
+      - name: Consolidar, validar y registrar resultado
+        id: consolidar
+        shell: bash
         run: |
-          node --check js/app.js
-          node --check js/deudas-familiares.js
-          node --check js/deudas-redesign-v23.js
-          node --check js/experiencia-financiera-v2.js
-          node --check js/deudas-fixes-v25.js
-          node --check js/tarjetas-consistencia-v26.js
-          node --check js/experiencia-unificada-v32.js
+          set +e
+          : > consolidacion-v33.log
 
-      - name: Guardar archivos generados
+          python3 scripts/finalizar_consolidacion_v33.py >> consolidacion-v33.log 2>&1
+          codigo=$?
+
+          if [ "$codigo" -eq 0 ]; then
+            python3 scripts/aplicar_correccion_visual_v2.py >> consolidacion-v33.log 2>&1
+            codigo=$?
+          fi
+
+          if [ "$codigo" -eq 0 ]; then
+            python3 scripts/finalizar_consolidacion_v33.py >> consolidacion-v33.log 2>&1
+            codigo=$?
+          fi
+
+          if [ "$codigo" -eq 0 ]; then
+            node --check js/app.js >> consolidacion-v33.log 2>&1 || codigo=$?
+            node --check js/deudas-familiares.js >> consolidacion-v33.log 2>&1 || codigo=$?
+            node --check js/deudas-redesign-v23.js >> consolidacion-v33.log 2>&1 || codigo=$?
+            node --check js/experiencia-financiera-v2.js >> consolidacion-v33.log 2>&1 || codigo=$?
+            node --check js/deudas-fixes-v25.js >> consolidacion-v33.log 2>&1 || codigo=$?
+            node --check js/tarjetas-consistencia-v26.js >> consolidacion-v33.log 2>&1 || codigo=$?
+            node --check js/experiencia-unificada-v32.js >> consolidacion-v33.log 2>&1 || codigo=$?
+          fi
+
+          echo "exit_code=$codigo" >> consolidacion-v33.log
+          echo "exit_code=$codigo" >> "$GITHUB_OUTPUT"
+          cat consolidacion-v33.log
+
+          if [ "$codigo" -ne 0 ]; then
+            git restore index.html firebase-messaging-sw.js \
+              js/app.js js/deudas-familiares.js js/deudas-redesign-v23.js \
+              js/experiencia-financiera-v2.js js/deudas-fixes-v25.js \
+              js/tarjetas-consistencia-v26.js
+          fi
+          exit 0
+
+      - name: Guardar resultado
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html firebase-messaging-sw.js \
-            js/app.js js/deudas-familiares.js js/deudas-redesign-v23.js \
-            js/experiencia-financiera-v2.js js/deudas-fixes-v25.js \
-            js/tarjetas-consistencia-v26.js
+          git add consolidacion-v33.log
+
+          if [ "${{ steps.consolidar.outputs.exit_code }}" = "0" ]; then
+            git add index.html firebase-messaging-sw.js \
+              js/app.js js/deudas-familiares.js js/deudas-redesign-v23.js \
+              js/experiencia-financiera-v2.js js/deudas-fixes-v25.js \
+              js/tarjetas-consistencia-v26.js
+            mensaje="Consolida renderizadores V33"
+          else
+            mensaje="Registra error de consolidación V33"
+          fi
+
           if git diff --cached --quiet; then
             echo "No hay cambios pendientes."
             exit 0
           fi
-          git commit -m "Consolida renderizadores V33"
+          git commit -m "$mensaje"
           git push origin "${GITHUB_REF_NAME}"
