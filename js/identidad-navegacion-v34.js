@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '34.0-beta.1';
+  const VERSION = '34.0-beta.2';
   if (window.HFIdentidadNavegacion34?.version === VERSION) return;
 
   const state = {
@@ -45,6 +45,15 @@
     };
   }
 
+  function removeHeaderSettings() {
+    document.querySelectorAll('.app-header .settings-btn').forEach(button => {
+      button.hidden = true;
+      button.setAttribute('aria-hidden', 'true');
+      button.tabIndex = -1;
+      button.style.setProperty('display', 'none', 'important');
+    });
+  }
+
   function openSettings() {
     const button = $('hf-nav-avatar');
     button?.setAttribute('aria-expanded', 'true');
@@ -73,13 +82,13 @@
       button.id = 'hf-nav-avatar';
       button.className = 'hf-nav-avatar-slot';
       button.setAttribute('aria-label', 'Abrir configuración');
+      button.setAttribute('title', 'Configuración');
       button.setAttribute('aria-haspopup', 'dialog');
       button.setAttribute('aria-expanded', 'false');
       button.innerHTML = `
         <span class="hf-nav-avatar-ring" aria-hidden="true">
           <img alt="" loading="eager" decoding="async">
-        </span>
-        <span class="hf-nav-avatar-label">Ajustes</span>`;
+        </span>`;
       button.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
@@ -92,7 +101,9 @@
       else tabs.appendChild(button);
     }
 
+    button.querySelector('.hf-nav-avatar-label')?.remove();
     tabs.classList.add('hf-nav-avatar-ready');
+    removeHeaderSettings();
     return button;
   }
 
@@ -122,6 +133,7 @@
     if (state.updating) return;
     state.updating = true;
     try {
+      removeHeaderSettings();
       ensureNavigationAvatar();
 
       try {
@@ -143,7 +155,7 @@
   }
 
   function updateFavicon() {
-    const href = './icons/app-icon.svg?v=34.0-beta.1';
+    const href = './icons/app-icon.svg?v=34.0-beta.2';
     let favicon = document.querySelector('link[rel="icon"]');
     if (!favicon) {
       favicon = document.createElement('link');
@@ -155,6 +167,7 @@
   }
 
   function limitedRetry() {
+    removeHeaderSettings();
     updateAvatar();
     if ($('hf-nav-avatar') || state.retries >= 6) return;
     state.retries += 1;
@@ -163,14 +176,12 @@
 
   function start() {
     updateFavicon();
+    removeHeaderSettings();
     limitedRetry();
 
     document.addEventListener('click', event => {
       if (event.target.closest('#hf-v27-save-avatar')) {
         setTimeout(updateAvatar, 650);
-      }
-      if (event.target.closest('.settings-btn, .app-logo')) {
-        setTimeout(updateAvatar, 0);
       }
     });
 
@@ -182,7 +193,8 @@
     version: VERSION,
     updateAvatar,
     ensureNavigationAvatar,
-    openSettings
+    openSettings,
+    removeHeaderSettings
   });
 
   if (document.readyState === 'loading') {
