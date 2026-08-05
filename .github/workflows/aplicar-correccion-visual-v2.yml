@@ -86,10 +86,11 @@ jobs:
             exit 1
           fi
 
-      - name: Verificar identidad y navegación V34 beta 2
+      - name: Verificar identidad y navegación V34.0
         run: |
-          grep -q "identidad-navegacion-v34.css?v=34.0-beta.2" js/experiencia-unificada-v32.js
-          grep -q "identidad-navegacion-v34.js?v=34.0-beta.2" js/experiencia-unificada-v32.js
+          grep -q "identidad-navegacion-v34.css?v=34.0" js/experiencia-unificada-v32.js
+          grep -q "identidad-navegacion-v34.js?v=34.0" js/experiencia-unificada-v32.js
+          grep -q "const VERSION = '34.0'" js/identidad-navegacion-v34.js
           grep -q "hf-nav-avatar" js/identidad-navegacion-v34.js
           grep -q "openAjustesModal" js/identidad-navegacion-v34.js
           grep -q "removeHeaderSettings" js/identidad-navegacion-v34.js
@@ -97,8 +98,8 @@ jobs:
             echo "La etiqueta Ajustes volvió al botón central" >&2
             exit 1
           fi
-          grep -q "app-icon.svg" manifest.json
-          grep -q "app-icon-maskable.svg" manifest.json
-          grep -q "34.0-beta.2" VERSION
+          grep -q "app-icon.svg?v=34.0" manifest.json
+          grep -q "app-icon-maskable.svg?v=34.0" manifest.json
+          grep -qx "34.0" VERSION
           grep -q "hf-nav-avatar-ready" css/identidad-navegacion-v34.css
           grep -q ".app-header .settings-btn" css/identidad-navegacion-v34.css
