@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v33-2-interacciones-avatar';
+const CACHE_NAME = 'hogar-finanzas-v33-3-estabilidad-red';
 const APP_SHELL = [
   './index.html',
   './css/styles.css?v=10.0',
@@ -37,17 +37,17 @@ const APP_SHELL = [
   './js/diagnostico-etapa-14.js?v=20.0',
   './css/experiencia-financiera-14.css?v=20.0',
   './css/experiencia-unificada-v32.css?v=33.2',
-  './js/experiencia-unificada-v32.js?v=33.2',
-  './js/movimientos-unificados-v33.js?v=33.2',
-  './js/experiencia-auxiliar-v33.js?v=33.2',
-  './js/hotfix-v33-1.js?v=33.2',
-  './js/avatar-random-v33-2.js?v=33.2',
+  './js/experiencia-unificada-v32.js?v=33.3',
+  './js/movimientos-unificados-v33.js?v=33.3',
+  './js/experiencia-auxiliar-v33.js?v=33.3',
+  './js/hotfix-v33-1.js?v=33.3',
+  './js/avatar-random-v33-2.js?v=33.3',
   './css/experiencia-integrada-v30.css?v=31.2',
   './css/experiencia-integrada-v29.css?v=29.3',
   './css/experiencia-integrada-v28.css?v=28.0',
   './css/experiencia-integrada-v27.css?v=27.0',
   './css/tarjetas-consistencia-v26.css?v=26.0',
-  './js/tarjetas-consistencia-v26.js?v=26.0',
+  './js/tarjetas-consistencia-v26.js?v=33.3',
   './css/deudas-fixes-v25.css?v=25.0',
   './js/deudas-fixes-v25.js?v=25.0',
   './css/deudas-redesign-v23.css?v=24.0',
