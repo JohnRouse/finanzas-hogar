@@ -3,7 +3,7 @@
   "short_name": "Finanzas",
   "description": "Finanzas compartidas del hogar",
   "id": "./",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f7f6f2",
@@ -22,5 +22,5 @@
       "purpose": "any maskable"
     }
   ],
-  "version": "11.1.1"
+  "version": "33.2"
 }
