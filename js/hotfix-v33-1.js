@@ -1,17 +1,22 @@
 (() => {
   'use strict';
 
-  const VERSION = '33.2';
+  const VERSION = '33.3';
   if (window.HFHotfix331?.version === VERSION) return;
 
   const state = {
     timer: null,
     rendering: false,
-    retries: 0
+    retries: 0,
+    debtObserver: null
   };
 
   function visibleFinalCards() {
     return document.querySelectorAll('#hf-family-debt-view .hf-v24-debt-card').length > 0;
+  }
+
+  function visibleLegacyCards() {
+    return document.querySelectorAll('#hf-family-debt-view .hf-family-card:not(.hf-v24-debt-card)').length > 0;
   }
 
   function syncReadyState() {
@@ -20,7 +25,7 @@
 
   async function renderDebtSafely(force = false) {
     if (state.rendering) return;
-    if (!force && visibleFinalCards()) {
+    if (!force && visibleFinalCards() && !visibleLegacyCards()) {
       syncReadyState();
       return;
     }
@@ -53,12 +58,28 @@
   function retryUntilReady() {
     if (visibleFinalCards() || state.retries >= 4) {
       syncReadyState();
+      observeDebtView();
       return;
     }
     state.retries += 1;
     renderDebtSafely(false).finally(() => {
       if (!visibleFinalCards()) setTimeout(retryUntilReady, 450);
+      else observeDebtView();
     });
+  }
+
+  function observeDebtView() {
+    const view = document.getElementById('hf-family-debt-view');
+    if (!view || state.debtObserver) return;
+
+    state.debtObserver = new MutationObserver(() => {
+      if (visibleLegacyCards() && !state.rendering) {
+        scheduleDebtRender(0, true);
+      } else {
+        syncReadyState();
+      }
+    });
+    state.debtObserver.observe(view, { childList: true, subtree: true });
   }
 
   function preserveFabSymbol() {
@@ -88,6 +109,11 @@
     preserveFabSymbol();
     retryUntilReady();
 
+    window.addEventListener('hf:bootstrap-avanzado-completado', () => {
+      observeDebtView();
+      scheduleDebtRender(0, true);
+    });
+
     ['hf:deuda-actualizada', 'hf:deudas-core-actualizadas', 'hf:estado-cuenta-confirmado', 'hf:deudas-recalculadas']
       .forEach(name => window.addEventListener(name, () => scheduleDebtRender(60, true)));
 
@@ -95,9 +121,10 @@
       const navigation = event.target.closest('.tab, .bnav-btn');
       if (navigation) {
         preserveFabSymbol();
+        observeDebtView();
         const debtPage = document.getElementById('page-deudas');
-        if (debtPage?.classList.contains('active') && !visibleFinalCards()) {
-          scheduleDebtRender(0, false);
+        if (debtPage?.classList.contains('active') && (!visibleFinalCards() || visibleLegacyCards())) {
+          scheduleDebtRender(0, true);
         }
         return;
       }
