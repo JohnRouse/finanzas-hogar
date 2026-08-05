@@ -11,15 +11,18 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v33-4-render-unico';
+const CACHE_NAME = 'hogar-finanzas-v34-identidad-navegacion-estable';
 const APP_SHELL = [
   './index.html',
+  './manifest.json',
   './css/styles.css?v=10.0',
   './js/data.js?v=10.0',
   './js/app.js?v=10.0',
   './css/importaciones.css?v=11.1',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/app-icon.svg?v=34.0',
+  './icons/app-icon-maskable.svg?v=34.0',
   './css/deudas-inteligentes.css?v=11.2.1',
   './js/modelo-financiero.js?v=11.5.4',
   './js/motor-conciliacion.js?v=11.5.4',
@@ -38,12 +41,14 @@ const APP_SHELL = [
   './js/experiencia-financiera-14.js?v=33.4',
   './js/diagnostico-etapa-14.js?v=20.0',
   './css/experiencia-financiera-14.css?v=20.0',
-  './css/experiencia-unificada-v32.css?v=33.2',
-  './js/experiencia-unificada-v32.js?v=33.4',
+  './css/experiencia-unificada-v32.css?v=32.1',
+  './css/identidad-navegacion-v34.css?v=34.0',
+  './js/experiencia-unificada-v32.js?v=34.0',
   './js/movimientos-unificados-v33.js?v=33.4',
   './js/experiencia-auxiliar-v33.js?v=33.4',
   './js/hotfix-v33-1.js?v=33.4',
   './js/avatar-random-v33-2.js?v=33.4',
+  './js/identidad-navegacion-v34.js?v=34.0',
   './css/experiencia-integrada-v30.css?v=31.2',
   './css/experiencia-integrada-v29.css?v=29.3',
   './css/experiencia-integrada-v28.css?v=28.0',
@@ -89,7 +94,7 @@ messaging.onBackgroundMessage(payload => {
   const title = data.title || 'Hogar Finanzas';
   const options = {
     body: data.body || 'Hay una actualización en las finanzas del hogar.',
-    icon: './icons/icon-192.png',
+    icon: './icons/app-icon.svg?v=34.0',
     badge: './icons/icon-192.png',
     tag: data.tag || 'hogar-finanzas',
     renotify: true,

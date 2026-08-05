@@ -1,0 +1,101 @@
+/* Hogar Finanzas — Identidad y navegación V34.0 */
+
+:root {
+  --hf-nav-height: 72px;
+  --hf-nav-avatar-size: 52px;
+}
+
+.app-header .settings-btn {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.tabs.hf-nav-avatar-ready {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  align-items: end !important;
+  overflow: visible !important;
+  min-height: var(--hf-nav-height) !important;
+  padding-inline: 6px !important;
+}
+
+.tabs.hf-nav-avatar-ready .tab {
+  min-width: 0 !important;
+  padding-inline: 2px !important;
+}
+
+.hf-nav-avatar-slot {
+  width: 100%;
+  min-width: 0;
+  height: var(--hf-nav-height);
+  margin: 0;
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 3;
+}
+
+.hf-nav-avatar-ring {
+  width: var(--hf-nav-avatar-size);
+  height: var(--hf-nav-avatar-size);
+  margin-top: -14px;
+  padding: 3px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: #dbeafe;
+  box-shadow: 0 7px 20px rgba(15, 23, 42, .18), 0 0 0 1px rgba(49, 94, 251, .16);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+
+.hf-nav-avatar-slot:active .hf-nav-avatar-ring {
+  transform: scale(.95);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .16), 0 0 0 1px rgba(49, 94, 251, .2);
+}
+
+.hf-nav-avatar-ring img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.hf-nav-avatar-label {
+  display: none !important;
+}
+
+.hf-nav-avatar-slot:focus-visible {
+  outline: 2px solid #315efb;
+  outline-offset: -2px;
+  border-radius: 15px;
+}
+
+.hf-nav-avatar-slot[aria-expanded="true"] .hf-nav-avatar-ring {
+  box-shadow: 0 7px 20px rgba(15, 23, 42, .18), 0 0 0 3px rgba(49, 94, 251, .2);
+}
+
+@media (max-width: 380px) {
+  :root {
+    --hf-nav-avatar-size: 48px;
+  }
+
+  .tabs.hf-nav-avatar-ready .nav-label {
+    font-size: 9px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hf-nav-avatar-ring {
+    transition: none;
+  }
+}
