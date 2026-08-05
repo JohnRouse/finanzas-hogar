@@ -1,4 +1,4 @@
-/* Hogar Finanzas — Experiencia unificada V32
+/* Hogar Finanzas — Experiencia unificada V32.1
  * Un único controlador para Movimientos, historial, avatar y formularios auxiliares.
  */
 
@@ -11,6 +11,24 @@
   visibility: hidden !important;
 }
 
+/*
+ * Nunca se muestran estructuras heredadas. Aunque un módulo antiguo alcance a
+ * reconstruirlas durante milisegundos, permanecen ocultas hasta que el único
+ * controlador activo produzca el componente final.
+ */
+#expenseList > .expense-item,
+#expenseList > .expense-swipe-wrap,
+#expenseList > .hf-v27-movement,
+#expenseList > .hf-v28-movement:not(.hf-v32-movement),
+#listaCompletaGastos > .expense-item,
+#listaCompletaGastos > .expense-swipe-wrap,
+#listaCompletaGastos > .hf-v27-movement,
+#listaCompletaGastos > .hf-v28-movement:not(.hf-v32-movement),
+#hf-family-debt-view .hf-family-card:not(.hf-v24-debt-card) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
 /* Una sola representación visible por movimiento: no hay transiciones de iconos. */
 .hf-v32-movement,
 .hf-v32-movement .hf-v28-movement-icon,
@@ -18,6 +36,15 @@
 .hf-v32-movement .hf-v32-category-glyph {
   animation: none !important;
   transition: none !important;
+}
+
+.hf-v32-movement .hf-v28-movement-icon > * {
+  visibility: visible !important;
+}
+
+.hf-v32-movement .hf-v28-movement-icon::before {
+  display: none !important;
+  content: none !important;
 }
 
 .hf-v32-movement .hf-v28-movement-amount strong {
