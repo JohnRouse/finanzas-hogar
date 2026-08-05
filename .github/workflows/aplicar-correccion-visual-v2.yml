@@ -1,4 +1,4 @@
-name: Aplicar experiencia unificada
+name: Validar experiencia financiera
 
 on:
   push:
@@ -7,16 +7,16 @@ on:
       - etapa-15-correccion-visual-v2
     paths:
       - .github/workflows/aplicar-correccion-visual-v2.yml
-      - scripts/aplicar_correccion_visual_v2.py
-      - scripts/consolidar_renderizadores_v33.py
-      - scripts/finalizar_consolidacion_v33.py
       - js/app.js
       - js/deudas-familiares.js
       - js/deudas-redesign-v23.js
-      - js/experiencia-financiera-v2.js
       - js/deudas-fixes-v25.js
       - js/tarjetas-consistencia-v26.js
+      - js/experiencia-financiera-v2.js
       - js/experiencia-unificada-v32.js
+      - js/movimientos-unificados-v33.js
+      - js/experiencia-auxiliar-v33.js
+      - js/hotfix-v33-1.js
       - css/experiencia-financiera-v2.css
       - css/deudas-redesign-v23.css
       - css/deudas-fixes-v25.css
@@ -26,84 +26,38 @@ on:
       - css/experiencia-integrada-v29.css
       - css/experiencia-integrada-v30.css
       - css/experiencia-unificada-v32.css
+      - index.html
+      - firebase-messaging-sw.js
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  aplicar:
-    if: github.actor != 'github-actions[bot]'
+  validar:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Descargar rama activa
+      - name: Descargar código
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-          fetch-depth: 0
 
-      - name: Consolidar, validar y registrar resultado
-        id: consolidar
-        shell: bash
+      - name: Validar JavaScript
         run: |
-          set +e
-          : > consolidacion-v33.log
+          node --check js/app.js
+          node --check js/deudas-familiares.js
+          node --check js/deudas-redesign-v23.js
+          node --check js/deudas-fixes-v25.js
+          node --check js/tarjetas-consistencia-v26.js
+          node --check js/experiencia-financiera-v2.js
+          node --check js/experiencia-unificada-v32.js
+          node --check js/movimientos-unificados-v33.js
+          node --check js/experiencia-auxiliar-v33.js
+          node --check js/hotfix-v33-1.js
+          node --check firebase-messaging-sw.js
 
-          python3 scripts/finalizar_consolidacion_v33.py >> consolidacion-v33.log 2>&1
-          codigo=$?
-
-          if [ "$codigo" -eq 0 ]; then
-            python3 scripts/aplicar_correccion_visual_v2.py >> consolidacion-v33.log 2>&1
-            codigo=$?
-          fi
-
-          if [ "$codigo" -eq 0 ]; then
-            python3 scripts/finalizar_consolidacion_v33.py >> consolidacion-v33.log 2>&1
-            codigo=$?
-          fi
-
-          if [ "$codigo" -eq 0 ]; then
-            node --check js/app.js >> consolidacion-v33.log 2>&1 || codigo=$?
-            node --check js/deudas-familiares.js >> consolidacion-v33.log 2>&1 || codigo=$?
-            node --check js/deudas-redesign-v23.js >> consolidacion-v33.log 2>&1 || codigo=$?
-            node --check js/experiencia-financiera-v2.js >> consolidacion-v33.log 2>&1 || codigo=$?
-            node --check js/deudas-fixes-v25.js >> consolidacion-v33.log 2>&1 || codigo=$?
-            node --check js/tarjetas-consistencia-v26.js >> consolidacion-v33.log 2>&1 || codigo=$?
-            node --check js/experiencia-unificada-v32.js >> consolidacion-v33.log 2>&1 || codigo=$?
-          fi
-
-          echo "exit_code=$codigo" >> consolidacion-v33.log
-          echo "exit_code=$codigo" >> "$GITHUB_OUTPUT"
-          cat consolidacion-v33.log
-
-          if [ "$codigo" -ne 0 ]; then
-            git restore index.html firebase-messaging-sw.js \
-              js/app.js js/deudas-familiares.js js/deudas-redesign-v23.js \
-              js/experiencia-financiera-v2.js js/deudas-fixes-v25.js \
-              js/tarjetas-consistencia-v26.js
-          fi
-          exit 0
-
-      - name: Guardar resultado
+      - name: Verificar recursos V33.1
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add consolidacion-v33.log
-
-          if [ "${{ steps.consolidar.outputs.exit_code }}" = "0" ]; then
-            git add index.html firebase-messaging-sw.js \
-              js/app.js js/deudas-familiares.js js/deudas-redesign-v23.js \
-              js/experiencia-financiera-v2.js js/deudas-fixes-v25.js \
-              js/tarjetas-consistencia-v26.js
-            mensaje="Consolida renderizadores V33"
-          else
-            mensaje="Registra error de consolidación V33"
-          fi
-
-          if git diff --cached --quiet; then
-            echo "No hay cambios pendientes."
-            exit 0
-          fi
-          git commit -m "$mensaje"
-          git push origin "${GITHUB_REF_NAME}"
+          grep -q "hotfix-v33-1.js" js/experiencia-unificada-v32.js
+          grep -q "hf-debt-v33-ready" css/experiencia-unificada-v32.css
+          grep -q "summary-secondary-list" js/experiencia-financiera-v2.js
+          grep -q "nav-icon" js/experiencia-financiera-v2.js
