@@ -11,10 +11,9 @@ BASE_VERSION = "22.0"
 DEBT_VERSION = "24.0"
 FIX_VERSION = "25.0"
 CARD_DATA_VERSION = "26.0"
-UNIFIED_VERSION = "32.1"
+UNIFIED_CSS_VERSION = "32.1"
+UNIFIED_JS_VERSION = "33.0"
 
-# Las hojas históricas se conservan temporalmente porque contienen la apariencia
-# aprobada. La lógica de interfaz, en cambio, queda concentrada en un solo archivo.
 RESOURCES = [
     ("css", "css/experiencia-financiera-v2.css", BASE_VERSION),
     ("css", "css/deudas-redesign-v23.css", DEBT_VERSION),
@@ -24,12 +23,12 @@ RESOURCES = [
     ("css", "css/experiencia-integrada-v28.css", "28.0"),
     ("css", "css/experiencia-integrada-v29.css", "29.3"),
     ("css", "css/experiencia-integrada-v30.css", "31.2"),
-    ("css", "css/experiencia-unificada-v32.css", UNIFIED_VERSION),
+    ("css", "css/experiencia-unificada-v32.css", UNIFIED_CSS_VERSION),
     ("js", "js/experiencia-financiera-v2.js", BASE_VERSION),
-    ("js", "js/deudas-redesign-v23.js", DEBT_VERSION),
+    ("js", "js/deudas-redesign-v23.js", "33.0"),
     ("js", "js/deudas-fixes-v25.js", FIX_VERSION),
     ("js", "js/tarjetas-consistencia-v26.js", CARD_DATA_VERSION),
-    ("js", "js/experiencia-unificada-v32.js", "32.0"),
+    ("js", "js/experiencia-unificada-v32.js", UNIFIED_JS_VERSION),
 ]
 
 OBSOLETE_UI_SCRIPTS = [
@@ -84,11 +83,7 @@ def upsert_html_resource(text: str, kind: str, path: str, version: str) -> str:
 
 def remove_obsolete_html_scripts(text: str) -> str:
     for path in OBSOLETE_UI_SCRIPTS:
-        text = re.sub(
-            rf'\s*<script src="{re.escape(path)}\?v=[^"]+"></script>',
-            '',
-            text,
-        )
+        text = re.sub(rf'\s*<script src="{re.escape(path)}\?v=[^"]+"></script>', '', text)
     return text
 
 
@@ -122,8 +117,6 @@ def patch_index() -> None:
     )
     text = patch_manifest_and_favicon(text)
 
-    # El HTML base ya nace con la opción final; no espera a que JavaScript retire
-    # controles antiguos después de mostrarlos.
     text = re.sub(
         r'<div style="display:flex;gap:8px"><button class="btn-recurrentes" onclick="openGastoRapidoModal\(\)">.*?</button><button class="btn-recurrentes" onclick="abrirGestionRecurrentes\(\)">',
         '<div style="display:flex;gap:8px"><button class="btn-recurrentes" onclick="abrirGestionRecurrentes()">',
@@ -131,12 +124,7 @@ def patch_index() -> None:
         count=1,
         flags=re.DOTALL,
     )
-    text = re.sub(
-        r'(<h2 id="historialTitle">).*?(</h2>)',
-        r'\1Movimientos\2',
-        text,
-        count=1,
-    )
+    text = re.sub(r'(<h2 id="historialTitle">).*?(</h2>)', r'\1Movimientos\2', text, count=1)
 
     for kind, path, version in RESOURCES:
         text = upsert_html_resource(text, kind, path, version)
@@ -169,7 +157,7 @@ def patch_service_worker() -> None:
     text = remove_obsolete_sw_assets(text)
     text = re.sub(
         r"const CACHE_NAME = '[^']+';",
-        "const CACHE_NAME = 'hogar-finanzas-v32-1-sin-renders-heredados';",
+        "const CACHE_NAME = 'hogar-finanzas-v33-render-directo';",
         text,
         count=1,
     )
@@ -177,11 +165,7 @@ def patch_service_worker() -> None:
 
     assets: list[str] = []
     for _, path, version in RESOURCES:
-        text = re.sub(
-            rf"'\./{re.escape(path)}\?v=[^']+'",
-            f"'./{path}?v={version}'",
-            text,
-        )
+        text = re.sub(rf"'\./{re.escape(path)}\?v=[^']+'", f"'./{path}?v={version}'", text)
         assets.append(f"  './{path}?v={version}',")
 
     missing = [asset for asset in assets if asset not in text]
@@ -199,12 +183,10 @@ def patch_service_worker() -> None:
 def main() -> None:
     patch_index()
     patch_service_worker()
-    print("✓ Apariencia aprobada conservada")
-    print("✓ Un solo controlador de Movimientos, historial, avatar y formularios")
-    print(f"✓ Experiencia unificada {UNIFIED_VERSION}")
-    print("✓ Renders heredados ocultos antes de llegar a pantalla")
+    print("✓ Render directo consolidado en app.js y Deudas familiares")
+    print("✓ Experiencia auxiliar sin renderizadores duplicados")
     print("✓ Scripts visuales históricos retirados de la carga")
-    print("✓ Caché PWA renovada")
+    print("✓ Caché PWA V33 renovada")
 
 
 if __name__ == "__main__":
