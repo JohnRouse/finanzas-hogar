@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '33.1';
+  const VERSION = '33.2';
   if (window.HFExperienciaUnificada?.version === VERSION) return;
 
   function loadScript(path) {
@@ -18,9 +18,10 @@
     document.head.appendChild(script);
   }
 
-  loadScript('js/movimientos-unificados-v33.js?v=33.1');
-  loadScript('js/experiencia-auxiliar-v33.js?v=33.1');
-  loadScript('js/hotfix-v33-1.js?v=33.1');
+  loadScript('js/movimientos-unificados-v33.js?v=33.2');
+  loadScript('js/experiencia-auxiliar-v33.js?v=33.2');
+  loadScript('js/hotfix-v33-1.js?v=33.2');
+  loadScript('js/avatar-random-v33-2.js?v=33.2');
 
   window.HFExperienciaUnificada = Object.freeze({ version: VERSION });
 })();
