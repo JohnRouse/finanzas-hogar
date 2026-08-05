@@ -1,8 +1,9 @@
-/* Hogar Finanzas — Identidad y navegación V34.0 */
+/* Hogar Finanzas — Avatar flotante en navegación V34.1 beta */
 
 :root {
-  --hf-nav-height: 72px;
-  --hf-nav-avatar-size: 52px;
+  --hf-nav-height: 64px;
+  --hf-nav-avatar-size: 54px;
+  --hf-nav-avatar-rise: 20px;
 }
 
 .app-header .settings-btn {
@@ -13,39 +14,78 @@
 
 .tabs.hf-nav-avatar-ready {
   grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  align-items: end !important;
+  align-items: center !important;
+  min-height: calc(var(--hf-nav-height) + env(safe-area-inset-bottom)) !important;
+  height: calc(var(--hf-nav-height) + env(safe-area-inset-bottom)) !important;
+  padding: 4px 6px calc(4px + env(safe-area-inset-bottom)) !important;
   overflow: visible !important;
-  min-height: var(--hf-nav-height) !important;
-  padding-inline: 6px !important;
+  position: fixed !important;
+  isolation: isolate;
 }
 
 .tabs.hf-nav-avatar-ready .tab {
   min-width: 0 !important;
-  padding-inline: 2px !important;
+  height: 54px !important;
+  padding: 5px 2px 4px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  align-self: center !important;
+}
+
+.tabs.hf-nav-avatar-ready .tab .nav-icon {
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+
+.tabs.hf-nav-avatar-ready .tab .nav-label {
+  margin: 0 !important;
+  line-height: 1.1 !important;
 }
 
 .hf-nav-avatar-slot {
   width: 100%;
   min-width: 0;
-  height: var(--hf-nav-height);
+  height: 100%;
   margin: 0;
-  padding: 0 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0;
+  display: block;
   border: 0;
   background: transparent;
   color: #64748b;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   position: relative;
-  z-index: 3;
+  align-self: stretch;
+  overflow: visible;
+  z-index: 5;
+}
+
+/* Oculta la línea superior del nav justo debajo del avatar para que parezca
+   una pieza flotante y no un círculo encerrado dentro de la barra. */
+.hf-nav-avatar-slot::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: calc(var(--hf-nav-avatar-size) + 14px);
+  height: 24px;
+  transform: translateX(-50%);
+  border-radius: 999px 999px 0 0;
+  background: var(--surface, #ffffff);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .hf-nav-avatar-ring {
   width: var(--hf-nav-avatar-size);
   height: var(--hf-nav-avatar-size);
-  margin-top: -14px;
+  position: absolute;
+  top: calc(-1 * var(--hf-nav-avatar-rise));
+  left: 50%;
+  margin: 0;
   padding: 3px;
   display: grid;
   place-items: center;
@@ -53,13 +93,15 @@
   border: 3px solid #ffffff;
   border-radius: 50%;
   background: #dbeafe;
-  box-shadow: 0 7px 20px rgba(15, 23, 42, .18), 0 0 0 1px rgba(49, 94, 251, .16);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .2), 0 0 0 1px rgba(49, 94, 251, .18);
+  transform: translateX(-50%);
   transition: transform .16s ease, box-shadow .16s ease;
+  z-index: 2;
 }
 
 .hf-nav-avatar-slot:active .hf-nav-avatar-ring {
-  transform: scale(.95);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, .16), 0 0 0 1px rgba(49, 94, 251, .2);
+  transform: translateX(-50%) scale(.95);
+  box-shadow: 0 4px 13px rgba(15, 23, 42, .17), 0 0 0 1px rgba(49, 94, 251, .22);
 }
 
 .hf-nav-avatar-ring img {
@@ -75,18 +117,26 @@
 }
 
 .hf-nav-avatar-slot:focus-visible {
-  outline: 2px solid #315efb;
-  outline-offset: -2px;
-  border-radius: 15px;
+  outline: none;
+}
+
+.hf-nav-avatar-slot:focus-visible .hf-nav-avatar-ring {
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .2), 0 0 0 3px rgba(49, 94, 251, .28);
 }
 
 .hf-nav-avatar-slot[aria-expanded="true"] .hf-nav-avatar-ring {
-  box-shadow: 0 7px 20px rgba(15, 23, 42, .18), 0 0 0 3px rgba(49, 94, 251, .2);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .2), 0 0 0 3px rgba(49, 94, 251, .22);
 }
 
 @media (max-width: 380px) {
   :root {
-    --hf-nav-avatar-size: 48px;
+    --hf-nav-height: 62px;
+    --hf-nav-avatar-size: 50px;
+    --hf-nav-avatar-rise: 18px;
+  }
+
+  .tabs.hf-nav-avatar-ready .tab {
+    height: 52px !important;
   }
 
   .tabs.hf-nav-avatar-ready .nav-label {
