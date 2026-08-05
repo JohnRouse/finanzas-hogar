@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '34.0';
+  const VERSION = '34.1-beta.1';
   if (window.HFExperienciaUnificada?.version === VERSION) return;
 
   function loadStylesheet(path) {
@@ -29,7 +29,7 @@
     document.head.appendChild(script);
   }
 
-  loadStylesheet('css/identidad-navegacion-v34.css?v=34.0');
+  loadStylesheet('css/identidad-navegacion-v34.css?v=34.1-beta.1');
 
   loadScript('js/movimientos-unificados-v33.js?v=33.4');
   loadScript('js/experiencia-auxiliar-v33.js?v=33.4');
