@@ -1,4 +1,4 @@
-/* Hogar Finanzas — Experiencia unificada V33.1 */
+/* Hogar Finanzas — Experiencia unificada V33.2 */
 
 #page-gastos button[onclick*="openGastoRapidoModal"],
 #gastoChoiceModal button[onclick*="openGastoRapidoModal"],
@@ -20,7 +20,6 @@
   visibility: hidden !important;
 }
 
-/* Nunca se oculta la vista de respaldo antes de que el renderer final termine. */
 body.hf-debt-v33-ready #hf-family-debt-view .hf-family-card:not(.hf-v24-debt-card) {
   display: none !important;
   visibility: hidden !important;
@@ -65,12 +64,10 @@ body.hf-debt-v33-ready #hf-family-debt-view .hf-family-card:not(.hf-v24-debt-car
   white-space: nowrap !important;
 }
 
-/* La navegación real es .tabs; se retira la barra heredada duplicada. */
 body .bottom-nav {
   display: none !important;
 }
 
-/* El FAB conserva el signo visible aunque las etiquetas contextuales estén ocultas. */
 body #fab-global {
   text-indent: 0 !important;
   overflow: visible !important;
@@ -85,7 +82,20 @@ body #fab-global {
   content: none !important;
 }
 
-/* Respaldo CSS: evita que los indicadores secundarios se superpongan antes del agrupado JS. */
+.hf-month-chevron {
+  width: 16px;
+  height: 16px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 16px;
+}
+
+.hf-month-chevron svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
 body #page-resumen .month-money-grid > .month-money-card:not(.primary) {
   min-height: 78px !important;
   padding: 14px 16px !important;
@@ -110,6 +120,22 @@ body #page-resumen .month-money-grid > .month-money-card:not(.primary) .month-mo
   max-width: 205px !important;
   font-size: 11px !important;
   line-height: 1.35 !important;
+}
+
+#hf-v33-detail-icon > * {
+  display: inline-grid !important;
+  place-items: center !important;
+  visibility: visible !important;
+}
+
+#hf-v33-detail-icon::before {
+  display: none !important;
+  content: none !important;
+}
+
+#hf-v33-detail-icon .hf-v32-category-glyph {
+  font-size: 25px !important;
+  line-height: 1 !important;
 }
 
 #pagoTarjetaModal .hf-v27-payment-available {
@@ -166,6 +192,34 @@ body #page-resumen .month-money-grid > .month-money-card:not(.primary) .month-mo
   font-size: 13px;
 }
 
+.hf-v33-avatar-randomize {
+  width: 100%;
+  min-height: 44px;
+  margin: 4px 0 2px;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #bfdbfe;
+  border-radius: 13px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hf-v33-avatar-randomize:hover,
+.hf-v33-avatar-randomize:active {
+  background: #dbeafe;
+}
+
+.hf-v33-avatar-randomize > span:first-child {
+  font-size: 19px;
+  line-height: 1;
+}
+
 .hf-v27-avatar-grid {
   margin: 16px 0;
   display: grid;
@@ -206,6 +260,7 @@ body #page-resumen .month-money-grid > .month-money-card:not(.primary) .month-mo
   body #page-resumen .month-money-grid > .month-money-card:not(.primary) {
     column-gap: 10px !important;
   }
+
   body #page-resumen .month-money-grid > .month-money-card:not(.primary) .month-money-help {
     max-width: 165px !important;
   }
