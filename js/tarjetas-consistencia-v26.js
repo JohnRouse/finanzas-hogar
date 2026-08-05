@@ -1,14 +1,13 @@
 (() => {
   'use strict';
 
-  const VERSION = '26.0';
+  const VERSION = '33.3';
   if (window.HFTarjetasConsistencia26?.version === VERSION) return;
 
   const state = {
-    observer: null,
     timer: null,
     migrationStarted: false,
-    detailsBusy: false
+    migrationFinished: false
   };
 
   const $ = id => document.getElementById(id);
@@ -122,7 +121,6 @@
       const options = ownerOptions(modal);
 
       removeLegacyCardFields(sheet, null);
-
       canonical = document.createElement('div');
       canonical.id = 'hf-v26-card-profile-form';
       canonical.className = 'hf-v26-card-profile-form';
@@ -144,9 +142,7 @@
     }
 
     removeLegacyCardFields(sheet, canonical);
-
-    const uniqueIds = ['t-nombre','t-quien','t-deuda','t-limite','t-tea','t-ultimos4','t-cierre','t-vence'];
-    uniqueIds.forEach(id => {
+    ['t-nombre','t-quien','t-deuda','t-limite','t-tea','t-ultimos4','t-cierre','t-vence'].forEach(id => {
       const fields = [...modal.querySelectorAll(`[id="${id}"]`)];
       fields.slice(1).forEach(field => field.closest('.input-row')?.remove());
     });
@@ -181,9 +177,7 @@
       'hf-st-note': 'Nota opcional'
     };
 
-    Object.entries(labels).forEach(([id, text]) => {
-      replaceLabelText($(id)?.closest('label'), text);
-    });
+    Object.entries(labels).forEach(([id, text]) => replaceLabelText($(id)?.closest('label'), text));
 
     const form = modal.querySelector('.hf-statement-form');
     if (form && !modal.querySelector('.hf-v26-state-scope')) {
@@ -201,83 +195,16 @@
     modal.dataset.hfV26State = VERSION;
   }
 
-  function dateLabel(value) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) return 'No registrada';
-    return new Date(`${value}T12:00:00`).toLocaleDateString('es-PE', {
-      day: '2-digit', month: 'short', year: 'numeric'
-    });
-  }
-
-  function setDetailCell(cell, label, value) {
-    if (!cell) return;
-    const small = cell.querySelector('small');
-    const strong = cell.querySelector('strong');
-    if (small) small.textContent = label;
-    if (strong) strong.textContent = value;
-  }
-
-  async function normalizeDebtDetails() {
-    if (state.detailsBusy || !window.DB) return;
-    const view = $('hf-family-debt-view');
-    const cardList = view?.querySelectorAll('.hf-family-card-list')?.[0];
-    if (!cardList) return;
-
-    state.detailsBusy = true;
-    try {
-      const cards = await window.DB.getTarjetas?.() || [];
-      const elements = [...cardList.querySelectorAll('.hf-v24-debt-card')];
-
-      elements.forEach((element, index) => {
-        const item = cards[index];
-        if (!item) return;
-        const cells = [...element.querySelectorAll('.hf-v24-details .hf-v24-detail-cell')];
-        if (cells.length < 6) return;
-
-        const statement = item.estadoCuenta || {};
-        const closeFromStatement = statement.fechaCierre || '';
-        const legacyClose = item.fechaCierre || '';
-        const close = closeFromStatement || legacyClose;
-        const closeLabel = closeFromStatement
-          ? 'Cierre del último estado'
-          : legacyClose
-            ? 'Última fecha registrada'
-            : 'Cierre del último estado';
-        const dueDay = item.diaVencimiento || item.vence || '';
-        const last4 = item.ultimosDigitos || item.ultimos4 || '';
-        const teaRaw = item.tea ?? item.tasaEfectivaAnual;
-        const tea = teaRaw !== null && teaRaw !== undefined && teaRaw !== '' && Number.isFinite(Number(teaRaw))
-          ? `${Number(teaRaw).toFixed(2)}%`
-          : 'No registrada';
-        const period = statement.periodo || statement.mes || item.ultimoEstadoMes || 'No registrado';
-        const total = Number(statement.pagoTotal);
-
-        setDetailCell(cells[0], closeLabel, dateLabel(close));
-        setDetailCell(cells[1], 'Día habitual de vencimiento', dueDay ? `Día ${dueDay}` : 'No registrado');
-        setDetailCell(cells[2], 'Últimos 4 dígitos', last4 ? `•••• ${last4}` : 'No registrados');
-        setDetailCell(cells[3], 'TEA anual', tea);
-        setDetailCell(cells[4], 'Periodo del último estado', period);
-        setDetailCell(cells[5], 'Pago total informado', Number.isFinite(total) && total > 0
-          ? `S/ ${total.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-          : 'No informado');
-      });
-    } catch (error) {
-      console.warn('No se pudieron normalizar los detalles de las tarjetas:', error);
-    } finally {
-      state.detailsBusy = false;
-    }
-  }
-
   async function normalizeCardAliases() {
-    if (state.migrationStarted || !window.DB) return;
+    if (state.migrationStarted || state.migrationFinished || !window.DB?.getTarjetas) return;
     state.migrationStarted = true;
 
     try {
-      const cards = await window.DB.getTarjetas?.() || [];
+      const cards = await window.DB.getTarjetas();
       let changed = false;
 
       for (const card of cards) {
         const update = {};
-
         const teaRaw = card.tea ?? card.tasaEfectivaAnual;
         if (teaRaw !== null && teaRaw !== undefined && teaRaw !== '' && Number.isFinite(Number(teaRaw))) {
           const tea = round(teaRaw);
@@ -310,45 +237,45 @@
         }
       }
 
+      state.migrationFinished = true;
       if (changed) {
-        await window.HFDeudasFamiliares?.renderizar?.();
+        await window.HFDeudasRedesign24?.renderDebtPage?.();
       }
     } catch (error) {
-      state.migrationStarted = false;
       console.warn('No se pudo normalizar el esquema de las tarjetas:', error);
+    } finally {
+      state.migrationStarted = false;
     }
+  }
+
+  function normalizeDebtDetails() {
+    // V33 genera los detalles con los datos correctos durante el render principal.
+    // Se conserva esta función solo para compatibilidad con módulos anteriores.
   }
 
   function repair() {
     normalizeCardForm();
     normalizeStatementModal();
-    normalizeDebtDetails();
-    normalizeCardAliases();
     document.body?.classList.add('hf-tarjetas-consistencia-v26');
   }
 
-  function scheduleRepair() {
+  function scheduleRepair(delay = 0) {
     clearTimeout(state.timer);
-    state.timer = setTimeout(repair, 80);
+    state.timer = setTimeout(repair, delay);
   }
 
   function start() {
     repair();
+    normalizeCardAliases();
 
-    state.observer = new MutationObserver(scheduleRepair);
-    state.observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'hidden']
+    ['hf:deuda-actualizada','hf:deudas-core-actualizadas','hf:estado-cuenta-confirmado','hf:deudas-recalculadas']
+      .forEach(eventName => window.addEventListener(eventName, () => scheduleRepair(0)));
+
+    document.addEventListener('click', event => {
+      if (event.target.closest('[onclick*="abrirNuevaTarjeta"], [onclick*="abrirEditarTarjeta"], [data-final-action="card"], .hf-v24-menu-button, .hf-v24-history-action')) {
+        scheduleRepair(0);
+      }
     });
-
-    [
-      'hf:deuda-actualizada',
-      'hf:deudas-core-actualizadas',
-      'hf:estado-cuenta-confirmado',
-      'hf:deudas-recalculadas'
-    ].forEach(eventName => window.addEventListener(eventName, scheduleRepair));
   }
 
   window.HFTarjetasConsistencia26 = Object.freeze({
@@ -356,7 +283,8 @@
     repair,
     normalizeCardForm,
     normalizeStatementModal,
-    normalizeDebtDetails
+    normalizeDebtDetails,
+    normalizeCardAliases
   });
 
   if (document.readyState === 'loading') {
