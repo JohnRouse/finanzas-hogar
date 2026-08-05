@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '33.0';
+  const VERSION = '33.1';
   if (window.HFExperienciaUnificada?.version === VERSION) return;
 
   function loadScript(path) {
@@ -18,10 +18,9 @@
     document.head.appendChild(script);
   }
 
-  // Se cargan durante el parseo, antes de DOMContentLoaded. De esta forma app.js
-  // nunca alcanza a mostrar el renderer visual anterior.
-  loadScript('js/movimientos-unificados-v33.js?v=33.0');
-  loadScript('js/experiencia-auxiliar-v33.js?v=33.0');
+  loadScript('js/movimientos-unificados-v33.js?v=33.1');
+  loadScript('js/experiencia-auxiliar-v33.js?v=33.1');
+  loadScript('js/hotfix-v33-1.js?v=33.1');
 
   window.HFExperienciaUnificada = Object.freeze({ version: VERSION });
 })();
