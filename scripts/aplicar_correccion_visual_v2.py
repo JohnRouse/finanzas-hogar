@@ -11,7 +11,7 @@ BASE_VERSION = "22.0"
 DEBT_VERSION = "24.0"
 FIX_VERSION = "25.0"
 CARD_DATA_VERSION = "26.0"
-UNIFIED_VERSION = "32.0"
+UNIFIED_VERSION = "32.1"
 
 # Las hojas históricas se conservan temporalmente porque contienen la apariencia
 # aprobada. La lógica de interfaz, en cambio, queda concentrada en un solo archivo.
@@ -29,7 +29,7 @@ RESOURCES = [
     ("js", "js/deudas-redesign-v23.js", DEBT_VERSION),
     ("js", "js/deudas-fixes-v25.js", FIX_VERSION),
     ("js", "js/tarjetas-consistencia-v26.js", CARD_DATA_VERSION),
-    ("js", "js/experiencia-unificada-v32.js", UNIFIED_VERSION),
+    ("js", "js/experiencia-unificada-v32.js", "32.0"),
 ]
 
 OBSOLETE_UI_SCRIPTS = [
@@ -122,6 +122,22 @@ def patch_index() -> None:
     )
     text = patch_manifest_and_favicon(text)
 
+    # El HTML base ya nace con la opción final; no espera a que JavaScript retire
+    # controles antiguos después de mostrarlos.
+    text = re.sub(
+        r'<div style="display:flex;gap:8px"><button class="btn-recurrentes" onclick="openGastoRapidoModal\(\)">.*?</button><button class="btn-recurrentes" onclick="abrirGestionRecurrentes\(\)">',
+        '<div style="display:flex;gap:8px"><button class="btn-recurrentes" onclick="abrirGestionRecurrentes()">',
+        text,
+        count=1,
+        flags=re.DOTALL,
+    )
+    text = re.sub(
+        r'(<h2 id="historialTitle">).*?(</h2>)',
+        r'\1Movimientos\2',
+        text,
+        count=1,
+    )
+
     for kind, path, version in RESOURCES:
         text = upsert_html_resource(text, kind, path, version)
 
@@ -153,7 +169,7 @@ def patch_service_worker() -> None:
     text = remove_obsolete_sw_assets(text)
     text = re.sub(
         r"const CACHE_NAME = '[^']+';",
-        "const CACHE_NAME = 'hogar-finanzas-v32-experiencia-unificada';",
+        "const CACHE_NAME = 'hogar-finanzas-v32-1-sin-renders-heredados';",
         text,
         count=1,
     )
@@ -186,6 +202,7 @@ def main() -> None:
     print("✓ Apariencia aprobada conservada")
     print("✓ Un solo controlador de Movimientos, historial, avatar y formularios")
     print(f"✓ Experiencia unificada {UNIFIED_VERSION}")
+    print("✓ Renders heredados ocultos antes de llegar a pantalla")
     print("✓ Scripts visuales históricos retirados de la carga")
     print("✓ Caché PWA renovada")
 
