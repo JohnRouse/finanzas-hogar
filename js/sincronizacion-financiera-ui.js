@@ -81,11 +81,6 @@
   });
 
   ['hf:deuda-actualizada', 'hf:deudas-recalculadas', 'hf:estado-cuenta-confirmado', 'hf:cierre-mensual-guardado']
-    .forEach(() => {
-      window.addEventListener(arguments[0], () => {});
-    });
-
-  ['hf:deuda-actualizada', 'hf:deudas-recalculadas', 'hf:estado-cuenta-confirmado', 'hf:cierre-mensual-guardado']
     .forEach(nombre => {
       window.addEventListener(nombre, () => programarRefresco({
         principal: true,
