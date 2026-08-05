@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '34.0-beta.2';
+  const VERSION = '34.0';
   if (window.HFIdentidadNavegacion34?.version === VERSION) return;
 
   const state = {
@@ -154,7 +154,7 @@
   }
 
   function updateFavicon() {
-    const href = './icons/app-icon.svg?v=34.0-beta.2';
+    const href = './icons/app-icon.svg?v=34.0';
     let favicon = document.querySelector('link[rel="icon"]');
     if (!favicon) {
       favicon = document.createElement('link');
