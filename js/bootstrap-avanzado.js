@@ -5,7 +5,7 @@
   if (window.__HF_BOOTSTRAP_AVANZADO__) return;
   window.__HF_BOOTSTRAP_AVANZADO__ = true;
 
-  const VERSION = '20.0';
+  const VERSION = '33.4';
   let promesaInicio = null;
 
   function cargarCSS(ruta, clave) {
@@ -49,7 +49,7 @@
       resultados.push(await cargar('HFRecuperacionProducto', `js/recuperacion-producto.js?v=${VERSION}`));
       resultados.push(await cargar('HFActualizadorSaldosTarjetas', `js/actualizador-saldos-tarjetas.js?v=${VERSION}`));
       resultados.push(await cargar('HFCierreFinancieroMensual', `js/cierre-financiero-mensual.js?v=${VERSION}`));
-      resultados.push(await cargar('HFDeudasFamiliares', `js/deudas-familiares.js?v=${VERSION}`));
+      resultados.push(await cargar('HFDeudasFamiliares', `js/deudas-coordinator-v33-4.js?v=${VERSION}`));
       resultados.push(await cargar('HFCoherenciaFinanciera', `js/coherencia-financiera.js?v=${VERSION}`));
       resultados.push(await cargar('HFSimuladorPagoExtra', `js/simulador-pago-extra.js?v=${VERSION}`));
       resultados.push(await cargar('HFTelegramPendientes', `js/telegram-pendientes.js?v=${VERSION}`));
