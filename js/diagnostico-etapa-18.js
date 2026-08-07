@@ -1,7 +1,7 @@
 /* Hogar Finanzas — diagnóstico Etapa 18 */
 (() => {
   'use strict';
-  const VERSION = '35.0-beta.8';
+  const VERSION = '35.0-beta.8.2';
   if (window.HFDiagnosticoEtapa18?.version === VERSION) return;
 
   async function ejecutar() {
@@ -9,8 +9,9 @@
     const cardEngine = window.HFEtapa18Beta5;
     const stabilityEngine = window.HFEtapa18Beta7;
     const canonicalEngine = window.HFTarjetasCanonicasBeta8;
+    const syncEngine = window.HFSincronizacionFinancieraUI;
     if (!financeEngine || !cardEngine || !stabilityEngine || !canonicalEngine || !window.DB) {
-      throw new Error('La Etapa 18 beta 8 todavía no está lista.');
+      throw new Error('La Etapa 18 beta 8.2 todavía no está lista.');
     }
 
     await cardEngine.refreshDebtStates?.();
@@ -79,15 +80,17 @@
         beta5:cardEngine.getState?.() || null,
         beta6:financeEngine.getState?.() || null,
         beta7:{version:stabilityEngine.version},
-        beta8:{version:canonicalEngine.version}
+        beta8:{version:canonicalEngine.version},
+        sincronizacion:syncEngine?.obtenerEstado?.() || { version:syncEngine?.version || null }
       }
     };
 
-    console.group('Hogar Finanzas · Diagnóstico Etapa 18 beta 8');
+    console.group('Hogar Finanzas · Diagnóstico Etapa 18 beta 8.2');
     console.table(cardStates.map(item => ({ tarjeta:item.name, estado:item.label || 'Pendiente', pagado:item.paid, pagoTotal:item.totalTarget, minimo:item.minimumTarget, uso:`${Math.round(item.usage || 0)}%`, vencimiento:item.statementDue || '' })));
     console.table(goalRows.map(item => ({ meta:item.nombre, reservado:item.reservado, apartadoMes:item.apartadoMes, tracked:item.tracked, diferencia:item.diferencia, porMes:item.porMes })));
     console.table(report.domCards);
     console.log('Tarjetas canónicas:', report.canonicalCards);
+    console.log('Sincronización:', report.runtime.sincronizacion);
     console.log('Finanzas:', report.finance);
     console.log('DOM Resumen:', report.domFinance);
     console.log(report);
