@@ -260,6 +260,94 @@ body.hf-v35-status-loading #hf-family-debt-view .hf-v24-debt-card[data-debt-type
   line-height: 1.35;
 }
 
+.hf-v35-summary-saving-action {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 11px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hf-v35-summary-saving-action:disabled {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: default;
+}
+
+.hf-v35-picker-intro {
+  margin: -9px 0 14px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.hf-v35-goal-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.hf-v35-goal-picker-item {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+  background: #fff;
+  color: #172033;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hf-v35-goal-picker-item > span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #eff6ff;
+  font-size: 19px;
+}
+
+.hf-v35-goal-picker-item > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hf-v35-goal-picker-item strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hf-v35-goal-picker-item small {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hf-v35-goal-picker-item > b {
+  color: #94a3b8;
+  font-size: 18px;
+  text-align: right;
+}
+
 @media (max-width: 380px) {
   .hf-v35-saving-actions {
     grid-template-columns: 1fr 1fr;
