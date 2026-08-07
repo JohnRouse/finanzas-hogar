@@ -1,9 +1,37 @@
-/* Hogar Finanzas — Avatar flotante en navegación V34.1 beta */
+/* Hogar Finanzas — Avatar flotante en navegación V34.1 beta.2 */
 
 :root {
   --hf-nav-height: 64px;
   --hf-nav-avatar-size: 54px;
   --hf-nav-avatar-rise: 20px;
+}
+
+/*
+ * La interfaz financiera V34 utiliza actualmente un sistema visual claro.
+ * styles.css conserva un bloque oscuro heredado que modificaba solamente los
+ * tokens antiguos (--text, --surface, etc.), mientras que los componentes V2
+ * seguían usando superficies claras. El resultado era texto claro sobre
+ * tarjetas claras. Hasta implementar un tema oscuro completo, mantenemos la
+ * paleta clara de forma coherente también cuando el sistema solicita dark.
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light;
+    --bg: #f4f7fb;
+    --surface: #ffffff;
+    --surface2: #f8fafc;
+    --surface-glass: rgba(255, 255, 255, .96);
+    --border: rgba(203, 213, 225, .72);
+    --border2: #e2e8f0;
+    --text: #0f172a;
+    --text2: #475569;
+    --text3: #64748b;
+  }
+
+  html,
+  body {
+    color-scheme: light !important;
+  }
 }
 
 .app-header .settings-btn {
@@ -74,7 +102,7 @@
   height: 24px;
   transform: translateX(-50%);
   border-radius: 999px 999px 0 0;
-  background: var(--surface, #ffffff);
+  background: var(--hf-surface, #ffffff);
   z-index: 0;
   pointer-events: none;
 }
