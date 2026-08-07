@@ -1,12 +1,21 @@
 # Pruebas Etapa 18 — estados pagados y ahorro reservado real
 
-Versión de prueba: `35.0-beta.2`
+Versión de prueba: `35.0-beta.4`
 
 ## Objetivo
 
 Validar que una obligación atendida deje de aparecer como vencida cuando existe evidencia de pago y que el ahorro reservado se comporte como dinero realmente separado del disponible, sin convertirse en gasto.
 
-## 1. Estado de tarjetas después de pagar
+## 1. Estabilidad antes de probar funciones
+
+1. Abrir la aplicación y dejarla sin tocar durante al menos 60 segundos.
+2. Confirmar que Chrome no muestre `La página no responde`.
+3. Abrir Configuración desde el avatar y navegar por varias opciones.
+4. La interfaz debe seguir respondiendo con normalidad.
+
+Beta 4 retiró del arranque los hotfix beta 2 y beta 3. El hotfix beta 2 contenía un `MutationObserver` sobre el modal de metas que podía volver a escribir el mismo texto observado y generar un ciclo de mutaciones; beta 4 usa operaciones idempotentes y refrescos explícitos.
+
+## 2. Estado de tarjetas después de pagar
 
 1. Abrir **Deudas**.
 2. Revisar las tarjetas que ya tengan pagos registrados.
@@ -16,65 +25,40 @@ Validar que una obligación atendida deje de aparecer como vencida cuando existe
    - `Pago registrado`: existe evidencia de pago, pero falta información para afirmar que cubrió mínimo o total.
    - `Pago parcial`: existe pago, pero el mínimo informado todavía no se cubrió y el vencimiento ya pasó.
    - `Vencida`: solo debe mantenerse cuando no se encontró un pago que permita considerar atendida la obligación.
-4. La detección revisa movimientos actuales, pagos antiguos compatibles y `ultimoPagoFecha` / `ultimoPagoMonto` de la tarjeta.
-5. Abrir **Ver detalles** y comprobar que aparezca el resumen del pago reconocido.
-6. Una tarjeta puede estar pagada y seguir con utilización alta por compras posteriores; el porcentaje de línea y el estado del pago son conceptos distintos.
-
-## 2. Persistencia visual del estado
-
-1. Cambiar entre Resumen, Movimientos y Deudas varias veces.
-2. Esperar unos segundos en Deudas.
-3. Confirmar que el badge reconocido no vuelva a `Vencida` por un render posterior.
+4. Una tarjeta puede estar pagada y seguir con utilización alta por compras posteriores; utilización y estado del pago son conceptos distintos.
 
 ## 3. Préstamos
 
 1. Abrir un préstamo con una cuota registrada.
-2. Cuando el pago haya avanzado `proximoVencimientoPosterior`, debe quedar `Al día` y usar el nuevo vencimiento.
+2. Cuando el pago haya avanzado el próximo vencimiento, debe quedar `Al día`.
 3. Si el saldo llegó a cero, debe mostrarse `Pagado`.
 
-## 4. Meta creada en beta 1 con saldo inicial
+## 4. Meta existente con saldo inicial
 
-Si ya existe la meta creada durante `35.0-beta.1` con S/ 100 de saldo pero sin `reservadoMeses`:
+Si existe una meta con saldo, pero sin `reservadoMeses`, beta 4 la migra una sola vez.
 
-1. Recargar `35.0-beta.2`.
-2. La aplicación debe migrar ese saldo una sola vez al mes visible.
-3. Con los datos de la prueba reportada, `Disponible hoy` debe pasar de S/ 872.03 a S/ 772.03.
-4. El historial de la meta debe incluir `Saldo inicial reservado`.
+Con el caso probado de S/100 reservados y S/872.03 disponibles antes de contabilizar el ahorro, el resultado esperado es:
+
+- Ahorro reservado: S/100.00
+- Disponible hoy: S/772.03
 
 ## 5. Crear una meta nueva
 
 1. Abrir **Plan**.
 2. Crear una meta nueva.
 3. El campo debe decir `Monto inicial a reservar (opcional)`.
-4. Si se escribe S/ 100 al crear la meta, esos S/ 100 deben descontarse inmediatamente del `Disponible hoy`.
-5. No debe permitirse reservar un monto inicial superior al dinero disponible.
+4. Un monto inicial se descuenta inmediatamente del disponible.
+5. No debe permitirse reservar más que el dinero disponible.
 
-## 6. Apartar dinero
+## 6. Apartar y retirar
 
-1. En una meta activa pulsar **Apartar dinero**.
-2. Anotar **Disponible hoy** antes de continuar.
-3. Apartar S/ 100.
-4. Confirmar que:
-   - la meta aumenta exactamente S/ 100;
-   - `Ahorro reservado` aumenta S/ 100;
-   - `Disponible hoy` disminuye exactamente S/ 100;
-   - no aparece un gasto nuevo en **Movimientos**;
-   - en **Movimientos** de la meta aparece `Dinero apartado`;
-   - no aparece `ReferenceError: nota is not defined`.
+1. Pulsar **Apartar dinero**.
+2. Apartar un monto pequeño y comprobar que la meta suba y el disponible baje por el mismo importe.
+3. Confirmar que no se registra como gasto.
+4. Pulsar **Retirar** y retirar el mismo monto.
+5. Confirmar que la meta baje y el disponible vuelva a subir exactamente por ese importe.
 
-## 7. Retirar de una meta
-
-1. Pulsar **Retirar**.
-2. Retirar S/ 100.
-3. Confirmar que el saldo de la meta disminuye S/ 100 y el disponible aumenta exactamente S/ 100.
-4. Con el ejemplo reportado, si antes de retirar había S/ 672.03 disponibles y S/ 200 reservados, después deben quedar S/ 772.03 disponibles y S/ 100 reservados; nunca S/ 972.03.
-5. El retiro debe aparecer en el historial de la meta y no como ingreso ordinario.
-
-## 8. Limpieza visual
-
-El mensaje `El ahorro ahora se separa de verdad` ya no debe aparecer en la pantalla de Plan.
-
-## 9. Diagnóstico
+## 7. Diagnóstico
 
 Desde la consola ejecutar:
 
@@ -82,15 +66,10 @@ Desde la consola ejecutar:
 await HFDiagnosticoEtapa18.ejecutar()
 ```
 
-Revisar dos partes:
+Revisar las tablas de tarjetas, metas y `domCards`. El diagnóstico de beta 4 no depende de los hotfix retirados.
 
-- la tabla de tarjetas calculadas;
-- `domCards`, que muestra la etiqueta que realmente quedó pintada en cada tarjeta.
-
-Si el cálculo dice `Mínimo pagado` o `Pago registrado` pero `domCards` muestra otra cosa, conservar la salida completa del diagnóstico.
-
-## 10. Persistencia
+## 8. Persistencia
 
 1. Recargar la aplicación.
-2. Confirmar que saldos reservados, disponible y movimientos de meta se mantienen.
+2. Confirmar que saldos reservados, disponible y estados de pago se mantienen.
 3. Cambiar de mes y volver al actual para comprobar que el ahorro histórico no vuelva a descontarse como un aporte nuevo.
