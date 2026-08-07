@@ -52,6 +52,7 @@ const APP_SHELL = [
   './js/identidad-navegacion-v34.js?v=34.0',
   './js/estados-pagados-ahorro-real-v35.js?v=35.0-beta.1',
   './js/ahorro-resumen-v35.js?v=35.0-beta.1',
+  './js/diagnostico-etapa-18.js?v=35.0-beta.1',
   './css/experiencia-integrada-v30.css?v=31.2',
   './css/experiencia-integrada-v29.css?v=29.3',
   './css/experiencia-integrada-v28.css?v=28.0',
