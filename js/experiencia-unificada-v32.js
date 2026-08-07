@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '35.0-beta.8.1';
+  const VERSION = '35.0-beta.8.2';
   if (window.HFExperienciaUnificada?.version === VERSION) return;
 
   function loadStylesheet(path) {
@@ -38,7 +38,7 @@
   loadStylesheet('css/identidad-navegacion-v34.css?v=34.1-beta.2');
   loadStylesheet('css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.8');
   loadStylesheet('css/hotfix-etapa-18-beta2.css?v=35.0-beta.8');
-  loadStylesheet('css/etapa-18-beta8.css?v=35.0-beta.8.1');
+  loadStylesheet('css/etapa-18-beta8.css?v=35.0-beta.8.2');
 
   const scripts = [
     'js/movimientos-unificados-v33.js?v=33.4',
@@ -50,7 +50,7 @@
     'js/etapa-18-beta6.js?v=35.0-beta.6',
     'js/etapa-18-beta6-bridge.js?v=35.0-beta.6',
     'js/etapa-18-beta7.js?v=35.0-beta.7',
-    'js/etapa-18-beta8.js?v=35.0-beta.8.1',
+    'js/etapa-18-beta8.js?v=35.0-beta.8.2',
     'js/ahorro-resumen-v35.js?v=35.0-beta.8',
     'js/diagnostico-etapa-18.js?v=35.0-beta.8'
   ];
@@ -58,10 +58,8 @@
   const ready = (async () => {
     for (const path of scripts) await appendScript(path);
 
-    // Fallback explícito: si el navegador tenía una copia antigua del cargador,
-    // vuelve a solicitar beta 8 con cache-busting en vez de dejar la app a medias.
     if (!window.HFTarjetasCanonicasBeta8) {
-      const retry = `js/etapa-18-beta8.js?v=35.0-beta.8.1&retry=${Date.now()}`;
+      const retry = `js/etapa-18-beta8.js?v=35.0-beta.8.2&retry=${Date.now()}`;
       await appendScript(retry, { force:true });
     }
 
