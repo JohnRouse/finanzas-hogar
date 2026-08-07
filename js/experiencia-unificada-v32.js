@@ -1,57 +1,81 @@
 (() => {
   'use strict';
 
-  const VERSION = '35.0-beta.8';
+  const VERSION = '35.0-beta.8.1';
   if (window.HFExperienciaUnificada?.version === VERSION) return;
 
   function loadStylesheet(path) {
     const cleanPath = path.split('?')[0];
-    if ([...document.styleSheets].some(sheet => sheet.href?.includes(cleanPath))) return;
+    if ([...document.styleSheets].some(sheet => sheet.href?.includes(cleanPath)) || document.querySelector(`link[href*="${cleanPath}"]`)) return;
 
     const link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = path;
+    link.href = new URL(path, document.baseURI).href;
     link.dataset.hfIdentityNavigation = VERSION;
-    document.head.appendChild(link);
+    (document.head || document.documentElement).appendChild(link);
   }
 
-  function loadScript(path) {
-    if ([...document.scripts].some(script => script.src.includes(path.split('?')[0]))) return;
-
-    if (document.readyState === 'loading') {
-      document.write(`<script src="${path}"><\/script>`);
-      return;
+  function appendScript(path, { force = false } = {}) {
+    const cleanPath = path.split('?')[0];
+    if (!force && [...document.scripts].some(script => script.src.includes(cleanPath))) {
+      return Promise.resolve({ path, status:'already-present' });
     }
 
-    const script = document.createElement('script');
-    script.src = path;
-    script.async = false;
-    document.head.appendChild(script);
+    return new Promise(resolve => {
+      const script = document.createElement('script');
+      script.src = new URL(path, document.baseURI).href;
+      script.async = false;
+      script.dataset.hfBootstrap = cleanPath;
+      script.onload = () => resolve({ path, status:'loaded' });
+      script.onerror = () => {
+        console.error(`❌ No se pudo cargar ${path}`);
+        resolve({ path, status:'error' });
+      };
+      (document.head || document.body || document.documentElement).appendChild(script);
+    });
   }
 
   loadStylesheet('css/identidad-navegacion-v34.css?v=34.1-beta.2');
   loadStylesheet('css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.8');
   loadStylesheet('css/hotfix-etapa-18-beta2.css?v=35.0-beta.8');
-  loadStylesheet('css/etapa-18-beta8.css?v=35.0-beta.8');
+  loadStylesheet('css/etapa-18-beta8.css?v=35.0-beta.8.1');
 
-  loadScript('js/movimientos-unificados-v33.js?v=33.4');
-  loadScript('js/experiencia-auxiliar-v33.js?v=33.4');
-  loadScript('js/hotfix-v33-1.js?v=33.4');
-  loadScript('js/avatar-random-v33-2.js?v=33.4');
-  loadScript('js/identidad-navegacion-v34.js?v=34.0');
+  const scripts = [
+    'js/movimientos-unificados-v33.js?v=33.4',
+    'js/experiencia-auxiliar-v33.js?v=33.4',
+    'js/hotfix-v33-1.js?v=33.4',
+    'js/avatar-random-v33-2.js?v=33.4',
+    'js/identidad-navegacion-v34.js?v=34.0',
+    'js/etapa-18-beta5.js?v=35.0-beta.5',
+    'js/etapa-18-beta6.js?v=35.0-beta.6',
+    'js/etapa-18-beta6-bridge.js?v=35.0-beta.6',
+    'js/etapa-18-beta7.js?v=35.0-beta.7',
+    'js/etapa-18-beta8.js?v=35.0-beta.8.1',
+    'js/ahorro-resumen-v35.js?v=35.0-beta.8',
+    'js/diagnostico-etapa-18.js?v=35.0-beta.8'
+  ];
 
-  // Beta 5 conserva la corrección estable de estados de pago de tarjetas.
-  loadScript('js/etapa-18-beta5.js?v=35.0-beta.5');
-  // Beta 6 define la contabilidad canónica: disponible = efectivo libre - saldo reservado.
-  loadScript('js/etapa-18-beta6.js?v=35.0-beta.6');
-  loadScript('js/etapa-18-beta6-bridge.js?v=35.0-beta.6');
-  // Beta 7 evita el parpadeo del Resumen y corrige la eliminación de metas con saldo.
-  loadScript('js/etapa-18-beta7.js?v=35.0-beta.7');
-  // Beta 8 unifica la ficha de tarjeta, alimenta el planificador y añade libro de movimientos.
-  loadScript('js/etapa-18-beta8.js?v=35.0-beta.8');
+  const ready = (async () => {
+    for (const path of scripts) await appendScript(path);
 
-  loadScript('js/ahorro-resumen-v35.js?v=35.0-beta.8');
-  loadScript('js/diagnostico-etapa-18.js?v=35.0-beta.8');
+    // Fallback explícito: si el navegador tenía una copia antigua del cargador,
+    // vuelve a solicitar beta 8 con cache-busting en vez de dejar la app a medias.
+    if (!window.HFTarjetasCanonicasBeta8) {
+      const retry = `js/etapa-18-beta8.js?v=35.0-beta.8.1&retry=${Date.now()}`;
+      await appendScript(retry, { force:true });
+    }
 
-  window.HFExperienciaUnificada = Object.freeze({ version: VERSION });
+    if (window.HFTarjetasCanonicasBeta8) {
+      console.info('✅ Tarjetas canónicas beta 8 cargadas:', window.HFTarjetasCanonicasBeta8.version);
+    } else {
+      console.error('❌ Beta 8 no quedó disponible después del reintento.');
+    }
+
+    return {
+      version:VERSION,
+      beta8:Boolean(window.HFTarjetasCanonicasBeta8)
+    };
+  })();
+
+  window.HFExperienciaUnificada = Object.freeze({ version: VERSION, ready });
 })();
