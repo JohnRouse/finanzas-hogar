@@ -41,7 +41,7 @@
   loadScript('js/estados-pagados-ahorro-real-v35.js?v=35.0-beta.1');
   loadScript('js/ahorro-resumen-v35.js?v=35.0-beta.1');
   loadScript('js/hotfix-etapa-18-beta2.js?v=35.0-beta.2');
-  loadScript('js/diagnostico-etapa-18.js?v=35.0-beta.1');
+  loadScript('js/diagnostico-etapa-18.js?v=35.0-beta.2');
 
   window.HFExperienciaUnificada = Object.freeze({ version: VERSION });
 })();
