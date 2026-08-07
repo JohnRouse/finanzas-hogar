@@ -52,7 +52,7 @@
     'js/etapa-18-beta7.js?v=35.0-beta.7',
     'js/etapa-18-beta8.js?v=35.0-beta.8.2',
     'js/ahorro-resumen-v35.js?v=35.0-beta.8',
-    'js/diagnostico-etapa-18.js?v=35.0-beta.8'
+    'js/diagnostico-etapa-18.js?v=35.0-beta.8.2'
   ];
 
   const ready = (async () => {
