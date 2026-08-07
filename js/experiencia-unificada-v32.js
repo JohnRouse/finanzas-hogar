@@ -39,7 +39,7 @@
   loadScript('js/avatar-random-v33-2.js?v=33.4');
   loadScript('js/identidad-navegacion-v34.js?v=34.0');
   loadScript('js/estados-pagados-ahorro-real-v35.js?v=35.0-beta.1');
-  loadScript('js/ahorro-resumen-v35.js?v=35.0-beta.1');
+  loadScript('js/ahorro-resumen-v35.js?v=35.0-beta.4');
   loadScript('js/etapa-18-beta4.js?v=35.0-beta.4');
   loadScript('js/diagnostico-etapa-18.js?v=35.0-beta.4');
 
