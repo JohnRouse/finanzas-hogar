@@ -13,7 +13,7 @@ Validar que una obligación atendida deje de aparecer como vencida cuando existe
 3. Abrir Configuración desde el avatar y navegar por varias opciones.
 4. La interfaz debe seguir respondiendo con normalidad.
 
-Beta 4 retiró del arranque los hotfix beta 2 y beta 3. El hotfix beta 2 contenía un `MutationObserver` sobre el modal de metas que podía volver a escribir el mismo texto observado y generar un ciclo de mutaciones; beta 4 usa operaciones idempotentes y refrescos explícitos.
+Causa raíz corregida en beta 4: el hotfix beta 2 instalaba un `MutationObserver` sobre el modal de metas y, dentro de su callback, volvía a asignar `textContent` a un nodo observado. Esa escritura generaba una nueva mutación y podía repetirse indefinidamente, consumiendo el hilo principal aunque el modal de metas no estuviera visible. Beta 4 ya no carga los hotfix beta 2 ni beta 3 y usa operaciones idempotentes y refrescos explícitos.
 
 ## 2. Estado de tarjetas después de pagar
 
