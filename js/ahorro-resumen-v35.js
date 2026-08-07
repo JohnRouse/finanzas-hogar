@@ -2,10 +2,10 @@
 (() => {
   'use strict';
 
-  const VERSION = '35.0-beta.1';
+  const VERSION = '35.0-beta.4';
   if (window.HFAhorroResumen35?.version === VERSION) return;
 
-  const state = { goals:[], timer:null };
+  const state = { goals:[], timer:null, refreshing:false };
   const $ = id => document.getElementById(id);
   const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
   const money = value => `S/ ${number(value).toLocaleString('es-PE', { minimumFractionDigits:2, maximumFractionDigits:2 })}`;
@@ -19,15 +19,18 @@
           <button class="modal-close" type="button" onclick="closeModal('hfSavingPickerModal')">✕</button>
           <div class="modal-handle"></div>
           <div class="modal-title">¿Para qué meta quieres apartar?</div>
-          <p class="hf-v35-picker-intro">Elige la meta que recibirá el dinero del disponible de este mes.</p>
+          <p class="hf-v35-picker-intro">Elige la meta que recibirá el dinero disponible de este mes.</p>
           <div class="hf-v35-goal-picker" id="hf-v35-goal-picker"></div>
         </div>
       </div>`);
   }
 
   async function refreshGoals() {
+    if (state.refreshing) return;
+    state.refreshing = true;
     try { state.goals = await window.DB?.getMetas?.() || []; }
     catch (_) { state.goals = []; }
+    finally { state.refreshing = false; }
     decorateSummary();
   }
 
@@ -90,16 +93,16 @@
     action.disabled = state.goals.length > 0 && active.length === 0;
   }
 
-  function schedule(delay = 120) {
+  function schedule(delay = 180) {
     clearTimeout(state.timer);
     state.timer = setTimeout(refreshGoals, delay);
   }
 
   function start() {
     ensurePicker();
-    schedule(350);
-    ['hf:coherencia-financiera-actualizada','hf:ahorro-reservado-actualizado','hf:objetivo-financiero-guardado']
-      .forEach(name => window.addEventListener(name, () => schedule(100)));
+    schedule(500);
+    ['hf:ahorro-reservado-actualizado','hf:objetivo-financiero-guardado']
+      .forEach(name => window.addEventListener(name, () => schedule(160)));
   }
 
   window.HFAhorroResumen35 = Object.freeze({ version:VERSION, refreshGoals, decorateSummary, openPicker });
