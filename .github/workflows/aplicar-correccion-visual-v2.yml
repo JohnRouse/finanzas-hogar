@@ -26,6 +26,7 @@ on:
       - js/avatar-random-v33-2.js
       - js/identidad-navegacion-v34.js
       - js/estados-pagados-ahorro-real-v35.js
+      - js/ahorro-resumen-v35.js
       - css/experiencia-financiera-v2.css
       - css/deudas-redesign-v23.css
       - css/deudas-fixes-v25.css
@@ -74,6 +75,7 @@ jobs:
           node --check js/avatar-random-v33-2.js
           node --check js/identidad-navegacion-v34.js
           node --check js/estados-pagados-ahorro-real-v35.js
+          node --check js/ahorro-resumen-v35.js
           node --check firebase-messaging-sw.js
 
       - name: Verificar estabilidad V33.4
@@ -130,7 +132,9 @@ jobs:
           grep -q "const VERSION = '35.0-beta.1'" js/experiencia-unificada-v32.js
           grep -q "estados-pagados-ahorro-real-v35.css?v=35.0-beta.1" js/experiencia-unificada-v32.js
           grep -q "estados-pagados-ahorro-real-v35.js?v=35.0-beta.1" js/experiencia-unificada-v32.js
+          grep -q "ahorro-resumen-v35.js?v=35.0-beta.1" js/experiencia-unificada-v32.js
           grep -q "deriveCardPaymentState" js/estados-pagados-ahorro-real-v35.js
           grep -q "reservadoMeses" js/estados-pagados-ahorro-real-v35.js
           grep -q "hf:ahorro-reservado-actualizado" js/estados-pagados-ahorro-real-v35.js
+          grep -q "hf-v35-summary-saving-action" js/ahorro-resumen-v35.js
           grep -q "hogar-finanzas-v35-beta1-pagos-ahorro-real" firebase-messaging-sw.js
