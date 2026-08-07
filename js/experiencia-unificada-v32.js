@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '35.0-beta.7';
+  const VERSION = '35.0-beta.8';
   if (window.HFExperienciaUnificada?.version === VERSION) return;
 
   function loadStylesheet(path) {
@@ -30,8 +30,9 @@
   }
 
   loadStylesheet('css/identidad-navegacion-v34.css?v=34.1-beta.2');
-  loadStylesheet('css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.7');
-  loadStylesheet('css/hotfix-etapa-18-beta2.css?v=35.0-beta.7');
+  loadStylesheet('css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.8');
+  loadStylesheet('css/hotfix-etapa-18-beta2.css?v=35.0-beta.8');
+  loadStylesheet('css/etapa-18-beta8.css?v=35.0-beta.8');
 
   loadScript('js/movimientos-unificados-v33.js?v=33.4');
   loadScript('js/experiencia-auxiliar-v33.js?v=33.4');
@@ -46,9 +47,11 @@
   loadScript('js/etapa-18-beta6-bridge.js?v=35.0-beta.6');
   // Beta 7 evita el parpadeo del Resumen y corrige la eliminación de metas con saldo.
   loadScript('js/etapa-18-beta7.js?v=35.0-beta.7');
+  // Beta 8 unifica la ficha de tarjeta, alimenta el planificador y añade libro de movimientos.
+  loadScript('js/etapa-18-beta8.js?v=35.0-beta.8');
 
-  loadScript('js/ahorro-resumen-v35.js?v=35.0-beta.7');
-  loadScript('js/diagnostico-etapa-18.js?v=35.0-beta.7');
+  loadScript('js/ahorro-resumen-v35.js?v=35.0-beta.8');
+  loadScript('js/diagnostico-etapa-18.js?v=35.0-beta.8');
 
   window.HFExperienciaUnificada = Object.freeze({ version: VERSION });
 })();
