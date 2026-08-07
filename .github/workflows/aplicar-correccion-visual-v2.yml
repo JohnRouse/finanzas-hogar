@@ -8,6 +8,7 @@ on:
       - etapa-16-identidad-y-navegacion
       - etapa-17-nav-avatar-flotante
       - etapa-18-estados-pagados-y-ahorro-real
+      - etapa-18-ahorro-contable-beta6
     paths:
       - .github/workflows/aplicar-correccion-visual-v2.yml
       - js/app.js
@@ -27,6 +28,7 @@ on:
       - js/identidad-navegacion-v34.js
       - js/ahorro-resumen-v35.js
       - js/etapa-18-beta5.js
+      - js/etapa-18-beta6.js
       - js/diagnostico-etapa-18.js
       - css/experiencia-financiera-v2.css
       - css/deudas-redesign-v23.css
@@ -78,6 +80,7 @@ jobs:
           node --check js/identidad-navegacion-v34.js
           node --check js/ahorro-resumen-v35.js
           node --check js/etapa-18-beta5.js
+          if [ -f js/etapa-18-beta6.js ]; then node --check js/etapa-18-beta6.js; fi
           node --check js/diagnostico-etapa-18.js
           node --check firebase-messaging-sw.js
 
@@ -157,3 +160,19 @@ jobs:
             echo "Los hotfix beta 2/3 no deben volver al arranque" >&2
             exit 1
           fi
+
+      - name: Verificar contabilidad de ahorro V35 beta 6
+        if: github.ref_name == 'etapa-18-ahorro-contable-beta6'
+        run: |
+          grep -qx "35.0-beta.6" VERSION
+          grep -q '"version": "35.0-beta.6"' manifest.json
+          grep -q "const VERSION = '35.0-beta.6'" js/experiencia-unificada-v32.js
+          grep -q "etapa-18-beta5.js?v=35.0-beta.5" js/experiencia-unificada-v32.js
+          grep -q "etapa-18-beta6.js?v=35.0-beta.6" js/experiencia-unificada-v32.js
+          grep -q "const VERSION = '35.0-beta.6'" js/etapa-18-beta6.js
+          grep -q "availableBeforeSaving - reserved" js/etapa-18-beta6.js
+          grep -q "stopImmediatePropagation" js/etapa-18-beta6.js
+          grep -q "contabilidadAhorroV35:'beta6-saldo-canonico'" js/etapa-18-beta6.js
+          grep -q "HFEtapa18Beta6" js/diagnostico-etapa-18.js
+          grep -q "35.0-beta.6" js/diagnostico-etapa-18.js
+          grep -q "hogar-finanzas-v35-beta6-saldo-reservado-canonico" firebase-messaging-sw.js
