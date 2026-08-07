@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v35-beta8-tarjetas-canonicas';
+const CACHE_NAME = 'hogar-finanzas-v35-beta8-1-loader-resiliente';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
@@ -45,8 +45,8 @@ const APP_SHELL = [
   './css/identidad-navegacion-v34.css?v=34.1-beta.2',
   './css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.8',
   './css/hotfix-etapa-18-beta2.css?v=35.0-beta.8',
-  './css/etapa-18-beta8.css?v=35.0-beta.8',
-  './js/experiencia-unificada-v32.js?v=35.0-beta.8',
+  './css/etapa-18-beta8.css?v=35.0-beta.8.1',
+  './js/experiencia-unificada-v32.js?v=35.0-beta.8.1',
   './js/movimientos-unificados-v33.js?v=33.4',
   './js/experiencia-auxiliar-v33.js?v=33.4',
   './js/hotfix-v33-1.js?v=33.4',
@@ -56,7 +56,7 @@ const APP_SHELL = [
   './js/etapa-18-beta6.js?v=35.0-beta.6',
   './js/etapa-18-beta6-bridge.js?v=35.0-beta.6',
   './js/etapa-18-beta7.js?v=35.0-beta.7',
-  './js/etapa-18-beta8.js?v=35.0-beta.8',
+  './js/etapa-18-beta8.js?v=35.0-beta.8.1',
   './js/ahorro-resumen-v35.js?v=35.0-beta.8',
   './js/diagnostico-etapa-18.js?v=35.0-beta.8',
   './css/experiencia-integrada-v30.css?v=31.2',
