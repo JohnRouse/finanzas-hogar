@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v34-1-beta2-avatar-contraste';
+const CACHE_NAME = 'hogar-finanzas-v35-beta1-pagos-ahorro-real';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
@@ -43,12 +43,14 @@ const APP_SHELL = [
   './css/experiencia-financiera-14.css?v=20.0',
   './css/experiencia-unificada-v32.css?v=32.1',
   './css/identidad-navegacion-v34.css?v=34.1-beta.2',
-  './js/experiencia-unificada-v32.js?v=34.1-beta.2',
+  './css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.1',
+  './js/experiencia-unificada-v32.js?v=35.0-beta.1',
   './js/movimientos-unificados-v33.js?v=33.4',
   './js/experiencia-auxiliar-v33.js?v=33.4',
   './js/hotfix-v33-1.js?v=33.4',
   './js/avatar-random-v33-2.js?v=33.4',
   './js/identidad-navegacion-v34.js?v=34.0',
+  './js/estados-pagados-ahorro-real-v35.js?v=35.0-beta.1',
   './css/experiencia-integrada-v30.css?v=31.2',
   './css/experiencia-integrada-v29.css?v=29.3',
   './css/experiencia-integrada-v28.css?v=28.0',
