@@ -1,16 +1,21 @@
 /* Hogar Finanzas — diagnóstico Etapa 18 */
 (() => {
   'use strict';
-  const VERSION = '35.0-beta.6';
+  const VERSION = '35.0-beta.7';
   if (window.HFDiagnosticoEtapa18?.version === VERSION) return;
 
   async function ejecutar() {
     const financeEngine = window.HFEtapa18Beta6;
     const cardEngine = window.HFEtapa18Beta5;
-    if (!financeEngine || !cardEngine || !window.DB) throw new Error('La Etapa 18 beta 6 todavía no está lista.');
+    const stabilityEngine = window.HFEtapa18Beta7;
+    if (!financeEngine || !cardEngine || !stabilityEngine || !window.DB) {
+      throw new Error('La Etapa 18 beta 7 todavía no está lista.');
+    }
 
     await cardEngine.refreshDebtStates?.();
     const context = await financeEngine.financialContext?.();
+    await stabilityEngine.settleFinancialUI?.();
+
     const [cards, movements, goals] = await Promise.all([
       DB.getTarjetas(),
       DB.getGastos(null),
@@ -34,6 +39,11 @@
       };
     });
 
+    const availableNode = document.getElementById('kpi-disponible');
+    const creditNode = document.getElementById('kpi-credito-mes');
+    const savedNode = document.getElementById('kpi-ahorro-real');
+    const helper = node => node?.closest('.month-money-card')?.querySelector('.month-money-help')?.textContent?.trim() || '';
+
     const report = {
       version:VERSION,
       month,
@@ -48,6 +58,15 @@
         disponibleReal:context.available,
         formula:'disponibleAntesAhorro - ahorroReservado'
       } : null,
+      domFinance:{
+        disponible:availableNode?.textContent?.trim() || '',
+        disponibleTexto:helper(availableNode),
+        credito:creditNode?.textContent?.trim() || '',
+        creditoTexto:helper(creditNode),
+        ahorro:savedNode?.textContent?.trim() || '',
+        ahorroTexto:helper(savedNode),
+        settling:document.documentElement.classList.contains('hf-finance-settling')
+      },
       domCards:[...document.querySelectorAll('#hf-family-debt-view .hf-v24-debt-card')].map(node => ({
         id:node.dataset.debtId,
         type:node.dataset.debtType,
@@ -55,15 +74,17 @@
       })),
       runtime:{
         beta5:cardEngine.getState?.() || null,
-        beta6:financeEngine.getState?.() || null
+        beta6:financeEngine.getState?.() || null,
+        beta7:{version:stabilityEngine.version}
       }
     };
 
-    console.group('Hogar Finanzas · Diagnóstico Etapa 18 beta 6');
+    console.group('Hogar Finanzas · Diagnóstico Etapa 18 beta 7');
     console.table(cardStates.map(item => ({ tarjeta:item.name, estado:item.label || 'Pendiente', pagado:item.paid, pagoTotal:item.totalTarget, minimo:item.minimumTarget, uso:`${Math.round(item.usage || 0)}%`, vencimiento:item.statementDue || '' })));
     console.table(goalRows.map(item => ({ meta:item.nombre, reservado:item.reservado, apartadoMes:item.apartadoMes, tracked:item.tracked, diferencia:item.diferencia, porMes:item.porMes })));
     console.table(report.domCards);
-    console.log(report.finance);
+    console.log('Finanzas:', report.finance);
+    console.log('DOM Resumen:', report.domFinance);
     console.log(report);
     console.groupEnd();
     return report;
