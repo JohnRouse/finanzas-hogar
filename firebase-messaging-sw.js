@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v34-1-beta1-avatar-flotante';
+const CACHE_NAME = 'hogar-finanzas-v34-1-beta2-avatar-contraste';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
@@ -42,8 +42,8 @@ const APP_SHELL = [
   './js/diagnostico-etapa-14.js?v=20.0',
   './css/experiencia-financiera-14.css?v=20.0',
   './css/experiencia-unificada-v32.css?v=32.1',
-  './css/identidad-navegacion-v34.css?v=34.1-beta.1',
-  './js/experiencia-unificada-v32.js?v=34.1-beta.1',
+  './css/identidad-navegacion-v34.css?v=34.1-beta.2',
+  './js/experiencia-unificada-v32.js?v=34.1-beta.2',
   './js/movimientos-unificados-v33.js?v=33.4',
   './js/experiencia-auxiliar-v33.js?v=33.4',
   './js/hotfix-v33-1.js?v=33.4',
