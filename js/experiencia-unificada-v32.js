@@ -43,6 +43,8 @@
   loadScript('js/etapa-18-beta5.js?v=35.0-beta.5');
   // Beta 6 corrige la fuente contable del Disponible hoy y toma control de aportes/retiros.
   loadScript('js/etapa-18-beta6.js?v=35.0-beta.6');
+  // Mantiene compatibles los accesos rápidos de ahorro del Resumen con el motor beta 6.
+  loadScript('js/etapa-18-beta6-bridge.js?v=35.0-beta.6');
 
   loadScript('js/ahorro-resumen-v35.js?v=35.0-beta.6');
   loadScript('js/diagnostico-etapa-18.js?v=35.0-beta.6');
