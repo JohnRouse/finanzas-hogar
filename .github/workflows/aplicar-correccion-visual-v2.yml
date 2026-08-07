@@ -7,6 +7,7 @@ on:
       - etapa-15-correccion-visual-v2
       - etapa-16-identidad-y-navegacion
       - etapa-17-nav-avatar-flotante
+      - etapa-18-estados-pagados-y-ahorro-real
     paths:
       - .github/workflows/aplicar-correccion-visual-v2.yml
       - js/app.js
@@ -24,6 +25,7 @@ on:
       - js/hotfix-v33-1.js
       - js/avatar-random-v33-2.js
       - js/identidad-navegacion-v34.js
+      - js/estados-pagados-ahorro-real-v35.js
       - css/experiencia-financiera-v2.css
       - css/deudas-redesign-v23.css
       - css/deudas-fixes-v25.css
@@ -34,6 +36,7 @@ on:
       - css/experiencia-integrada-v30.css
       - css/experiencia-unificada-v32.css
       - css/identidad-navegacion-v34.css
+      - css/estados-pagados-ahorro-real-v35.css
       - icons/app-icon.svg
       - icons/app-icon-maskable.svg
       - index.html
@@ -70,6 +73,7 @@ jobs:
           node --check js/hotfix-v33-1.js
           node --check js/avatar-random-v33-2.js
           node --check js/identidad-navegacion-v34.js
+          node --check js/estados-pagados-ahorro-real-v35.js
           node --check firebase-messaging-sw.js
 
       - name: Verificar estabilidad V33.4
@@ -117,3 +121,16 @@ jobs:
           grep -q "prefers-color-scheme: dark" css/identidad-navegacion-v34.css
           grep -q "color-scheme: light" css/identidad-navegacion-v34.css
           grep -q "hogar-finanzas-v34-1-beta2-avatar-contraste" firebase-messaging-sw.js
+
+      - name: Verificar estados pagados y ahorro real V35 beta
+        if: github.ref_name == 'etapa-18-estados-pagados-y-ahorro-real'
+        run: |
+          grep -qx "35.0-beta.1" VERSION
+          grep -q '"version": "35.0-beta.1"' manifest.json
+          grep -q "const VERSION = '35.0-beta.1'" js/experiencia-unificada-v32.js
+          grep -q "estados-pagados-ahorro-real-v35.css?v=35.0-beta.1" js/experiencia-unificada-v32.js
+          grep -q "estados-pagados-ahorro-real-v35.js?v=35.0-beta.1" js/experiencia-unificada-v32.js
+          grep -q "deriveCardPaymentState" js/estados-pagados-ahorro-real-v35.js
+          grep -q "reservadoMeses" js/estados-pagados-ahorro-real-v35.js
+          grep -q "hf:ahorro-reservado-actualizado" js/estados-pagados-ahorro-real-v35.js
+          grep -q "hogar-finanzas-v35-beta1-pagos-ahorro-real" firebase-messaging-sw.js
