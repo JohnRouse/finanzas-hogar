@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '35.0-beta.6';
+  const VERSION = '35.0-beta.7';
   if (window.HFExperienciaUnificada?.version === VERSION) return;
 
   function loadStylesheet(path) {
@@ -30,8 +30,8 @@
   }
 
   loadStylesheet('css/identidad-navegacion-v34.css?v=34.1-beta.2');
-  loadStylesheet('css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.6');
-  loadStylesheet('css/hotfix-etapa-18-beta2.css?v=35.0-beta.6');
+  loadStylesheet('css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.7');
+  loadStylesheet('css/hotfix-etapa-18-beta2.css?v=35.0-beta.7');
 
   loadScript('js/movimientos-unificados-v33.js?v=33.4');
   loadScript('js/experiencia-auxiliar-v33.js?v=33.4');
@@ -41,13 +41,14 @@
 
   // Beta 5 conserva la corrección estable de estados de pago de tarjetas.
   loadScript('js/etapa-18-beta5.js?v=35.0-beta.5');
-  // Beta 6 corrige la fuente contable del Disponible hoy y toma control de aportes/retiros.
+  // Beta 6 define la contabilidad canónica: disponible = efectivo libre - saldo reservado.
   loadScript('js/etapa-18-beta6.js?v=35.0-beta.6');
-  // Mantiene compatibles los accesos rápidos de ahorro del Resumen con el motor beta 6.
   loadScript('js/etapa-18-beta6-bridge.js?v=35.0-beta.6');
+  // Beta 7 evita el parpadeo del Resumen y corrige la eliminación de metas con saldo.
+  loadScript('js/etapa-18-beta7.js?v=35.0-beta.7');
 
-  loadScript('js/ahorro-resumen-v35.js?v=35.0-beta.6');
-  loadScript('js/diagnostico-etapa-18.js?v=35.0-beta.6');
+  loadScript('js/ahorro-resumen-v35.js?v=35.0-beta.7');
+  loadScript('js/diagnostico-etapa-18.js?v=35.0-beta.7');
 
   window.HFExperienciaUnificada = Object.freeze({ version: VERSION });
 })();
