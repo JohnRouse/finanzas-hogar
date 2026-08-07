@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '34.1-beta.2';
+  const VERSION = '35.0-beta.1';
   if (window.HFExperienciaUnificada?.version === VERSION) return;
 
   function loadStylesheet(path) {
@@ -30,12 +30,14 @@
   }
 
   loadStylesheet('css/identidad-navegacion-v34.css?v=34.1-beta.2');
+  loadStylesheet('css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.1');
 
   loadScript('js/movimientos-unificados-v33.js?v=33.4');
   loadScript('js/experiencia-auxiliar-v33.js?v=33.4');
   loadScript('js/hotfix-v33-1.js?v=33.4');
   loadScript('js/avatar-random-v33-2.js?v=33.4');
   loadScript('js/identidad-navegacion-v34.js?v=34.0');
+  loadScript('js/estados-pagados-ahorro-real-v35.js?v=35.0-beta.1');
 
   window.HFExperienciaUnificada = Object.freeze({ version: VERSION });
 })();
