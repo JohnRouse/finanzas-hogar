@@ -1,0 +1,359 @@
+/* Hogar Finanzas — Estados pagados + ahorro reservado real V35 */
+
+body.hf-v35-status-loading #hf-family-debt-view .hf-v24-debt-card[data-debt-type="card"] .hf-v24-status {
+  visibility: hidden !important;
+}
+
+.hf-v35-paid-summary {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.hf-v35-paid-summary.minimo,
+.hf-v35-paid-summary.pago {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.hf-v35-paid-summary > span {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(22, 101, 52, .09);
+  font-weight: 800;
+}
+
+.hf-v35-paid-summary > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hf-v35-paid-summary strong {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.hf-v35-paid-summary small {
+  color: currentColor;
+  font-size: 10px;
+  line-height: 1.35;
+  opacity: .78;
+}
+
+.hf-v35-saving-accounting-note {
+  margin: 0 0 12px;
+  padding: 11px 12px;
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  border: 1px solid #bfdbfe;
+  border-radius: 13px;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.hf-v35-saving-accounting-note > span {
+  flex: 0 0 auto;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.hf-v35-saving-accounting-note p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.hf-v35-saving-accounting-note strong {
+  display: block;
+  margin-bottom: 1px;
+  color: #172033;
+  font-size: 11.5px;
+}
+
+#savingGoals .saving-goal {
+  padding-bottom: 14px;
+}
+
+#savingGoals .saving-goal .saving-info {
+  padding-right: 26px;
+}
+
+.hf-v35-saving-actions {
+  width: 100%;
+  margin-top: 13px;
+  padding-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 7px;
+  border-top: 1px solid #e6e9ef;
+}
+
+.hf-v35-saving-actions button {
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 7px;
+  border: 1px solid #dbe2ea;
+  border-radius: 11px;
+  background: #fff;
+  color: #475569;
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.15;
+  cursor: pointer;
+}
+
+.hf-v35-saving-actions button.primary {
+  border-color: #2447c6;
+  background: #2447c6;
+  color: #fff;
+}
+
+.hf-v35-saving-actions button.history {
+  color: #315efb;
+}
+
+.hf-v35-saving-actions button:disabled {
+  border-color: #e5e7eb;
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: default;
+}
+
+.hf-v35-saving-sheet .modal-title {
+  padding-right: 44px;
+}
+
+.hf-v35-saving-context {
+  margin-bottom: 16px;
+  padding: 13px 14px;
+  display: grid;
+  gap: 9px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.hf-v35-saving-context > div,
+.hf-v35-saving-preview > div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hf-v35-saving-context span,
+.hf-v35-saving-preview span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.hf-v35-saving-context strong,
+.hf-v35-saving-preview strong {
+  min-width: 0;
+  color: #172033;
+  font-size: 12px;
+  text-align: right;
+}
+
+.hf-v35-saving-preview {
+  margin: 3px 0 16px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+  border: 1px solid #bfdbfe;
+  border-radius: 13px;
+  background: #eff6ff;
+}
+
+.hf-v35-saving-preview strong.danger {
+  color: #b91c1c;
+}
+
+.hf-v35-saving-history {
+  display: grid;
+  gap: 0;
+}
+
+.hf-v35-history-row {
+  min-width: 0;
+  padding: 12px 2px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  border-bottom: 1px solid #e6e9ef;
+}
+
+.hf-v35-history-row:last-child {
+  border-bottom: 0;
+}
+
+.hf-v35-history-row > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 800;
+}
+
+.hf-v35-history-row.retiro > span {
+  background: #fef3c7;
+  color: #a16207;
+}
+
+.hf-v35-history-row > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hf-v35-history-row strong {
+  color: #172033;
+  font-size: 12px;
+}
+
+.hf-v35-history-row small {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+}
+
+.hf-v35-history-row > b {
+  color: #15803d;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.hf-v35-history-row.retiro > b {
+  color: #a16207;
+}
+
+.hf-v35-legacy-saving-help {
+  display: block;
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 9.5px;
+  line-height: 1.35;
+}
+
+.hf-v35-summary-saving-action {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 11px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hf-v35-summary-saving-action:disabled {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: default;
+}
+
+.hf-v35-picker-intro {
+  margin: -9px 0 14px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.hf-v35-goal-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.hf-v35-goal-picker-item {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+  background: #fff;
+  color: #172033;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hf-v35-goal-picker-item > span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #eff6ff;
+  font-size: 19px;
+}
+
+.hf-v35-goal-picker-item > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hf-v35-goal-picker-item strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hf-v35-goal-picker-item small {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hf-v35-goal-picker-item > b {
+  color: #94a3b8;
+  font-size: 18px;
+  text-align: right;
+}
+
+@media (max-width: 380px) {
+  .hf-v35-saving-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hf-v35-saving-actions .history {
+    grid-column: 1 / -1;
+  }
+}

@@ -7,6 +7,7 @@ on:
       - etapa-15-correccion-visual-v2
       - etapa-16-identidad-y-navegacion
       - etapa-17-nav-avatar-flotante
+      - etapa-18-estados-pagados-y-ahorro-real
     paths:
       - .github/workflows/aplicar-correccion-visual-v2.yml
       - js/app.js
@@ -24,6 +25,9 @@ on:
       - js/hotfix-v33-1.js
       - js/avatar-random-v33-2.js
       - js/identidad-navegacion-v34.js
+      - js/ahorro-resumen-v35.js
+      - js/etapa-18-beta5.js
+      - js/diagnostico-etapa-18.js
       - css/experiencia-financiera-v2.css
       - css/deudas-redesign-v23.css
       - css/deudas-fixes-v25.css
@@ -34,6 +38,8 @@ on:
       - css/experiencia-integrada-v30.css
       - css/experiencia-unificada-v32.css
       - css/identidad-navegacion-v34.css
+      - css/estados-pagados-ahorro-real-v35.css
+      - css/hotfix-etapa-18-beta2.css
       - icons/app-icon.svg
       - icons/app-icon-maskable.svg
       - index.html
@@ -70,6 +76,9 @@ jobs:
           node --check js/hotfix-v33-1.js
           node --check js/avatar-random-v33-2.js
           node --check js/identidad-navegacion-v34.js
+          node --check js/ahorro-resumen-v35.js
+          node --check js/etapa-18-beta5.js
+          node --check js/diagnostico-etapa-18.js
           node --check firebase-messaging-sw.js
 
       - name: Verificar estabilidad V33.4
@@ -117,3 +126,34 @@ jobs:
           grep -q "prefers-color-scheme: dark" css/identidad-navegacion-v34.css
           grep -q "color-scheme: light" css/identidad-navegacion-v34.css
           grep -q "hogar-finanzas-v34-1-beta2-avatar-contraste" firebase-messaging-sw.js
+
+      - name: Verificar estados pagados y ahorro real V35 beta 5
+        if: github.ref_name == 'etapa-18-estados-pagados-y-ahorro-real'
+        run: |
+          grep -qx "35.0-beta.5" VERSION
+          grep -q '"version": "35.0-beta.5"' manifest.json
+          grep -q "const VERSION = '35.0-beta.5'" js/experiencia-unificada-v32.js
+          grep -q "etapa-18-beta5.js?v=35.0-beta.5" js/experiencia-unificada-v32.js
+          grep -q "diagnostico-etapa-18.js?v=35.0-beta.5" js/experiencia-unificada-v32.js
+          grep -q "const VERSION = '35.0-beta.5'" js/etapa-18-beta5.js
+          grep -q "reconcileSavingsLedger" js/etapa-18-beta5.js
+          grep -q "reservedNetMonth" js/etapa-18-beta5.js
+          grep -q "deriveCardState" js/etapa-18-beta5.js
+          grep -q "await refreshDebtStates" js/etapa-18-beta5.js
+          grep -q "Monto inicial a reservar" js/etapa-18-beta5.js
+          grep -q "nota:note" js/etapa-18-beta5.js
+          grep -q "HFDiagnosticoEtapa18" js/diagnostico-etapa-18.js
+          grep -q "35.0-beta.5" js/diagnostico-etapa-18.js
+          grep -q "hogar-finanzas-v35-beta5-ahorro-pagos-estables" firebase-messaging-sw.js
+          if grep -q "estados-pagados-ahorro-real-v35.js" js/experiencia-unificada-v32.js; then
+            echo "El motor V35 beta 1 no debe cargarse junto con beta 5" >&2
+            exit 1
+          fi
+          if grep -q "etapa-18-beta4.js" js/experiencia-unificada-v32.js; then
+            echo "Beta 4 no debe cargarse junto con beta 5" >&2
+            exit 1
+          fi
+          if grep -q "hotfix-etapa-18-beta2.js\|hotfix-etapa-18-beta3.js" js/experiencia-unificada-v32.js; then
+            echo "Los hotfix beta 2/3 no deben volver al arranque" >&2
+            exit 1
+          fi
