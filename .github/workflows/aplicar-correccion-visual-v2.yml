@@ -104,14 +104,16 @@ jobs:
           grep -q "hf-nav-avatar-ready" css/identidad-navegacion-v34.css
           grep -q ".app-header .settings-btn" css/identidad-navegacion-v34.css
 
-      - name: Verificar avatar flotante V34.1 beta
+      - name: Verificar avatar flotante y contraste V34.1 beta
         if: github.ref_name == 'etapa-17-nav-avatar-flotante'
         run: |
-          grep -qx "34.1-beta.1" VERSION
-          grep -q "34.1-beta.1" manifest.json
-          grep -q "const VERSION = '34.1-beta.1'" js/experiencia-unificada-v32.js
+          grep -qx "34.1-beta.2" VERSION
+          grep -q "34.1-beta.2" manifest.json
+          grep -q "const VERSION = '34.1-beta.2'" js/experiencia-unificada-v32.js
           grep -q -- "--hf-nav-avatar-rise: 20px" css/identidad-navegacion-v34.css
           grep -q "top: calc(-1 \* var(--hf-nav-avatar-rise))" css/identidad-navegacion-v34.css
           grep -q "position: absolute" css/identidad-navegacion-v34.css
           grep -q "align-items: center" css/identidad-navegacion-v34.css
-          grep -q "hogar-finanzas-v34-1-beta1-avatar-flotante" firebase-messaging-sw.js
+          grep -q "prefers-color-scheme: dark" css/identidad-navegacion-v34.css
+          grep -q "color-scheme: light" css/identidad-navegacion-v34.css
+          grep -q "hogar-finanzas-v34-1-beta2-avatar-contraste" firebase-messaging-sw.js
