@@ -11,7 +11,7 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const CACHE_NAME = 'hogar-finanzas-v35-beta7-meta-delete-resumen-estable';
+const CACHE_NAME = 'hogar-finanzas-v35-beta8-3-estados-plan-estables';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
@@ -34,7 +34,7 @@ const APP_SHELL = [
   './js/actualizador-tarjetas-outlook.js?v=11.5.4',
   './js/outlook-ui.js?v=11.5.4',
   './js/deudas-inteligentes.js?v=11.2.1',
-  './js/sincronizacion-financiera-ui.js?v=33.4',
+  './js/sincronizacion-financiera-ui.js?v=35.0-beta.8.2',
   './js/bootstrap-avanzado.js?v=33.4',
   './js/deudas-familiares.js?v=33.4',
   './js/deudas-coordinator-v33-4.js?v=33.4',
@@ -43,9 +43,10 @@ const APP_SHELL = [
   './css/experiencia-financiera-14.css?v=20.0',
   './css/experiencia-unificada-v32.css?v=32.1',
   './css/identidad-navegacion-v34.css?v=34.1-beta.2',
-  './css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.7',
-  './css/hotfix-etapa-18-beta2.css?v=35.0-beta.7',
-  './js/experiencia-unificada-v32.js?v=35.0-beta.7',
+  './css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.8',
+  './css/hotfix-etapa-18-beta2.css?v=35.0-beta.8',
+  './css/etapa-18-beta8.css?v=35.0-beta.8.3',
+  './js/experiencia-unificada-v32.js?v=35.0-beta.8.3',
   './js/movimientos-unificados-v33.js?v=33.4',
   './js/experiencia-auxiliar-v33.js?v=33.4',
   './js/hotfix-v33-1.js?v=33.4',
@@ -55,8 +56,10 @@ const APP_SHELL = [
   './js/etapa-18-beta6.js?v=35.0-beta.6',
   './js/etapa-18-beta6-bridge.js?v=35.0-beta.6',
   './js/etapa-18-beta7.js?v=35.0-beta.7',
-  './js/ahorro-resumen-v35.js?v=35.0-beta.7',
-  './js/diagnostico-etapa-18.js?v=35.0-beta.7',
+  './js/etapa-18-beta8.js?v=35.0-beta.8.3',
+  './js/etapa-18-beta8-3.js?v=35.0-beta.8.3',
+  './js/ahorro-resumen-v35.js?v=35.0-beta.8',
+  './js/diagnostico-etapa-18.js?v=35.0-beta.8.2',
   './css/experiencia-integrada-v30.css?v=31.2',
   './css/experiencia-integrada-v29.css?v=29.3',
   './css/experiencia-integrada-v28.css?v=28.0',
