@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '35.0-beta.8.2';
+  const VERSION = '35.0-beta.8.3';
   if (window.HFExperienciaUnificada?.version === VERSION) return;
 
   function loadStylesheet(path) {
@@ -38,7 +38,7 @@
   loadStylesheet('css/identidad-navegacion-v34.css?v=34.1-beta.2');
   loadStylesheet('css/estados-pagados-ahorro-real-v35.css?v=35.0-beta.8');
   loadStylesheet('css/hotfix-etapa-18-beta2.css?v=35.0-beta.8');
-  loadStylesheet('css/etapa-18-beta8.css?v=35.0-beta.8.2');
+  loadStylesheet('css/etapa-18-beta8.css?v=35.0-beta.8.3');
 
   const scripts = [
     'js/movimientos-unificados-v33.js?v=33.4',
@@ -50,7 +50,8 @@
     'js/etapa-18-beta6.js?v=35.0-beta.6',
     'js/etapa-18-beta6-bridge.js?v=35.0-beta.6',
     'js/etapa-18-beta7.js?v=35.0-beta.7',
-    'js/etapa-18-beta8.js?v=35.0-beta.8.2',
+    'js/etapa-18-beta8.js?v=35.0-beta.8.3',
+    'js/etapa-18-beta8-3.js?v=35.0-beta.8.3',
     'js/ahorro-resumen-v35.js?v=35.0-beta.8',
     'js/diagnostico-etapa-18.js?v=35.0-beta.8.2'
   ];
@@ -59,7 +60,12 @@
     for (const path of scripts) await appendScript(path);
 
     if (!window.HFTarjetasCanonicasBeta8) {
-      const retry = `js/etapa-18-beta8.js?v=35.0-beta.8.2&retry=${Date.now()}`;
+      const retry = `js/etapa-18-beta8.js?v=35.0-beta.8.3&retry=${Date.now()}`;
+      await appendScript(retry, { force:true });
+    }
+
+    if (!window.HFEtapa18Beta83) {
+      const retry = `js/etapa-18-beta8-3.js?v=35.0-beta.8.3&retry=${Date.now()}`;
       await appendScript(retry, { force:true });
     }
 
@@ -69,9 +75,16 @@
       console.error('❌ Beta 8 no quedó disponible después del reintento.');
     }
 
+    if (window.HFEtapa18Beta83) {
+      console.info('✅ Ajustes beta 8.3 cargados:', window.HFEtapa18Beta83.version);
+    } else {
+      console.error('❌ Beta 8.3 no quedó disponible después del reintento.');
+    }
+
     return {
       version:VERSION,
-      beta8:Boolean(window.HFTarjetasCanonicasBeta8)
+      beta8:Boolean(window.HFTarjetasCanonicasBeta8),
+      beta83:Boolean(window.HFEtapa18Beta83)
     };
   })();
 
